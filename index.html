@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharma Supply Chain Simulator - Advanced</title>
+    <title>Pharma Supply Chain Simulator - Executive Edition</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Import Map to fix React Version Conflicts -->
     <script type="importmap">
         {
             "imports": {
@@ -27,13 +24,12 @@
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
         .chart-container { background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-        .diagram-text { font-size: 12px; font-weight: 500; fill: #475569; }
-        .diagram-label { font-size: 10px; fill: #64748b; }
-        .stock-box { stroke-width: 2; rx: 4; }
-        .flow-pipe { fill: none; stroke: #cbd5e1; stroke-width: 8; stroke-linecap: round; }
-        .flow-arrow { fill: #cbd5e1; }
-        .info-link { fill: none; stroke: #3b82f6; stroke-width: 1.5; stroke-dasharray: 4; marker-end: url(#arrowhead); }
-        .loop-label { font-size: 14px; font-weight: bold; fill: #ef4444; }
+        
+        /* Toggle Switch CSS */
+        .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #3b82f6; }
+        .toggle-checkbox { right: 0; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
+        .toggle-label { background-color: #cbd5e1; transition: all 0.3s; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -47,17 +43,23 @@
             ResponsiveContainer, AreaChart, Area, ReferenceLine, ComposedChart, Bar
         } from 'recharts';
         import {
-            Settings, RefreshCw, Activity, Users, Package, AlertTriangle, 
-            Info, Download, TrendingUp, AlertOctagon, Calculator, Sigma, Network
+            Settings, RefreshCw, Activity, Package, AlertOctagon, TrendingUp, 
+            DollarSign, Percent, ShieldAlert, GitMerge, BookmarkPlus
         } from 'lucide-react';
 
         // --- Simulation Engine ---
 
         const runSimulation = (params) => {
             const {
-                initialDemand, shockWeek, shockMagnitude, productivity,
-                shelfLife, qaDelayTime, targetCoverage, timeToCorrectInv,
-                timeToAdjustWf, avgEmploymentTime, timeToAvgShipments,
+                // Environment
+                initialDemand, shockWeek, shockMagnitude, noiseLevel,
+                // Supply Chain Physics
+                productivity, shelfLife, qaDelayTime, targetCoverage, 
+                timeToCorrectInv, timeToAdjustWf, avgEmploymentTime, timeToAvgShipments,
+                // Financials
+                price, cost, holdingCost, stockPenalty, wasteCost,
+                // Policy Levers
+                useOvertime, expediteQA, multiEchelon
             } = params;
 
             const dt = 0.20; 
@@ -73,71 +75,137 @@
             const eqQuarantine = eqProduction * qaDelayTime;
             const eqWorkforce = eqProduction / productivity;
 
+            // Manufacturer State
             let inventory = eqInventory;
             let quarantine = eqQuarantine;
             let workforce = eqWorkforce;
             let avgShipmentRate = eqDemand;
+            
+            // Retailer State (If Multi-Echelon)
+            let retailInventory = eqInventory;
+            let retailAvgDemand = eqDemand;
+
+            // Cumulative Metrics
             let cumulativeWaste = 0;
+            let cumulativeProfit = 0;
+            let totalMarketDemand = 0;
+            let totalMarketShipments = 0;
 
             for (let t = 0; t < steps; t++) {
                 const time = t * dt;
 
-                // 1. Demand Shock
-                const currentDemand = time >= shockWeek ? initialDemand * shockMagnitude : initialDemand;
+                // 1. Stochastic Demand Shock
+                const baseDemand = time >= shockWeek ? initialDemand * shockMagnitude : initialDemand;
+                // Simple pseudo-random noise approximation (-1 to 1)
+                const randomNoise = (Math.random() * 2 - 1) * noiseLevel;
+                const actualMarketDemand = Math.max(0, baseDemand * (1 + randomNoise));
 
-                // 2. Shipment & Perception
-                const maxShipment = inventory / dt; // Cannot ship more than stock
-                const actualShipment = Math.min(currentDemand, maxShipment);
-                const missedSales = Math.max(0, currentDemand - maxShipment);
+                let manufacturerDemand = actualMarketDemand;
+                let marketShipment = 0;
+
+                // 2. Multi-Echelon Logic (Retailer orders from Manufacturer)
+                if (multiEchelon) {
+                    marketShipment = Math.min(actualMarketDemand, retailInventory / dt);
+                    
+                    // Retailer Forecasting (Exponential Smoothing)
+                    const changeInAvg = (marketShipment - retailAvgDemand) / timeToAvgShipments;
+                    retailAvgDemand += changeInAvg * dt;
+                    
+                    // Retailer Ordering Policy
+                    const retailDesiredInv = retailAvgDemand * targetCoverage;
+                    const retailInvGap = retailDesiredInv - retailInventory;
+                    let retailOrder = retailAvgDemand + (retailInvGap / timeToCorrectInv);
+                    
+                    manufacturerDemand = Math.max(0, retailOrder); // Passes bullwhip upstream
+                }
+
+                // 3. Manufacturer Shipment
+                const maxShipment = inventory / dt;
+                const actualShipment = Math.min(manufacturerDemand, maxShipment);
+                const missedSales = Math.max(0, manufacturerDemand - maxShipment);
                 
-                // Exponential Smoothing for Demand Forecasting
-                const changeInAvg = (actualShipment - avgShipmentRate) / timeToAvgShipments;
-                const nextAvgShipmentRate = avgShipmentRate + changeInAvg * dt;
+                if (!multiEchelon) {
+                    marketShipment = actualShipment; // Direct to market
+                } else {
+                    retailInventory += (actualShipment - marketShipment) * dt; // Replenish retail
+                }
 
-                // 3. Production Planning
-                const desiredInventory = nextAvgShipmentRate * targetCoverage;
+                // Financial Tracking Core Metrics
+                totalMarketDemand += actualMarketDemand * dt;
+                totalMarketShipments += marketShipment * dt;
+
+                // Manufacturer Forecasting
+                const changeInMfgAvg = (actualShipment - avgShipmentRate) / timeToAvgShipments;
+                avgShipmentRate += changeInMfgAvg * dt;
+
+                // 4. Policy Levers (Interventions)
+                let currentProdMultiplier = 1.0;
+                let currentCostMultiplier = 1.0;
+                let currentQADelay = qaDelayTime;
+                let currentWasteMultiplier = 1.0;
+
+                // Overtime Lever
+                const desiredInventory = avgShipmentRate * targetCoverage;
+                if (useOvertime && inventory < desiredInventory * 0.8) {
+                    currentProdMultiplier = 1.20; // 20% bump in productivity
+                    currentCostMultiplier = 1.50; // Time-and-a-half cost
+                }
+
+                // Expedite QA Lever
+                if (expediteQA) {
+                    currentQADelay = Math.max(0.1, qaDelayTime * 0.5); // Halve the delay
+                    currentWasteMultiplier = 1.25; // 25% higher expiration rate due to rushed quality
+                }
+
+                // 5. Production Planning
                 const invGap = desiredInventory - inventory;
                 const invCorrection = invGap / timeToCorrectInv;
-                const currentExpiration = inventory / shelfLife;
+                const currentExpiration = (inventory / shelfLife) * currentWasteMultiplier;
                 
-                const targetProduction = nextAvgShipmentRate + invCorrection + currentExpiration;
+                const targetProduction = avgShipmentRate + invCorrection + currentExpiration;
                 const desiredProduction = Math.max(0, targetProduction);
 
-                // 4. Workforce Dynamics
-                const desiredWorkforce = desiredProduction / productivity;
+                // 6. Workforce Dynamics
+                const effectiveProductivity = productivity * currentProdMultiplier;
+                const desiredWorkforce = desiredProduction / effectiveProductivity;
                 const wfGap = desiredWorkforce - workforce;
                 const departures = workforce / avgEmploymentTime;
                 const hiring = (wfGap / timeToAdjustWf) + departures;
                 const hiringRate = Math.max(0, hiring);
                 
-                const nextWorkforce = workforce + (hiringRate - departures) * dt;
+                workforce += (hiringRate - departures) * dt;
 
-                // 5. Production & QA
-                const actualProduction = workforce * productivity;
-                const qaApproval = quarantine / qaDelayTime; // Outflow from QA
+                // 7. Production & QA State Updates
+                const actualProduction = workforce * effectiveProductivity;
+                const qaApproval = quarantine / currentQADelay;
                 
-                const nextQuarantine = quarantine + (actualProduction - qaApproval) * dt;
-                const nextInventory = inventory + (qaApproval - actualShipment - currentExpiration) * dt;
+                quarantine += (actualProduction - qaApproval) * dt;
+                inventory += (qaApproval - actualShipment - currentExpiration) * dt;
                 
                 cumulativeWaste += currentExpiration * dt;
 
+                // 8. Financial Accounting
+                const rev = actualShipment * price;
+                const pCost = actualProduction * cost * currentCostMultiplier;
+                const hCost = inventory * holdingCost;
+                const mCost = missedSales * stockPenalty;
+                const wCost = currentExpiration * wasteCost;
+
+                const stepProfit = (rev - pCost - hCost - mCost - wCost) * dt;
+                cumulativeProfit += stepProfit;
+
                 data.push({
                     time: parseFloat(time.toFixed(1)),
-                    marketDemand: Math.round(currentDemand),
+                    marketDemand: Math.round(actualMarketDemand),
+                    manufacturerDemand: Math.round(manufacturerDemand),
                     productionRate: Math.round(actualProduction),
                     inventory: Math.round(inventory),
+                    retailInventory: multiEchelon ? Math.round(retailInventory) : 0,
                     quarantine: Math.round(quarantine),
-                    workforce: Math.round(workforce),
-                    qaApproval: Math.round(qaApproval),
-                    expirationRate: parseFloat(currentExpiration.toFixed(1)),
+                    cumulativeProfit: Math.round(cumulativeProfit),
                     cumulativeWaste: Math.round(cumulativeWaste),
-                    missedSales: Math.round(missedSales)
+                    fillRate: totalMarketDemand > 0 ? (totalMarketShipments / totalMarketDemand) * 100 : 100
                 });
-
-                inventory = nextInventory;
-                quarantine = nextQuarantine;
-                workforce = nextWorkforce;
-                avgShipmentRate = nextAvgShipmentRate;
             }
             return data;
         };
@@ -157,174 +225,29 @@
             </div>
         );
 
-        const MetricCard = ({ title, value, subtext, icon: Icon, color }) => (
+        const Toggle = ({ label, checked, onChange, description }) => (
+            <div className="mb-4 flex items-start justify-between">
+                <div>
+                    <span className="font-medium text-sm text-slate-700">{label}</span>
+                    {description && <p className="text-xs text-slate-500 mt-0.5 max-w-[200px]">{description}</p>}
+                </div>
+                <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in mt-1">
+                    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
+                        className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" />
+                    <label className="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                </div>
+            </div>
+        );
+
+        const MetricCard = ({ title, value, subtext, icon: Icon, color, isCurrency = false }) => (
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start space-x-3">
                 <div className={`p-2 rounded-lg ${color} text-white`}><Icon size={20} /></div>
                 <div>
                     <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">{title}</div>
-                    <div className="text-2xl font-bold text-slate-800 mt-0.5">{value}</div>
+                    <div className={`text-2xl font-bold mt-0.5 ${isCurrency && value < 0 ? 'text-red-600' : 'text-slate-800'}`}>
+                        {isCurrency ? (value < 0 ? `-$${Math.abs(value).toLocaleString()}` : `$${value.toLocaleString()}`) : value}
+                    </div>
                     <div className="text-xs text-slate-400 mt-1">{subtext}</div>
-                </div>
-            </div>
-        );
-
-        const ScenarioButton = ({ label, active, onClick }) => (
-            <button onClick={onClick}
-                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors border ${
-                    active ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-            >
-                {label}
-            </button>
-        );
-
-        // --- Formula View Component ---
-        const FormulaView = () => (
-            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm space-y-8 animate-in fade-in duration-500">
-                <div className="border-b border-slate-100 pb-4">
-                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <Sigma className="text-blue-600" />
-                        System Dynamics Mathematical Model
-                    </h2>
-                    <p className="text-slate-500 mt-2">
-                        This model uses Euler Integration (step-by-step approximation) with a time step <code>dt = 0.20 weeks</code>. 
-                        Below are the core equations governing the stocks and flows.
-                    </p>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Stock Logic */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                            <Package size={20} className="text-emerald-500"/> Stock Updates (State)
-                        </h3>
-                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-sm text-slate-700 space-y-3">
-                            <div>
-                                <strong className="text-emerald-700">Inventory(t)</strong> = 
-                                <div className="pl-4 mt-1 text-slate-500">Inventory(t-dt) + (QA_Approval - Shipment - Expiration) × dt</div>
-                            </div>
-                            <div>
-                                <strong className="text-purple-700">Quarantine(t)</strong> = 
-                                <div className="pl-4 mt-1 text-slate-500">Quarantine(t-dt) + (Production - QA_Approval) × dt</div>
-                            </div>
-                            <div>
-                                <strong className="text-indigo-700">Workforce(t)</strong> = 
-                                <div className="pl-4 mt-1 text-slate-500">Workforce(t-dt) + (Hiring - Departures) × dt</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Rate Logic */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
-                            <Activity size={20} className="text-blue-500"/> Flow Rates (Behavior)
-                        </h3>
-                        <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
-                            <div>
-                                <h4 className="font-bold text-slate-700 text-sm">Desired Production Target</h4>
-                                <div className="font-mono text-xs text-blue-700 bg-white p-2 border border-slate-200 rounded mt-1">
-                                    Target = ForecastedDemand + (InvGap / CorrectionTime) + Expiration
-                                </div>
-                                <p className="text-xs text-slate-500 mt-1">This equation drives the "Bullwhip Effect" by reacting to both sales and inventory gaps.</p>
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-slate-700 text-sm">QA Approval Rate (First-Order Delay)</h4>
-                                <div className="font-mono text-xs text-purple-700 bg-white p-2 border border-slate-200 rounded mt-1">
-                                    QA_Outflow = QuarantineStock / QA_Delay_Time
-                                </div>
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-slate-700 text-sm">Hiring Rate</h4>
-                                <div className="font-mono text-xs text-indigo-700 bg-white p-2 border border-slate-200 rounded mt-1">
-                                    Hiring = ((DesiredWorkforce - ActualWorkforce) / HiringDelay) + Departures
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-
-        // --- Causal Diagram Component ---
-        const CausalDiagram = () => (
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col items-center">
-                <div className="w-full border-b border-slate-100 pb-4 mb-4">
-                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <Network className="text-blue-600" />
-                        Stock & Flow Diagram
-                    </h2>
-                    <p className="text-slate-500 mt-2">
-                        Visualizing the physical flow of materials and people (thick grey pipes) and the information feedback loops (thin blue dashed lines) that cause instability.
-                    </p>
-                </div>
-                
-                <div className="w-full overflow-x-auto flex justify-center">
-                    <svg width="800" height="400" viewBox="0 0 800 400" className="bg-slate-50 rounded-lg border border-slate-100">
-                        <defs>
-                            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="#3b82f6" />
-                            </marker>
-                            <marker id="flowArrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="#cbd5e1" />
-                            </marker>
-                        </defs>
-
-                        {/* --- Physical Flows (Grey Pipes) --- */}
-                        {/* Workforce Flow */}
-                        <path d="M 50 200 L 100 200" className="flow-pipe" markerEnd="url(#flowArrow)"/>
-                        <path d="M 200 200 L 250 200" className="flow-pipe" markerEnd="url(#flowArrow)"/>
-                        
-                        {/* Material Flow */}
-                        <path d="M 150 140 L 350 140" className="flow-pipe" markerEnd="url(#flowArrow)"/> {/* Production to Quarantine */}
-                        <path d="M 450 140 L 550 140" className="flow-pipe" markerEnd="url(#flowArrow)"/> {/* Quarantine to Inv */}
-                        <path d="M 650 140 L 750 140" className="flow-pipe" markerEnd="url(#flowArrow)"/> {/* Inv to Ship */}
-                        <path d="M 600 180 L 600 250" className="flow-pipe" markerEnd="url(#flowArrow)"/> {/* Expiration */}
-
-                        {/* --- Stocks (Boxes) --- */}
-                        <rect x="100" y="160" width="100" height="80" fill="#e0e7ff" stroke="#4338ca" className="stock-box" />
-                        <text x="150" y="200" textAnchor="middle" className="diagram-text">Workforce</text>
-
-                        <rect x="350" y="100" width="100" height="80" fill="#f3e8ff" stroke="#7e22ce" className="stock-box" />
-                        <text x="400" y="140" textAnchor="middle" className="diagram-text">Quarantine</text>
-                        <text x="400" y="160" textAnchor="middle" className="diagram-label">(Delay)</text>
-
-                        <rect x="550" y="100" width="100" height="80" fill="#d1fae5" stroke="#047857" className="stock-box" />
-                        <text x="600" y="140" textAnchor="middle" className="diagram-text">Inventory</text>
-
-                        {/* --- Clouds (Sources/Sinks) --- */}
-                        <text x="30" y="205" className="diagram-label">Labor Pool</text>
-                        <text x="260" y="205" className="diagram-label">Quit</text>
-                        <text x="760" y="145" className="diagram-label">Customer</text>
-                        <text x="600" y="270" textAnchor="middle" className="diagram-label">Waste</text>
-
-                        {/* --- Rate Valves --- */}
-                        <circle cx="75" cy="200" r="10" fill="white" stroke="#94a3b8" strokeWidth="2"/>
-                        <text x="75" y="185" textAnchor="middle" className="diagram-label">Hiring</text>
-
-                        <circle cx="280" cy="140" r="10" fill="white" stroke="#94a3b8" strokeWidth="2"/>
-                        <text x="280" y="125" textAnchor="middle" className="diagram-label">Production</text>
-
-                        <circle cx="500" cy="140" r="10" fill="white" stroke="#94a3b8" strokeWidth="2"/>
-                        <text x="500" y="125" textAnchor="middle" className="diagram-label">QA Approval</text>
-
-                        {/* --- Information Links (Blue Dashed) --- */}
-                        
-                        {/* Workforce driving Production */}
-                        <path d="M 150 160 Q 150 140 270 140" className="info-link" />
-                        
-                        {/* Loop B1: Inventory Correction */}
-                        <path d="M 600 100 Q 600 50 280 130" className="info-link" stroke="red" />
-                        <text x="450" y="70" textAnchor="middle" className="loop-label" fill="red">B1: Inventory Control</text>
-
-                        {/* Loop B2: Hiring */}
-                        <path d="M 280 150 Q 200 250 75 210" className="info-link" />
-                        <text x="200" y="260" textAnchor="middle" className="loop-label" fill="red">B2: Hiring Lag</text>
-
-                        {/* Demand Input */}
-                        <text x="700" y="50" className="diagram-text" fill="black" fontWeight="bold">Market Demand</text>
-                        <path d="M 700 60 Q 650 60 600 90" className="info-link" />
-
-                    </svg>
                 </div>
             </div>
         );
@@ -333,85 +256,59 @@
 
         const App = () => {
             const defaults = {
-                initialDemand: 1000,
-                shockWeek: 10,
-                shockMagnitude: 1.10,
-                productivity: 5,
-                shelfLife: 50,
-                qaDelayTime: 2,
-                targetCoverage: 4,
-                timeToCorrectInv: 8,
-                timeToAdjustWf: 8,
-                avgEmploymentTime: 50,
-                timeToAvgShipments: 8,
+                // Environment
+                initialDemand: 1000, shockWeek: 10, shockMagnitude: 1.20, noiseLevel: 0.05,
+                // Supply Chain
+                productivity: 5, shelfLife: 50, qaDelayTime: 3, targetCoverage: 4, 
+                timeToCorrectInv: 8, timeToAdjustWf: 8, avgEmploymentTime: 50, timeToAvgShipments: 8,
+                // Financials (Fixed for this sim)
+                price: 100, cost: 40, holdingCost: 0.5, stockPenalty: 150, wasteCost: 60,
+                // Levers
+                useOvertime: false, expediteQA: false, multiEchelon: false
             };
 
             const [params, setParams] = useState(defaults);
-            const [scenario, setScenario] = useState('Standard');
-            const [activeTab, setActiveTab] = useState('simulator'); // 'simulator', 'formulae', 'diagram'
+            const [baselineData, setBaselineData] = useState(null);
 
             const data = useMemo(() => runSimulation(params), [params]);
 
-            // Metrics
-            const peakProd = Math.max(...data.map(d => d.productionRate));
-            const peakDemand = Math.max(...data.map(d => d.marketDemand));
+            // Chart Data Mapping (Combining current run with baseline if it exists)
+            const chartData = useMemo(() => {
+                return data.map((d, index) => ({
+                    ...d,
+                    baseProfit: baselineData ? baselineData[index].cumulativeProfit : null,
+                    baseInv: baselineData ? baselineData[index].inventory : null
+                }));
+            }, [data, baselineData]);
+
+            // Top KPIs
+            const finalProfit = data[data.length - 1].cumulativeProfit;
+            const finalFillRate = data[data.length - 1].fillRate.toFixed(1);
             const totalWaste = data[data.length - 1].cumulativeWaste;
-            const maxInv = Math.max(...data.map(d => d.inventory));
             
-            // Bullwhip Calculation
+            const peakDemand = Math.max(...data.map(d => d.marketDemand));
+            const peakMfgDemand = Math.max(...data.map(d => d.manufacturerDemand));
+            const peakProd = Math.max(...data.map(d => d.productionRate));
+            
+            // Calculate Bullwhip Ratio (Production Peak vs Market Demand Peak)
             const dIncrease = peakDemand - params.initialDemand;
             const pIncrease = peakProd - params.initialDemand;
             const bullwhip = dIncrease > 0 ? (pIncrease / dIncrease).toFixed(2) : "1.00";
 
-            // Scenarios
-            const applyScenario = (type) => {
-                setScenario(type);
-                let newParams = { ...defaults };
-                switch(type) {
-                    case 'Pandemic':
-                        newParams.shockMagnitude = 1.30; // 30% spike
-                        newParams.targetCoverage = 6;    // Hoarding
-                        break;
-                    case 'Quality Crisis':
-                        newParams.qaDelayTime = 6;       // 6 week delay
-                        break;
-                    case 'Workforce Shortage':
-                        newParams.timeToAdjustWf = 16;   // Hard to hire
-                        break;
-                    default:
-                        break;
-                }
-                setParams(newParams);
-            };
-
-            // Download CSV
-            const downloadCSV = () => {
-                const headers = Object.keys(data[0]).join(',');
-                const rows = data.map(obj => Object.values(obj).join(',')).join('\n');
-                const blob = new Blob([headers + '\n' + rows], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'pharma_simulation_data.csv';
-                a.click();
-            };
+            const saveBaseline = () => setBaselineData(data);
+            const clearBaseline = () => setBaselineData(null);
 
             return (
                 <div className="min-h-screen pb-12">
-                    {/* Navbar */}
                     <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
                         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                             <div className="flex items-center space-x-2">
                                 <Activity className="text-blue-600" />
-                                <span className="font-bold text-slate-900 text-lg">PharmaSim</span>
-                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">v2.0</span>
+                                <span className="font-bold text-slate-900 text-lg">PharmaSim <span className="font-normal text-slate-500">Executive</span></span>
                             </div>
-                            <div className="flex space-x-2">
-                                <button onClick={downloadCSV} className="flex items-center px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">
-                                    <Download size={16} className="mr-2" /> Export Data
-                                </button>
-                                <button onClick={() => applyScenario('Standard')} className="flex items-center px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-red-600 transition-colors">
-                                    <RefreshCw size={16} className="mr-2" /> Reset
+                            <div className="flex space-x-3">
+                                <button onClick={() => setParams(defaults)} className="flex items-center px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-red-600">
+                                    <RefreshCw size={16} className="mr-2" /> Reset Defaults
                                 </button>
                             </div>
                         </div>
@@ -419,211 +316,157 @@
 
                     <main className="max-w-7xl mx-auto px-4 py-8">
                         
-                        {/* Tab Navigation */}
-                        <div className="flex space-x-1 bg-slate-200 p-1 rounded-lg w-fit mb-8">
-                            <button 
-                                onClick={() => setActiveTab('simulator')}
-                                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'simulator' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-                            >
-                                <Activity size={16} className="mr-2"/> Simulator
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('diagram')}
-                                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'diagram' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-                            >
-                                <Network size={16} className="mr-2"/> Causal Diagram
-                            </button>
-                            <button 
-                                onClick={() => setActiveTab('formulae')}
-                                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-all ${activeTab === 'formulae' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-                            >
-                                <Calculator size={16} className="mr-2"/> Model Formulae
-                            </button>
+                        {/* Executive KPI Dash */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <MetricCard 
+                                title="Annual Profit" value={finalProfit} isCurrency={true}
+                                subtext="Revenue minus all operating costs" icon={DollarSign} color="bg-emerald-600" 
+                            />
+                            <MetricCard 
+                                title="Order Fill Rate" value={`${finalFillRate}%`} 
+                                subtext="Customer demand successfully met" icon={Percent} 
+                                color={finalFillRate < 90 ? "bg-red-500" : "bg-blue-500"} 
+                            />
+                            <MetricCard 
+                                title="Bullwhip Effect" value={`${bullwhip}x`} 
+                                subtext="Supply fluctuation vs Market fluctuation" icon={TrendingUp} 
+                                color={parseFloat(bullwhip) > 1.5 ? "bg-orange-500" : "bg-slate-500"} 
+                            />
+                            <MetricCard 
+                                title="Total Waste Cost" value={totalWaste * params.wasteCost} isCurrency={true}
+                                subtext="Value of expired goods" icon={AlertOctagon} color="bg-rose-500" 
+                            />
                         </div>
 
-                        {/* Content Switching */}
-                        {activeTab === 'formulae' && <FormulaView />}
-                        {activeTab === 'diagram' && <CausalDiagram />}
-                        {activeTab === 'simulator' && (
-                            <>
-                                {/* App Description */}
-                                <div className="mb-8 bg-blue-50 border border-blue-100 p-6 rounded-xl">
-                                    <h2 className="text-xl font-bold text-slate-800 mb-2">About this Simulator</h2>
-                                    <p className="text-slate-600 leading-relaxed">
-                                        This interactive tool models the complex dynamics of a pharmaceutical supply chain using System Dynamics principles. 
-                                        It demonstrates the <strong>"Bullwhip Effect"</strong>—where small changes in market demand (shocks) amplify into massive fluctuations in production, inventory, and waste due to delays in information, quality assurance (QA), and workforce hiring.
-                                        2026 - Daniel Sepulveda - kathuman@gmail.com.
-                                    </p>
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            
+                            {/* Controls Left Column */}
+                            <div className="lg:col-span-4 space-y-6">
+                                
+                                {/* Market & Environment */}
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                    <h3 className="font-semibold text-slate-800 flex items-center mb-4 border-b border-slate-100 pb-2">
+                                        <Activity size={18} className="mr-2 text-blue-500" /> Market Environment
+                                    </h3>
+                                    <Slider label="Shock Magnitude" value={Math.round((params.shockMagnitude - 1) * 100)} min={0} max={50} step={5} unit="%" 
+                                        onChange={(v) => setParams(p => ({...p, shockMagnitude: 1 + v/100}))} />
+                                    <Slider label="Demand Volatility (Noise)" value={params.noiseLevel * 100} min={0} max={20} step={1} unit="%" 
+                                        onChange={(v) => setParams(p => ({...p, noiseLevel: v/100}))} />
                                 </div>
 
-                                {/* Top Metrics */}
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                                    <MetricCard 
-                                        title="Bullwhip Effect" 
-                                        value={`${bullwhip}x`} 
-                                        subtext="Amplification of demand shock"
-                                        icon={TrendingUp} 
-                                        color={parseFloat(bullwhip) > 2 ? "bg-red-500" : "bg-blue-500"} 
+                                {/* Network Config */}
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                    <h3 className="font-semibold text-slate-800 flex items-center mb-4 border-b border-slate-100 pb-2">
+                                        <GitMerge size={18} className="mr-2 text-indigo-500" /> Network Architecture
+                                    </h3>
+                                    <Toggle 
+                                        label="Enable Retail Tier (Multi-Echelon)" 
+                                        description="Adds a distributor between market and factory. Watch the bullwhip explode."
+                                        checked={params.multiEchelon} 
+                                        onChange={(v) => setParams(p => ({...p, multiEchelon: v}))} 
                                     />
-                                    <MetricCard 
-                                        title="Total Waste" 
-                                        value={totalWaste.toLocaleString()} 
-                                        subtext="Units expired this year"
-                                        icon={AlertOctagon} 
-                                        color="bg-orange-500" 
+                                    <Slider label="QA Delay" value={params.qaDelayTime} min={1} max={8} step={1} unit="wks" 
+                                        onChange={(v) => setParams(p => ({...p, qaDelayTime: v}))} />
+                                </div>
+
+                                {/* Executive Policy Interventions */}
+                                <div className="bg-white p-5 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                                    <h3 className="font-semibold text-slate-800 flex items-center mb-4 border-b border-slate-100 pb-2">
+                                        <ShieldAlert size={18} className="mr-2 text-blue-500" /> Policy Interventions
+                                    </h3>
+                                    <Toggle 
+                                        label="Emergency Overtime" 
+                                        description="Boosts prod by 20% when stock drops, but increases labor cost by 50%."
+                                        checked={params.useOvertime} 
+                                        onChange={(v) => setParams(p => ({...p, useOvertime: v}))} 
                                     />
-                                    <MetricCard 
-                                        title="Peak Inventory" 
-                                        value={maxInv.toLocaleString()} 
-                                        subtext="Max warehouse capacity used"
-                                        icon={Package} 
-                                        color="bg-emerald-500" 
-                                    />
-                                    <MetricCard 
-                                        title="Production Peak" 
-                                        value={peakProd.toLocaleString()} 
-                                        subtext="Max weekly output"
-                                        icon={Settings} 
-                                        color="bg-indigo-500" 
+                                    <Toggle 
+                                        label="Expedite QA Process" 
+                                        description="Halves QA delay to rush stock, but increases defect/waste rate by 25%."
+                                        checked={params.expediteQA} 
+                                        onChange={(v) => setParams(p => ({...p, expediteQA: v}))} 
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                                    
-                                    {/* Controls Column */}
-                                    <div className="lg:col-span-4 space-y-6">
-                                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                            <div className="flex items-center justify-between mb-6">
-                                                <h3 className="font-semibold text-slate-800 flex items-center">
-                                                    <Settings size={18} className="mr-2 text-slate-400" /> 
-                                                    Parameters
-                                                </h3>
-                                                <div className="flex space-x-1">
-                                                    {['Pandemic', 'Quality Crisis', 'Workforce Shortage'].map(s => (
-                                                        <button key={s} 
-                                                            onClick={() => applyScenario(s)}
-                                                            title={`Apply ${s} Scenario`}
-                                                            className={`w-2 h-2 rounded-full ${scenario === s ? 'bg-blue-500 ring-2 ring-blue-200' : 'bg-slate-200 hover:bg-slate-300'}`}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
+                            </div>
 
-                                            <div className="space-y-6">
-                                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                                                    <div className="text-xs font-bold text-slate-400 uppercase mb-4">Demand Shock</div>
-                                                    <Slider label="Shock Magnitude" value={Math.round((params.shockMagnitude - 1) * 100)} min={0} max={50} step={5} unit="%" 
-                                                        onChange={(v) => setParams(p => ({...p, shockMagnitude: 1 + v/100}))} />
-                                                    <Slider label="Shock Week" value={params.shockWeek} min={0} max={40} step={1} unit="wk" 
-                                                        onChange={(v) => setParams(p => ({...p, shockWeek: v}))} />
-                                                </div>
+                            {/* Charts Right Column */}
+                            <div className="lg:col-span-8 space-y-6">
+                                
+                                {/* Compare Header */}
+                                <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                    <div className="text-sm text-slate-600">
+                                        {baselineData ? 
+                                            <span className="flex items-center text-emerald-600 font-medium"><BookmarkPlus size={16} className="mr-2"/> Baseline Saved. Compare your interventions.</span> : 
+                                            "Save a baseline to compare the financial impact of your policy changes."}
+                                    </div>
+                                    <div className="space-x-2">
+                                        <button onClick={saveBaseline} className="px-3 py-1.5 bg-slate-800 text-white text-sm rounded hover:bg-slate-700 transition">Save Baseline</button>
+                                        {baselineData && <button onClick={clearBaseline} className="px-3 py-1.5 bg-slate-200 text-slate-700 text-sm rounded hover:bg-slate-300 transition">Clear</button>}
+                                    </div>
+                                </div>
 
-                                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                                                    <div className="text-xs font-bold text-slate-400 uppercase mb-4">Supply Chain Constraints</div>
-                                                    <Slider label="QA Delay" value={params.qaDelayTime} min={0} max={12} step={1} unit="wks" 
-                                                        onChange={(v) => setParams(p => ({...p, qaDelayTime: v}))} />
-                                                    <Slider label="Hiring Lag" value={params.timeToAdjustWf} min={1} max={24} step={1} unit="wks" 
-                                                        onChange={(v) => setParams(p => ({...p, timeToAdjustWf: v}))} />
-                                                    <Slider label="Shelf Life" value={params.shelfLife} min={10} max={100} step={5} unit="wks" 
-                                                        onChange={(v) => setParams(p => ({...p, shelfLife: v}))} />
-                                                </div>
-                                            </div>
+                                {/* Chart 1: The Bullwhip */}
+                                <div className="chart-container">
+                                    <div className="mb-4">
+                                        <h3 className="text-lg font-bold text-slate-800">Demand Amplification (The Bullwhip)</h3>
+                                        <p className="text-sm text-slate-500">Notice how stochastic market demand amplifies as it moves upstream to the manufacturer.</p>
+                                    </div>
+                                    <div className="h-72">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <ComposedChart data={chartData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="time" tick={{fill: '#94a3b8'}} tickLine={false} />
+                                                <YAxis tick={{fill: '#94a3b8'}} tickLine={false} />
+                                                <Tooltip contentStyle={{ borderRadius: '8px' }} />
+                                                <Legend />
+                                                <ReferenceLine x={params.shockWeek} stroke="#cbd5e1" strokeDasharray="3 3" />
+                                                <Line type="monotone" dataKey="marketDemand" name="Actual Market Demand" stroke="#64748b" strokeWidth={2} dot={false} />
+                                                {params.multiEchelon && <Line type="step" dataKey="manufacturerDemand" name="Retail Orders to Mfg" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="4 4" />}
+                                                <Line type="monotone" dataKey="productionRate" name="Mfg Production Rate" stroke="#3b82f6" strokeWidth={3} dot={false} />
+                                            </ComposedChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
 
-                                            <div className="mt-6 flex flex-wrap gap-2">
-                                                {['Standard', 'Pandemic', 'Quality Crisis', 'Workforce Shortage'].map(s => (
-                                                    <ScenarioButton key={s} label={s} active={scenario === s} onClick={() => applyScenario(s)} />
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-blue-50 border border-blue-100 p-5 rounded-xl text-sm text-blue-800">
-                                            <div className="font-semibold flex items-center mb-2"><Info size={16} className="mr-2"/> Insight</div>
-                                            In the <strong>{scenario}</strong> scenario, notice how the gap between Production (Blue) and Demand (Black) widens. This "overshoot" causes the massive accumulation of Waste shown in the orange chart.
+                                {/* Dual Charts: Finances & Inventory */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="chart-container">
+                                        <h4 className="font-bold text-slate-800 mb-2">Cumulative Profit ($)</h4>
+                                        <div className="h-48">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <ComposedChart data={chartData}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                    <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
+                                                    <YAxis tick={{fontSize: 10}} tickLine={false} tickFormatter={(val) => `$${val/1000}k`} />
+                                                    <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                                                    {baselineData && <Line type="monotone" dataKey="baseProfit" name="Baseline Profit" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />}
+                                                    <Line type="monotone" dataKey="cumulativeProfit" name="Current Profit" stroke="#10b981" strokeWidth={3} dot={false} />
+                                                </ComposedChart>
+                                            </ResponsiveContainer>
                                         </div>
                                     </div>
 
-                                    {/* Charts Column */}
-                                    <div className="lg:col-span-8 space-y-6">
-                                        
-                                        {/* Chart 1: The Bullwhip */}
-                                        <div className="chart-container">
-                                            <div className="mb-4">
-                                                <h3 className="text-lg font-bold text-slate-800">Production vs. Demand</h3>
-                                                <p className="text-sm text-slate-500">The "Bullwhip Effect" is visible where the blue line overshoots the dotted black line.</p>
-                                            </div>
-                                            <div className="h-64">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <ComposedChart data={data}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                        <XAxis dataKey="time" label={{ value: 'Weeks', position: 'insideBottomRight', offset: -5 }} tick={{fill: '#94a3b8'}} tickLine={false} />
-                                                        <YAxis tick={{fill: '#94a3b8'}} tickLine={false} />
-                                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                                        <Legend iconType="circle" />
-                                                        <ReferenceLine x={params.shockWeek} stroke="#ef4444" strokeDasharray="3 3" />
-                                                        <Line type="monotone" dataKey="marketDemand" name="Market Demand" stroke="#1e293b" strokeWidth={2} dot={false} strokeDasharray="5 5" />
-                                                        <Line type="monotone" dataKey="productionRate" name="Production Rate" stroke="#3b82f6" strokeWidth={3} dot={false} />
-                                                    </ComposedChart>
-                                                </ResponsiveContainer>
-                                            </div>
+                                    <div className="chart-container">
+                                        <h4 className="font-bold text-slate-800 mb-2">Available Inventory (Mfg)</h4>
+                                        <div className="h-48">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <ComposedChart data={chartData}>
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                    <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
+                                                    <YAxis tick={{fontSize: 10}} tickLine={false} />
+                                                    <Tooltip />
+                                                    {baselineData && <Line type="monotone" dataKey="baseInv" name="Baseline Inv" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />}
+                                                    <Area type="monotone" dataKey="inventory" name="Current Inv" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
+                                                </ComposedChart>
+                                            </ResponsiveContainer>
                                         </div>
-
-                                        {/* Chart 2: Inventory Composition */}
-                                        <div className="chart-container">
-                                            <div className="mb-4">
-                                                <h3 className="text-lg font-bold text-slate-800">Inventory Levels</h3>
-                                                <p className="text-sm text-slate-500">Available stock vs. products stuck in Quarantine (QA).</p>
-                                            </div>
-                                            <div className="h-64">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <AreaChart data={data}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                        <XAxis dataKey="time" tick={{fill: '#94a3b8'}} tickLine={false} />
-                                                        <YAxis tick={{fill: '#94a3b8'}} tickLine={false} />
-                                                        <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                                        <Legend iconType="circle" />
-                                                        <Area type="monotone" dataKey="inventory" name="Available Inventory" stackId="1" stroke="#10b981" fill="#10b981" fillOpacity={0.2} />
-                                                        <Area type="monotone" dataKey="quarantine" name="Quarantine (QA)" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
-                                                    </AreaChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </div>
-
-                                        {/* Chart 3: Waste & Workforce */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="chart-container">
-                                                <h4 className="font-bold text-slate-800 mb-2">Cumulative Waste</h4>
-                                                <div className="h-48">
-                                                    <ResponsiveContainer width="100%" height="100%">
-                                                        <AreaChart data={data}>
-                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                            <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
-                                                            <YAxis tick={{fontSize: 10}} tickLine={false} />
-                                                            <Tooltip />
-                                                            <Area type="monotone" dataKey="cumulativeWaste" name="Expired Units" stroke="#f97316" fill="#f97316" fillOpacity={0.2} />
-                                                        </AreaChart>
-                                                    </ResponsiveContainer>
-                                                </div>
-                                            </div>
-                                            <div className="chart-container">
-                                                <h4 className="font-bold text-slate-800 mb-2">Workforce Size</h4>
-                                                <div className="h-48">
-                                                    <ResponsiveContainer width="100%" height="100%">
-                                                        <LineChart data={data}>
-                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                            <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
-                                                            <YAxis domain={['auto', 'auto']} tick={{fontSize: 10}} tickLine={false} />
-                                                            <Tooltip />
-                                                            <Line type="monotone" dataKey="workforce" name="Workers" stroke="#64748b" strokeWidth={2} dot={false} />
-                                                        </LineChart>
-                                                    </ResponsiveContainer>
-                                                </div>
-                                            </div>
-                                        </div>
-
                                     </div>
                                 </div>
-                            </>
-                        )}
+
+                            </div>
+                        </div>
                     </main>
                 </div>
             );
