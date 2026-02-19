@@ -24,15 +24,9 @@
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
         .chart-container { background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-        
-        /* Toggle Switch CSS */
-        .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #3b82f6; }
-        .toggle-checkbox { right: 0; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
-        .toggle-label { background-color: #cbd5e1; transition: all 0.3s; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-900 overflow-y-scroll">
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
@@ -40,25 +34,21 @@
         import { createRoot } from 'react-dom/client';
         import {
             LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-            ResponsiveContainer, AreaChart, Area, ReferenceLine, ComposedChart, Bar
+            ResponsiveContainer, AreaChart, Area, ReferenceLine, ComposedChart
         } from 'recharts';
         import {
             Settings, RefreshCw, Activity, Package, AlertOctagon, TrendingUp, 
-            DollarSign, Percent, ShieldAlert, GitMerge, BookmarkPlus
+            DollarSign, Percent, ShieldAlert, GitMerge, BookmarkPlus, Info, Calculator, LayoutDashboard
         } from 'lucide-react';
 
         // --- Simulation Engine ---
 
         const runSimulation = (params) => {
             const {
-                // Environment
                 initialDemand, shockWeek, shockMagnitude, noiseLevel,
-                // Supply Chain Physics
                 productivity, shelfLife, qaDelayTime, targetCoverage, 
                 timeToCorrectInv, timeToAdjustWf, avgEmploymentTime, timeToAvgShipments,
-                // Financials
                 price, cost, holdingCost, stockPenalty, wasteCost,
-                // Policy Levers
                 useOvertime, expediteQA, multiEchelon
             } = params;
 
@@ -75,17 +65,14 @@
             const eqQuarantine = eqProduction * qaDelayTime;
             const eqWorkforce = eqProduction / productivity;
 
-            // Manufacturer State
             let inventory = eqInventory;
             let quarantine = eqQuarantine;
             let workforce = eqWorkforce;
             let avgShipmentRate = eqDemand;
             
-            // Retailer State (If Multi-Echelon)
             let retailInventory = eqInventory;
             let retailAvgDemand = eqDemand;
 
-            // Cumulative Metrics
             let cumulativeWaste = 0;
             let cumulativeProfit = 0;
             let totalMarketDemand = 0;
@@ -94,70 +81,60 @@
             for (let t = 0; t < steps; t++) {
                 const time = t * dt;
 
-                // 1. Stochastic Demand Shock
                 const baseDemand = time >= shockWeek ? initialDemand * shockMagnitude : initialDemand;
-                // Simple pseudo-random noise approximation (-1 to 1)
                 const randomNoise = (Math.random() * 2 - 1) * noiseLevel;
                 const actualMarketDemand = Math.max(0, baseDemand * (1 + randomNoise));
 
                 let manufacturerDemand = actualMarketDemand;
                 let marketShipment = 0;
 
-                // 2. Multi-Echelon Logic (Retailer orders from Manufacturer)
                 if (multiEchelon) {
                     marketShipment = Math.min(actualMarketDemand, retailInventory / dt);
-                    
-                    // Retailer Forecasting (Exponential Smoothing)
                     const changeInAvg = (marketShipment - retailAvgDemand) / timeToAvgShipments;
                     retailAvgDemand += changeInAvg * dt;
                     
-                    // Retailer Ordering Policy
                     const retailDesiredInv = retailAvgDemand * targetCoverage;
                     const retailInvGap = retailDesiredInv - retailInventory;
                     let retailOrder = retailAvgDemand + (retailInvGap / timeToCorrectInv);
                     
-                    manufacturerDemand = Math.max(0, retailOrder); // Passes bullwhip upstream
+                    manufacturerDemand = Math.max(0, retailOrder); 
                 }
 
-                // 3. Manufacturer Shipment
                 const maxShipment = inventory / dt;
                 const actualShipment = Math.min(manufacturerDemand, maxShipment);
                 const missedSales = Math.max(0, manufacturerDemand - maxShipment);
                 
                 if (!multiEchelon) {
-                    marketShipment = actualShipment; // Direct to market
+                    marketShipment = actualShipment; 
                 } else {
-                    retailInventory += (actualShipment - marketShipment) * dt; // Replenish retail
+                    retailInventory += (actualShipment - marketShipment) * dt; 
                 }
 
-                // Financial Tracking Core Metrics
                 totalMarketDemand += actualMarketDemand * dt;
                 totalMarketShipments += marketShipment * dt;
 
-                // Manufacturer Forecasting
                 const changeInMfgAvg = (actualShipment - avgShipmentRate) / timeToAvgShipments;
                 avgShipmentRate += changeInMfgAvg * dt;
 
-                // 4. Policy Levers (Interventions)
                 let currentProdMultiplier = 1.0;
                 let currentCostMultiplier = 1.0;
                 let currentQADelay = qaDelayTime;
                 let currentWasteMultiplier = 1.0;
 
-                // Overtime Lever
                 const desiredInventory = avgShipmentRate * targetCoverage;
+                
+                // Intervention: Overtime
                 if (useOvertime && inventory < desiredInventory * 0.8) {
-                    currentProdMultiplier = 1.20; // 20% bump in productivity
-                    currentCostMultiplier = 1.50; // Time-and-a-half cost
+                    currentProdMultiplier = 1.20; 
+                    currentCostMultiplier = 1.50; 
                 }
 
-                // Expedite QA Lever
+                // Intervention: Expedite QA
                 if (expediteQA) {
-                    currentQADelay = Math.max(0.1, qaDelayTime * 0.5); // Halve the delay
-                    currentWasteMultiplier = 1.25; // 25% higher expiration rate due to rushed quality
+                    currentQADelay = Math.max(0.1, qaDelayTime * 0.5); 
+                    currentWasteMultiplier = 1.25; 
                 }
 
-                // 5. Production Planning
                 const invGap = desiredInventory - inventory;
                 const invCorrection = invGap / timeToCorrectInv;
                 const currentExpiration = (inventory / shelfLife) * currentWasteMultiplier;
@@ -165,7 +142,6 @@
                 const targetProduction = avgShipmentRate + invCorrection + currentExpiration;
                 const desiredProduction = Math.max(0, targetProduction);
 
-                // 6. Workforce Dynamics
                 const effectiveProductivity = productivity * currentProdMultiplier;
                 const desiredWorkforce = desiredProduction / effectiveProductivity;
                 const wfGap = desiredWorkforce - workforce;
@@ -175,7 +151,6 @@
                 
                 workforce += (hiringRate - departures) * dt;
 
-                // 7. Production & QA State Updates
                 const actualProduction = workforce * effectiveProductivity;
                 const qaApproval = quarantine / currentQADelay;
                 
@@ -184,7 +159,6 @@
                 
                 cumulativeWaste += currentExpiration * dt;
 
-                // 8. Financial Accounting
                 const rev = actualShipment * price;
                 const pCost = actualProduction * cost * currentCostMultiplier;
                 const hCost = inventory * holdingCost;
@@ -225,17 +199,22 @@
             </div>
         );
 
+        // Re-written Toggle using pure Tailwind CSS classes for reliability
         const Toggle = ({ label, checked, onChange, description }) => (
-            <div className="mb-4 flex items-start justify-between">
-                <div>
-                    <span className="font-medium text-sm text-slate-700">{label}</span>
-                    {description && <p className="text-xs text-slate-500 mt-0.5 max-w-[200px]">{description}</p>}
+            <div className="mb-5 flex items-start justify-between">
+                <div className="pr-4">
+                    <span className="font-medium text-sm text-slate-800">{label}</span>
+                    {description && <p className="text-xs text-slate-500 mt-1">{description}</p>}
                 </div>
-                <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in mt-1">
-                    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
-                        className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" />
-                    <label className="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
-                </div>
+                <button
+                    type="button"
+                    className={`${checked ? 'bg-blue-600' : 'bg-slate-300'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 mt-1`}
+                    onClick={() => onChange(!checked)}
+                    role="switch"
+                    aria-checked={checked}
+                >
+                    <span className={`${checked ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}></span>
+                </button>
             </div>
         );
 
@@ -252,27 +231,113 @@
             </div>
         );
 
+        // --- Tabs Content Components ---
+
+        const ExplanationTab = () => (
+            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
+                <div className="border-b border-slate-100 pb-4">
+                    <h2 className="text-2xl font-bold text-slate-800 flex items-center">
+                        <Info className="mr-3 text-blue-600" /> Understanding the Simulation
+                    </h2>
+                </div>
+                
+                <div className="space-y-6 text-slate-600 leading-relaxed">
+                    <section>
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">What is this tool?</h3>
+                        <p>This simulator uses <strong>System Dynamics</strong> to model a pharmaceutical supply chain. Unlike static spreadsheets, this model runs step-by-step through time (Euler integration), allowing you to see how delays, feedback loops, and human decisions interact dynamically.</p>
+                    </section>
+
+                    <section>
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">The Bullwhip Effect</h3>
+                        <p>The core phenomenon demonstrated here is the Bullwhip Effect. When customer demand spikes (the shock), the supply chain doesn't just match the spike—it amplifies it. This happens because:</p>
+                        <ul className="list-disc pl-6 mt-2 space-y-1">
+                            <li><strong>Forecasting Lag:</strong> It takes time to realize a shock isn't just a fluke.</li>
+                            <li><strong>Inventory Depletion:</strong> While you figure out the forecast, your safety stock drains.</li>
+                            <li><strong>Over-Ordering:</strong> You must place a massive order to both satisfy the *new* high demand AND refill the empty safety stock simultaneously.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">The Impact of Multi-Echelon (Multi-Tier)</h3>
+                        <p>If you enable the <strong>Retail Tier</strong>, you add a distributor/retailer between the market and the factory. The retailer experiences the market shock, drains their inventory, and places a massive panic order to the manufacturer. The manufacturer sees an incredibly distorted, violent spike in demand that is much larger than what the actual end-consumers are buying.</p>
+                    </section>
+
+                    <section>
+                        <h3 className="text-lg font-bold text-slate-800 mb-2">Policy Interventions</h3>
+                        <p>You have tools to fight back:</p>
+                        <ul className="list-disc pl-6 mt-2 space-y-2">
+                            <li><strong>Emergency Overtime:</strong> When inventory drops below 80% of target, workers boost output by 20%. <em>Tradeoff: Labor costs increase by 50% during this time.</em></li>
+                            <li><strong>Expedite QA:</strong> Halves the time products spend in quarantine to get them to market faster. <em>Tradeoff: Rushing quality assurance increases product expiration/defects by 25%.</em></li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        );
+
+        const EquationsTab = () => (
+            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
+                <div className="border-b border-slate-100 pb-4">
+                    <h2 className="text-2xl font-bold text-slate-800 flex items-center">
+                        <Calculator className="mr-3 text-emerald-600" /> Mathematical Model
+                    </h2>
+                </div>
+                
+                <div className="space-y-8 text-slate-600">
+                    <p>The simulation runs continuously in steps of <code>dt = 0.20</code> weeks. Below are the core equations governing the system.</p>
+
+                    <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">1. Demand Forecasting (Exponential Smoothing)</h3>
+                        <p className="mb-2 text-sm">We don't react instantly to noise; we smooth it over time:</p>
+                        <code className="block bg-white p-3 rounded border border-slate-200 text-blue-700 font-mono text-sm shadow-sm">
+                            Forecast(t) = Forecast(t-dt) + [ (ActualDemand - Forecast(t-dt)) / TimeToAverage ] * dt
+                        </code>
+                    </div>
+
+                    <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">2. Production Target & Bullwhip Generator</h3>
+                        <p className="mb-2 text-sm">Production aims to cover the forecast, replace expired goods, and close the gap in safety stock. The "Gap" division is what causes the Bullwhip overshoot:</p>
+                        <code className="block bg-white p-3 rounded border border-slate-200 text-purple-700 font-mono text-sm shadow-sm mb-2">
+                            TargetInv = Forecast * TargetCoverage<br/>
+                            InvGap = TargetInv - CurrentInv
+                        </code>
+                        <code className="block bg-white p-3 rounded border border-slate-200 text-purple-700 font-mono text-sm shadow-sm">
+                            TargetProduction = Forecast + (InvGap / TimeToCorrectInv) + ExpectedExpiration
+                        </code>
+                    </div>
+
+                    <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">3. Financial Accounting</h3>
+                        <p className="mb-2 text-sm">Profit is the sum of revenue minus operational friction costs:</p>
+                        <code className="block bg-white p-3 rounded border border-slate-200 text-emerald-700 font-mono text-sm shadow-sm">
+                            Revenue = Shipments * UnitPrice<br/><br/>
+                            Costs = (Production * UnitCost * OvertimeMultiplier) <br/>
+                                    + (Inventory * HoldingCost) <br/>
+                                    + (MissedSales * StockoutPenalty) <br/>
+                                    + (ExpiredUnits * WasteCost)<br/><br/>
+                            Profit(t) = Profit(t-dt) + (Revenue - Costs) * dt
+                        </code>
+                    </div>
+                </div>
+            </div>
+        );
+
         // --- Main Application ---
 
         const App = () => {
             const defaults = {
-                // Environment
                 initialDemand: 1000, shockWeek: 10, shockMagnitude: 1.20, noiseLevel: 0.05,
-                // Supply Chain
                 productivity: 5, shelfLife: 50, qaDelayTime: 3, targetCoverage: 4, 
                 timeToCorrectInv: 8, timeToAdjustWf: 8, avgEmploymentTime: 50, timeToAvgShipments: 8,
-                // Financials (Fixed for this sim)
                 price: 100, cost: 40, holdingCost: 0.5, stockPenalty: 150, wasteCost: 60,
-                // Levers
                 useOvertime: false, expediteQA: false, multiEchelon: false
             };
 
             const [params, setParams] = useState(defaults);
             const [baselineData, setBaselineData] = useState(null);
+            const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'explanation', 'equations'
 
             const data = useMemo(() => runSimulation(params), [params]);
 
-            // Chart Data Mapping (Combining current run with baseline if it exists)
             const chartData = useMemo(() => {
                 return data.map((d, index) => ({
                     ...d,
@@ -281,16 +346,13 @@
                 }));
             }, [data, baselineData]);
 
-            // Top KPIs
             const finalProfit = data[data.length - 1].cumulativeProfit;
             const finalFillRate = data[data.length - 1].fillRate.toFixed(1);
             const totalWaste = data[data.length - 1].cumulativeWaste;
             
             const peakDemand = Math.max(...data.map(d => d.marketDemand));
-            const peakMfgDemand = Math.max(...data.map(d => d.manufacturerDemand));
             const peakProd = Math.max(...data.map(d => d.productionRate));
             
-            // Calculate Bullwhip Ratio (Production Peak vs Market Demand Peak)
             const dIncrease = peakDemand - params.initialDemand;
             const pIncrease = peakProd - params.initialDemand;
             const bullwhip = dIncrease > 0 ? (pIncrease / dIncrease).toFixed(2) : "1.00";
@@ -299,7 +361,9 @@
             const clearBaseline = () => setBaselineData(null);
 
             return (
-                <div className="min-h-screen pb-12">
+                <div className="min-h-screen pb-12 flex flex-col">
+                    
+                    {/* Top Navigation */}
                     <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
                         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
                             <div className="flex items-center space-x-2">
@@ -307,166 +371,191 @@
                                 <span className="font-bold text-slate-900 text-lg">PharmaSim <span className="font-normal text-slate-500">Executive</span></span>
                             </div>
                             <div className="flex space-x-3">
-                                <button onClick={() => setParams(defaults)} className="flex items-center px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-red-600">
-                                    <RefreshCw size={16} className="mr-2" /> Reset Defaults
+                                <button onClick={() => setParams(defaults)} className="flex items-center px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-red-600 transition-colors">
+                                    <RefreshCw size={16} className="mr-2" /> Reset
                                 </button>
                             </div>
                         </div>
                     </nav>
 
-                    <main className="max-w-7xl mx-auto px-4 py-8">
+                    {/* Tab Navigation */}
+                    <div className="bg-slate-100 border-b border-slate-200">
+                        <div className="max-w-7xl mx-auto px-4 flex space-x-6">
+                            <button onClick={() => setActiveTab('dashboard')} className={`flex items-center py-3 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'dashboard' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+                                <LayoutDashboard size={16} className="mr-2" /> Dashboard
+                            </button>
+                            <button onClick={() => setActiveTab('explanation')} className={`flex items-center py-3 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'explanation' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+                                <Info size={16} className="mr-2" /> Explanation
+                            </button>
+                            <button onClick={() => setActiveTab('equations')} className={`flex items-center py-3 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'equations' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
+                                <Calculator size={16} className="mr-2" /> Equations
+                            </button>
+                        </div>
+                    </div>
+
+                    <main className="max-w-7xl mx-auto px-4 py-8 w-full flex-grow">
                         
-                        {/* Executive KPI Dash */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                            <MetricCard 
-                                title="Annual Profit" value={finalProfit} isCurrency={true}
-                                subtext="Revenue minus all operating costs" icon={DollarSign} color="bg-emerald-600" 
-                            />
-                            <MetricCard 
-                                title="Order Fill Rate" value={`${finalFillRate}%`} 
-                                subtext="Customer demand successfully met" icon={Percent} 
-                                color={finalFillRate < 90 ? "bg-red-500" : "bg-blue-500"} 
-                            />
-                            <MetricCard 
-                                title="Bullwhip Effect" value={`${bullwhip}x`} 
-                                subtext="Supply fluctuation vs Market fluctuation" icon={TrendingUp} 
-                                color={parseFloat(bullwhip) > 1.5 ? "bg-orange-500" : "bg-slate-500"} 
-                            />
-                            <MetricCard 
-                                title="Total Waste Cost" value={totalWaste * params.wasteCost} isCurrency={true}
-                                subtext="Value of expired goods" icon={AlertOctagon} color="bg-rose-500" 
-                            />
-                        </div>
+                        {/* --- EXPLANATION TAB --- */}
+                        {activeTab === 'explanation' && <ExplanationTab />}
 
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            
-                            {/* Controls Left Column */}
-                            <div className="lg:col-span-4 space-y-6">
-                                
-                                {/* Market & Environment */}
-                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                    <h3 className="font-semibold text-slate-800 flex items-center mb-4 border-b border-slate-100 pb-2">
-                                        <Activity size={18} className="mr-2 text-blue-500" /> Market Environment
-                                    </h3>
-                                    <Slider label="Shock Magnitude" value={Math.round((params.shockMagnitude - 1) * 100)} min={0} max={50} step={5} unit="%" 
-                                        onChange={(v) => setParams(p => ({...p, shockMagnitude: 1 + v/100}))} />
-                                    <Slider label="Demand Volatility (Noise)" value={params.noiseLevel * 100} min={0} max={20} step={1} unit="%" 
-                                        onChange={(v) => setParams(p => ({...p, noiseLevel: v/100}))} />
-                                </div>
+                        {/* --- EQUATIONS TAB --- */}
+                        {activeTab === 'equations' && <EquationsTab />}
 
-                                {/* Network Config */}
-                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                                    <h3 className="font-semibold text-slate-800 flex items-center mb-4 border-b border-slate-100 pb-2">
-                                        <GitMerge size={18} className="mr-2 text-indigo-500" /> Network Architecture
-                                    </h3>
-                                    <Toggle 
-                                        label="Enable Retail Tier (Multi-Echelon)" 
-                                        description="Adds a distributor between market and factory. Watch the bullwhip explode."
-                                        checked={params.multiEchelon} 
-                                        onChange={(v) => setParams(p => ({...p, multiEchelon: v}))} 
+                        {/* --- DASHBOARD TAB --- */}
+                        {activeTab === 'dashboard' && (
+                            <div className="animate-in fade-in duration-500">
+                                {/* Executive KPI Dash */}
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                                    <MetricCard 
+                                        title="Annual Profit" value={finalProfit} isCurrency={true}
+                                        subtext="Revenue minus all operating costs" icon={DollarSign} color="bg-emerald-600" 
                                     />
-                                    <Slider label="QA Delay" value={params.qaDelayTime} min={1} max={8} step={1} unit="wks" 
-                                        onChange={(v) => setParams(p => ({...p, qaDelayTime: v}))} />
-                                </div>
-
-                                {/* Executive Policy Interventions */}
-                                <div className="bg-white p-5 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden">
-                                    <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                                    <h3 className="font-semibold text-slate-800 flex items-center mb-4 border-b border-slate-100 pb-2">
-                                        <ShieldAlert size={18} className="mr-2 text-blue-500" /> Policy Interventions
-                                    </h3>
-                                    <Toggle 
-                                        label="Emergency Overtime" 
-                                        description="Boosts prod by 20% when stock drops, but increases labor cost by 50%."
-                                        checked={params.useOvertime} 
-                                        onChange={(v) => setParams(p => ({...p, useOvertime: v}))} 
+                                    <MetricCard 
+                                        title="Order Fill Rate" value={`${finalFillRate}%`} 
+                                        subtext="Customer demand successfully met" icon={Percent} 
+                                        color={finalFillRate < 90 ? "bg-red-500" : "bg-blue-500"} 
                                     />
-                                    <Toggle 
-                                        label="Expedite QA Process" 
-                                        description="Halves QA delay to rush stock, but increases defect/waste rate by 25%."
-                                        checked={params.expediteQA} 
-                                        onChange={(v) => setParams(p => ({...p, expediteQA: v}))} 
+                                    <MetricCard 
+                                        title="Bullwhip Effect" value={`${bullwhip}x`} 
+                                        subtext="Supply fluctuation vs Market fluctuation" icon={TrendingUp} 
+                                        color={parseFloat(bullwhip) > 1.5 ? "bg-orange-500" : "bg-slate-500"} 
+                                    />
+                                    <MetricCard 
+                                        title="Total Waste Cost" value={totalWaste * params.wasteCost} isCurrency={true}
+                                        subtext="Value of expired goods" icon={AlertOctagon} color="bg-rose-500" 
                                     />
                                 </div>
 
-                            </div>
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                    
+                                    {/* Controls Left Column */}
+                                    <div className="lg:col-span-4 space-y-6">
+                                        
+                                        {/* Market & Environment */}
+                                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                            <h3 className="font-bold text-slate-800 flex items-center mb-5 pb-3 border-b border-slate-100">
+                                                <Activity size={18} className="mr-2 text-blue-500" /> Market Environment
+                                            </h3>
+                                            <Slider label="Shock Magnitude" value={Math.round((params.shockMagnitude - 1) * 100)} min={0} max={50} step={5} unit="%" 
+                                                onChange={(v) => setParams(p => ({...p, shockMagnitude: 1 + v/100}))} />
+                                            <Slider label="Demand Volatility (Noise)" value={params.noiseLevel * 100} min={0} max={20} step={1} unit="%" 
+                                                onChange={(v) => setParams(p => ({...p, noiseLevel: v/100}))} />
+                                        </div>
 
-                            {/* Charts Right Column */}
-                            <div className="lg:col-span-8 space-y-6">
-                                
-                                {/* Compare Header */}
-                                <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                                    <div className="text-sm text-slate-600">
-                                        {baselineData ? 
-                                            <span className="flex items-center text-emerald-600 font-medium"><BookmarkPlus size={16} className="mr-2"/> Baseline Saved. Compare your interventions.</span> : 
-                                            "Save a baseline to compare the financial impact of your policy changes."}
-                                    </div>
-                                    <div className="space-x-2">
-                                        <button onClick={saveBaseline} className="px-3 py-1.5 bg-slate-800 text-white text-sm rounded hover:bg-slate-700 transition">Save Baseline</button>
-                                        {baselineData && <button onClick={clearBaseline} className="px-3 py-1.5 bg-slate-200 text-slate-700 text-sm rounded hover:bg-slate-300 transition">Clear</button>}
-                                    </div>
-                                </div>
+                                        {/* Network Config */}
+                                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                            <h3 className="font-bold text-slate-800 flex items-center mb-5 pb-3 border-b border-slate-100">
+                                                <GitMerge size={18} className="mr-2 text-indigo-500" /> Network Architecture
+                                            </h3>
+                                            <Toggle 
+                                                label="Enable Retail Tier (Multi-Echelon)" 
+                                                description="Adds a distributor between market and factory. Watch the bullwhip explode."
+                                                checked={params.multiEchelon} 
+                                                onChange={(v) => setParams(p => ({...p, multiEchelon: v}))} 
+                                            />
+                                            <Slider label="QA Delay" value={params.qaDelayTime} min={1} max={8} step={1} unit="wks" 
+                                                onChange={(v) => setParams(p => ({...p, qaDelayTime: v}))} />
+                                        </div>
 
-                                {/* Chart 1: The Bullwhip */}
-                                <div className="chart-container">
-                                    <div className="mb-4">
-                                        <h3 className="text-lg font-bold text-slate-800">Demand Amplification (The Bullwhip)</h3>
-                                        <p className="text-sm text-slate-500">Notice how stochastic market demand amplifies as it moves upstream to the manufacturer.</p>
-                                    </div>
-                                    <div className="h-72">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <ComposedChart data={chartData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                <XAxis dataKey="time" tick={{fill: '#94a3b8'}} tickLine={false} />
-                                                <YAxis tick={{fill: '#94a3b8'}} tickLine={false} />
-                                                <Tooltip contentStyle={{ borderRadius: '8px' }} />
-                                                <Legend />
-                                                <ReferenceLine x={params.shockWeek} stroke="#cbd5e1" strokeDasharray="3 3" />
-                                                <Line type="monotone" dataKey="marketDemand" name="Actual Market Demand" stroke="#64748b" strokeWidth={2} dot={false} />
-                                                {params.multiEchelon && <Line type="step" dataKey="manufacturerDemand" name="Retail Orders to Mfg" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="4 4" />}
-                                                <Line type="monotone" dataKey="productionRate" name="Mfg Production Rate" stroke="#3b82f6" strokeWidth={3} dot={false} />
-                                            </ComposedChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
+                                        {/* Executive Policy Interventions */}
+                                        <div className="bg-white p-6 rounded-xl border border-blue-300 shadow-md relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+                                            <h3 className="font-bold text-slate-800 flex items-center mb-5 pb-3 border-b border-slate-100">
+                                                <ShieldAlert size={18} className="mr-2 text-blue-500" /> Policy Interventions
+                                            </h3>
+                                            <Toggle 
+                                                label="Emergency Overtime" 
+                                                description="Boosts production by 20% when stock drops, but increases labor cost by 50%."
+                                                checked={params.useOvertime} 
+                                                onChange={(v) => setParams(p => ({...p, useOvertime: v}))} 
+                                            />
+                                            <Toggle 
+                                                label="Expedite QA Process" 
+                                                description="Halves QA delay to rush stock to market, but increases defect/waste rate by 25%."
+                                                checked={params.expediteQA} 
+                                                onChange={(v) => setParams(p => ({...p, expediteQA: v}))} 
+                                            />
+                                        </div>
 
-                                {/* Dual Charts: Finances & Inventory */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="chart-container">
-                                        <h4 className="font-bold text-slate-800 mb-2">Cumulative Profit ($)</h4>
-                                        <div className="h-48">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <ComposedChart data={chartData}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
-                                                    <YAxis tick={{fontSize: 10}} tickLine={false} tickFormatter={(val) => `$${val/1000}k`} />
-                                                    <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
-                                                    {baselineData && <Line type="monotone" dataKey="baseProfit" name="Baseline Profit" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />}
-                                                    <Line type="monotone" dataKey="cumulativeProfit" name="Current Profit" stroke="#10b981" strokeWidth={3} dot={false} />
-                                                </ComposedChart>
-                                            </ResponsiveContainer>
+                                    </div>
+
+                                    {/* Charts Right Column */}
+                                    <div className="lg:col-span-8 space-y-6">
+                                        
+                                        {/* Compare Header */}
+                                        <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                            <div className="text-sm text-slate-600">
+                                                {baselineData ? 
+                                                    <span className="flex items-center text-emerald-600 font-medium"><BookmarkPlus size={16} className="mr-2"/> Baseline Saved. Toggle policies on the left to compare.</span> : 
+                                                    "Save a baseline, then toggle Policies (Overtime/QA) to see financial impact."}
+                                            </div>
+                                            <div className="space-x-2">
+                                                <button onClick={saveBaseline} className="px-4 py-2 bg-slate-800 text-white font-medium text-sm rounded-lg hover:bg-slate-700 transition shadow-sm">Save Baseline</button>
+                                                {baselineData && <button onClick={clearBaseline} className="px-4 py-2 bg-slate-200 text-slate-700 font-medium text-sm rounded-lg hover:bg-slate-300 transition">Clear</button>}
+                                            </div>
+                                        </div>
+
+                                        {/* Chart 1: The Bullwhip */}
+                                        <div className="chart-container">
+                                            <div className="mb-4">
+                                                <h3 className="text-lg font-bold text-slate-800">Demand Amplification (The Bullwhip)</h3>
+                                                <p className="text-sm text-slate-500">Watch the actual market demand compared to production. Turn on Multi-Echelon to see order amplification.</p>
+                                            </div>
+                                            <div className="h-72">
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <ComposedChart data={chartData}>
+                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                        <XAxis dataKey="time" tick={{fill: '#94a3b8'}} tickLine={false} />
+                                                        <YAxis tick={{fill: '#94a3b8'}} tickLine={false} />
+                                                        <Tooltip contentStyle={{ borderRadius: '8px' }} />
+                                                        <Legend />
+                                                        <ReferenceLine x={params.shockWeek} stroke="#cbd5e1" strokeDasharray="3 3" />
+                                                        <Line type="monotone" dataKey="marketDemand" name="Actual Market Demand" stroke="#64748b" strokeWidth={2} dot={false} />
+                                                        {params.multiEchelon && <Line type="step" dataKey="manufacturerDemand" name="Retail Orders to Mfg" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="4 4" />}
+                                                        <Line type="monotone" dataKey="productionRate" name="Mfg Production Rate" stroke="#3b82f6" strokeWidth={3} dot={false} />
+                                                    </ComposedChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        </div>
+
+                                        {/* Dual Charts: Finances & Inventory */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="chart-container">
+                                                <h4 className="font-bold text-slate-800 mb-2">Cumulative Profit ($)</h4>
+                                                <div className="h-48">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <ComposedChart data={chartData}>
+                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                            <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
+                                                            <YAxis tick={{fontSize: 10}} tickLine={false} tickFormatter={(val) => `$${val/1000}k`} />
+                                                            <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                                                            {baselineData && <Line type="monotone" dataKey="baseProfit" name="Baseline Profit" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />}
+                                                            <Line type="monotone" dataKey="cumulativeProfit" name="Current Profit" stroke="#10b981" strokeWidth={3} dot={false} />
+                                                        </ComposedChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </div>
+
+                                            <div className="chart-container">
+                                                <h4 className="font-bold text-slate-800 mb-2">Available Inventory (Mfg)</h4>
+                                                <div className="h-48">
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <ComposedChart data={chartData}>
+                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                                            <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
+                                                            <YAxis tick={{fontSize: 10}} tickLine={false} />
+                                                            <Tooltip />
+                                                            {baselineData && <Line type="monotone" dataKey="baseInv" name="Baseline Inv" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />}
+                                                            <Area type="monotone" dataKey="inventory" name="Current Inv" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
+                                                        </ComposedChart>
+                                                    </ResponsiveContainer>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div className="chart-container">
-                                        <h4 className="font-bold text-slate-800 mb-2">Available Inventory (Mfg)</h4>
-                                        <div className="h-48">
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <ComposedChart data={chartData}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                    <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
-                                                    <YAxis tick={{fontSize: 10}} tickLine={false} />
-                                                    <Tooltip />
-                                                    {baselineData && <Line type="monotone" dataKey="baseInv" name="Baseline Inv" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />}
-                                                    <Area type="monotone" dataKey="inventory" name="Current Inv" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
-                                                </ComposedChart>
-                                            </ResponsiveContainer>
-                                        </div>
-                                    </div>
                                 </div>
-
                             </div>
-                        </div>
+                        )}
                     </main>
                 </div>
             );
