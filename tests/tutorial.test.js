@@ -1,4 +1,4 @@
-// PharmaSim tutorial checks — run with: node tests/tutorial.test.js
+// Supply Pulse tutorial checks — run with: node tests/tutorial.test.js
 // Every question's claim holds in the model for the scenario its step sets up, every step points at something that
 // exists, quotes only known numbers and has a Spanish version with the same shape.
 const fs = require("fs"), path = require("path");
@@ -18,7 +18,7 @@ const CLAIMS = {
   "outage-expedite-needs-penalty": () => run("outage", { expediteQA: true }).profit > run("outage").profit && run("outage", { expediteQA: true, shortagePenalty: 0 }).profit < run("outage", { shortagePenalty: 0 }).profit,
   "step-cover-six-full-service": () => run("step", { coverage: 6 }).shortWeeks === 0 && run("step", { coverage: 6 }).fillRate > 0.999,
   "shortlife-campaign-waste": () => run("shortLife", { campaignWeeks: 4 }).wasteUnits > run("shortLife").wasteUnits,
-  "api-buffer-cheaper": () => { const a = run("apiOutage", { apiCoverage: 10 }), f = run("apiOutage", { coverage: 8 }); return Math.abs(a.fillRate - f.fillRate) < 0.003 && a.profit > f.profit && a.fillRate > run("apiOutage").fillRate; },
+  "ing-buffer-cheaper": () => { const a = run("ingredientOutage", { ingCoverage: 10 }), f = run("ingredientOutage", { coverage: 8 }); return Math.abs(a.fillRate - f.fillRate) < 0.003 && a.profit > f.profit && a.fillRate > run("ingredientOutage").fillRate; },
   "futures-overtime-wins": () => { const a = A.futures(Object.assign({}, M.PRESETS.step.values, { overtime: true }), 100), b = A.futures(M.PRESETS.step.values, 100); return A.headToHead(a, b, "profit").wins >= 95; },
   "allocation-same-total": () => { const a = run("outage"), b = run("outage", { allocation: "critical" }); return Math.abs(a.fillRate - b.fillRate) < 1e-12 && b.criticalFill > a.criticalFill; }
 };
@@ -35,9 +35,9 @@ const STATEMENTS = [
   ["the step causes shortage weeks at the defaults", () => run("step").shortWeeks > 0],
   ["two-week campaigns cost the step its full recovery", () => run("step", { campaignWeeks: 2 }).fillRate < run("step").fillRate - 0.01],
   ["four-week campaigns on the short-life product raise the warning the step points at", () => M.run(Object.assign({}, M.PRESETS.shortLife.values, { campaignWeeks: 4 })).warnings.length > 0],
-  ["the API outage causes a shortage", () => run("apiOutage").shortWeeks > 0 && run("apiOutage").lost > 0],
-  ["API orders are amplified on the step, and counting the supply line cuts them", () => run("step", { apiTier: true }).apiBullwhip > 3 && run("step", { apiTier: true, supplyLineWeight: 1 }).apiBullwhip < run("step", { apiTier: true }).apiBullwhip],
-  ["critical first: critical patients get more, others less", () => { const a = run("outage"), b = run("outage", { allocation: "critical" }); return b.criticalFill > a.criticalFill && b.otherFill < a.otherFill; }],
+  ["the ingredient outage causes a shortage", () => run("ingredientOutage").shortWeeks > 0 && run("ingredientOutage").lost > 0],
+  ["Ingredient orders are amplified on the step, and counting the supply line cuts them", () => run("step", { ingTier: true }).ingBullwhip > 3 && run("step", { ingTier: true, supplyLineWeight: 1 }).ingBullwhip < run("step", { ingTier: true }).ingBullwhip],
+  ["critical first: priority customers get more, others less", () => { const a = run("outage"), b = run("outage", { allocation: "critical" }); return b.criticalFill > a.criticalFill && b.otherFill < a.otherFill; }],
   ["the optimiser's best policies for the step use overtime and count the supply line", () => { const o = A.optimise(M.merge(M.PRESETS.step.values), { futures: 10, minFill: 0.995 }); return o.best.length >= 5 && o.best.slice(0, 5).every((b) => b.policy.overtime && b.policy.supplyLineWeight > 0); }],
   ["every preset value is within its slider range", () => Object.values(M.PRESETS).every((pr) => Object.entries(pr.values).every(([k, v]) => { const c = S.BY_KEY[k]; return !c || c.min == null || (v >= c.min && v <= c.max); }))]
 ];

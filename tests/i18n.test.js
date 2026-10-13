@@ -1,4 +1,4 @@
-// PharmaSim Spanish translation checks — run with: node tests/i18n.test.js
+// Supply Pulse Spanish translation checks — run with: node tests/i18n.test.js
 // Every string the scripts translate, every control, equation and preset text, every element the pages mark and every
 // validation message has a Spanish version with the same placeholders and markup, and nothing in the dictionary is unused.
 const fs = require("fs"), path = require("path");
@@ -46,9 +46,9 @@ check("the Spanish page text keeps the English markup", [...keys].every((k) => {
 // ---- the model's validation messages
 const msgs = new Set();
 [{ dt: 1 }, { weeks: 2 }, { demand: 0 }, { pattern: "x" }, { qaTime: 0 }, { retailTier: true, transitTime: 0 }, { rejectRate: 100 }, { shelfLife: 10, minRemaining: 8 }, { supplyLineWeight: 2 }, { coverage: 1 }, { ceiling: 90 }]
-  .concat([{ pattern: "history", history: [1] }, { allocation: "x" }, { criticalShare: 120 }, { apiTier: true, apiCoverage: 0.5 }, { qaCapacity: 90 }, { campaignWeeks: -1 }, { campaignWeeks: 1, changeoverDays: 3 }])
+  .concat([{ pattern: "history", history: [1] }, { allocation: "x" }, { criticalShare: 120 }, { ingTier: true, ingCoverage: 0.5 }, { qaCapacity: 90 }, { campaignWeeks: -1 }, { campaignWeeks: 1, changeoverDays: 3 }])
   .forEach((o) => M.validate(M.merge(o)).forEach((m) => msgs.add(m)));
-[Object.assign({}, M.PRESETS.shortLife.values, { campaignWeeks: 4 }), Object.assign({}, M.PRESETS.shortLife.values, { coverage: 7 }), { apiTier: true, apiOutage: true, apiOutageWeek: 100 }, { outage: true, outageWeek: 102 }]
+[Object.assign({}, M.PRESETS.shortLife.values, { campaignWeeks: 4 }), Object.assign({}, M.PRESETS.shortLife.values, { coverage: 7 }), { ingTier: true, ingOutage: true, ingOutageWeek: 100 }, { outage: true, outageWeek: 102 }]
   .forEach((o) => M.warnings(M.merge(o)).forEach((m) => msgs.add(m)));
 // …and the messages from reading a demand file
 {
@@ -64,7 +64,7 @@ check("every validation, warning and data-import message is translated (" + msgs
 // ---- one version everywhere
 {
   const v = (f, re) => (re.exec(fs.readFileSync(R + f, "utf8")) || [])[1];
-  const app = v("app.js", /APP_VERSION = "([\d.]+)"/), vs = [v("play.js", /APP_VERSION = "([\d.]+)"/), v("report.js", /APP_VERSION = "([\d.]+)"/), v("about.html", /id="cite-ver">([\d.]+)</), v("about.html", /PharmaSim v([\d.]+) ·/), (/cite-ver\\">([\d.]+)</.exec(fs.readFileSync(R + "i18n-es.js", "utf8")) || [])[1], v("i18n-es.js", /PharmaSim v([\d.]+) ·/)];
+  const app = v("app.js", /APP_VERSION = "([\d.]+)"/), vs = [v("play.js", /APP_VERSION = "([\d.]+)"/), v("report.js", /APP_VERSION = "([\d.]+)"/), v("about.html", /id="cite-ver">([\d.]+)</), v("about.html", /Supply Pulse v([\d.]+) ·/), (/cite-ver\\">([\d.]+)</.exec(fs.readFileSync(R + "i18n-es.js", "utf8")) || [])[1], v("i18n-es.js", /Supply Pulse v([\d.]+) ·/)];
   check("every page and the Spanish text show the same version (" + app + ")", !!app && vs.every((x) => x === app), vs.join(" "));
 }
 console.log(pass + "/" + (pass + fail) + " checks passed");

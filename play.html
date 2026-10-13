@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="title.play">PharmaSim — Play the planner</title>
-  <meta data-i18n-attr="content=meta.play" name="description" content="Take the planner's seat in a pharmaceutical supply chain: set the production plan week by week, seeing only what a planner sees, and compare your result with the planning rule on the same demand." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>" />
+  <title data-i18n="title.play">Supply Pulse — Play the planner</title>
+  <meta data-i18n-attr="content=meta.play" name="description" content="Take the planner's seat in a packaged food and dairy supply chain: set the production plan week by week, seeing only what a planner sees, and compare your result with the planning rule on the same demand." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥛</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -14,7 +14,7 @@
 <body>
 <header class="topbar">
   <div class="brand">
-    <a class="mark" href="index.html">PHARMA<span>SIM</span></a>
+    <a class="mark" href="index.html">SUPPLY<span>PULSE</span></a>
     <span class="ver" id="ver"></span>
     <div class="sub"><span class="rest" data-i18n="play.sub">PLAY THE PLANNER</span></div>
   </div>
@@ -28,7 +28,7 @@
 <main class="play">
   <section class="panel" id="setup">
     <h2 data-i18n="play.h">Play the planner</h2>
-    <p class="lab-sum" data-i18n="play.intro">You run the plant. Each turn you decide how many packs a week to plan for; hiring follows your plan, and batches still wait in QA before they can be sold. You see what a real planner sees: the orders coming in, your stock, what is in quarantine and your workforce. You never see the demand to come. At the end, your two years are compared with the planning rule on the very same demand.</p>
+    <p class="lab-sum" data-i18n="play.intro">You run the plant. Each turn you decide how many cases a week to plan for; hiring follows your plan, and batches still wait in QA before they can be sold. You see what a real planner sees: the orders coming in, your stock, what is in QA hold and your workforce. You never see the demand to come. At the end, your two years are compared with the planning rule on the very same demand.</p>
     <div class="dtools">
       <label><span data-i18n="play.scn">Scenario</span> <select class="choice" id="g-scn"></select></label>
       <label><span data-i18n="play.turn">Each turn</span> <select class="choice" id="g-turn"><option value="1" data-i18n="play.t1">1 week</option><option value="2" selected data-i18n="play.t2">2 weeks</option><option value="4" data-i18n="play.t4">4 weeks</option></select></label>
@@ -44,8 +44,8 @@
         <p class="game-week" id="g-week"></p>
         <div class="facts" id="g-facts"></div>
         <p class="panel-note" id="g-hintline"></p>
-        <label class="name" for="g-plan" data-i18n="play.plan">Production plan (packs a week)</label>
-        <div class="plan-row"><input type="range" id="g-plan" min="0" step="100"><input type="number" id="g-plan-num" min="0" step="100" data-i18n-attr="aria-label=play.plan" aria-label="Production plan (packs a week)"></div>
+        <label class="name" for="g-plan" data-i18n="play.plan">Production plan (cases a week)</label>
+        <div class="plan-row"><input type="range" id="g-plan" min="0" step="100"><input type="number" id="g-plan-num" min="0" step="100" data-i18n-attr="aria-label=play.plan" aria-label="Production plan (cases a week)"></div>
         <div class="quick">
           <button class="btn small" type="button" data-quick="orders" data-i18n="play.q1">= this week's orders</button>
           <button class="btn small" type="button" data-quick="avg" data-i18n="play.q2">= 4-week average</button>
@@ -76,8 +76,8 @@
   </section>
 
   <footer class="foot">
-    <span class="consult" data-i18n="foot.consult">PharmaSim <span id="ver-foot"></span> · <a href="about.html">About</a> · Available for consulting — <a href="https://github.com/kathuman" target="_blank" rel="noopener">get in touch</a></span>
-    <span data-i18n="foot.note">A system-dynamics model of a pharmaceutical supply chain: tested equations, a fair baseline and the trade-offs of each lever. Built with <a href="https://claude.com" target="_blank" rel="noopener">Claude</a>.</span>
+    <span class="consult" data-i18n="foot.consult">Supply Pulse <span id="ver-foot"></span> · <a href="about.html">About</a> · Available for consulting — <a href="https://github.com/kathuman" target="_blank" rel="noopener">get in touch</a></span>
+    <span data-i18n="foot.note">A system-dynamics model of a packaged food and dairy supply chain: tested equations, a fair baseline and the trade-offs of each lever. Built with <a href="https://claude.com" target="_blank" rel="noopener">Claude</a>.</span>
   </footer>
 </main>
 <script src="i18n-es.js"></script>

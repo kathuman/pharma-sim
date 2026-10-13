@@ -1,16 +1,16 @@
-// PharmaSim — decision analysis on top of the model (window.PSAnalysis / module.exports): many demand futures at once,
+// Supply Pulse — decision analysis on top of the model (window.SPAnalysis / module.exports): many demand futures at once,
 // a tornado of which inputs matter most, a sweep of one input, and a search for the best planning policy. Every
 // comparison uses the same random futures (seeds) for every option, so differences are never luck. Pure: no DOM.
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"));
-  else root.PSAnalysis = factory(root.PSModel);
+  else root.SPAnalysis = factory(root.SPModel);
 })(typeof self !== "undefined" ? self : this, function (M) {
   "use strict";
   // the results the tools can measure, and whether more is better
   var KPIS = {
     profit: { label: "Profit", better: 1 },
     fillRate: { label: "Fill rate", better: 1 },
-    criticalFill: { label: "Critical patients served", better: 1 },
+    criticalFill: { label: "Priority customers served", better: 1 },
     shortWeeks: { label: "Weeks short", better: -1 },
     bullwhip: { label: "Bullwhip", better: -1 },
     wasteUnits: { label: "Waste", better: -1 },

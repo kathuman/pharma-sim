@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="title.report">PharmaSim — Decision report</title>
-  <meta data-i18n-attr="content=meta.report" name="description" content="A printable report of a PharmaSim scenario: its results against the baseline, the range over many demand futures, the charts, what matters most and every input changed." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>" />
+  <title data-i18n="title.report">Supply Pulse — Decision report</title>
+  <meta data-i18n-attr="content=meta.report" name="description" content="A printable report of a Supply Pulse scenario: its results against the baseline, the range over many demand futures, the charts, what matters most and every input changed." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥛</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -47,7 +47,7 @@
 <body>
 <header class="topbar noprint">
   <div class="brand">
-    <a class="mark" href="index.html">PHARMA<span>SIM</span></a>
+    <a class="mark" href="index.html">SUPPLY<span>PULSE</span></a>
     <div class="sub"><span class="rest" data-i18n="r.sub">DECISION REPORT</span></div>
   </div>
   <div class="header-actions">
@@ -57,7 +57,7 @@
   </div>
 </header>
 <main class="report" id="report">
-  <div class="eyebrow" data-i18n="r.eyebrow">PharmaSim decision report</div>
+  <div class="eyebrow" data-i18n="r.eyebrow">Supply Pulse decision report</div>
   <h1 id="r-title"></h1>
   <p class="meta" id="r-meta"></p>
   <p class="headline" id="r-headline"></p>
@@ -87,7 +87,7 @@
   <h2 data-i18n="lim.sum">What the model leaves out</h2>
   <div data-i18n="lim.body">
     <ul>
-      <li>One product family, one plant, at most one distributor and one API supplier. Several markets, other products competing for the same line, and allocation between markets are not modelled.</li>
+      <li>One product family, one plant, at most one distributor and one ingredient supplier. Several markets, other products competing for the same line, and allocation between markets are not modelled.</li>
       <li>Campaigns are averaged: their lost capacity, delay and cycle stock are modelled, but not individual batches and when each is made.</li>
       <li>The distributor's stock is not aged; shelf life is tracked at the plant only.</li>
       <li>Nobody is laid off: the workforce shrinks only as people leave.</li>

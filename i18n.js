@@ -1,4 +1,4 @@
-// PharmaSim — languages (window.PSi18n). English is written in the pages and scripts; Spanish
+// Supply Pulse — languages (window.PSi18n). English is written in the pages and scripts; Spanish
 // (Latin America) comes from i18n-es.js. The language is chosen by ?lang=es|en, then the viewer's last choice, then
 // the browser's language.
 //   T(english, vars)   the text in the current language, with {name} placeholders filled from vars
@@ -7,7 +7,7 @@
 // Load i18n-es.js, then this file, before any other script of the page.
 (function (root) {
   "use strict";
-  var KEY = "ps-lang", ES = root.PS_ES || null;
+  var KEY = "sp-lang", ES = root.SP_ES || null;
   function detect() {
     var q = null;
     try { q = new URLSearchParams(location.search).get("lang"); } catch (e) { q = null; }

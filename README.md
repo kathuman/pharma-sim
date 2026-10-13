@@ -1,10 +1,10 @@
-# PharmaSim — Pharmaceutical Supply Chain Dynamics
+# Supply Pulse — Food and Dairy Supply Chain Dynamics
 
-[![PharmaSim tests](https://github.com/kathuman/pharma-sim/actions/workflows/ci.yml/badge.svg)](https://github.com/kathuman/pharma-sim/actions/workflows/ci.yml)
+[![Supply Pulse tests](https://github.com/kathuman/supply-pulse/actions/workflows/ci.yml/badge.svg)](https://github.com/kathuman/supply-pulse/actions/workflows/ci.yml)
 
-**Live: [kathuman.github.io/pharma-sim](https://kathuman.github.io/pharma-sim/)** · [About](https://kathuman.github.io/pharma-sim/about.html) · English and Latin American Spanish
+**Live: [kathuman.github.io/supply-pulse](https://kathuman.github.io/supply-pulse/)** · [About](https://kathuman.github.io/supply-pulse/about.html) · English and Latin American Spanish
 
-A system-dynamics simulator of a pharmaceutical supply chain. Shock the market or the plant, add a distributor,
+A system-dynamics simulator of a packaged food and dairy supply chain. Shock the market or the plant, add a distributor,
 pull a lever or change the planning policy, and see the effect on profit, service, the bullwhip effect and waste
 against a saved baseline. A three-level tutorial (beginner, intermediate, advanced) walks through it.
 
@@ -16,28 +16,28 @@ against a saved baseline. A three-level tutorial (beginner, intermediate, advanc
   generator. The baseline sees the same random future, so a difference is never luck.
 - **Plant**: production is the workforce times productivity, capped by the equipment. The workforce follows the
   plan with a hiring delay, and people leave over time. Overtime can add capacity, with a premium paid only on the
-  extra packs.
+  extra cases.
 - **Campaigns** (optional): the line is shared with other products. Each campaign starts with a changeover, which
   costs capacity. A change of plan reaches the line half a campaign later, on average, and half a campaign of cycle
   stock is added to the target.
-- **API supplier** (optional): the plant needs the active ingredient for every pack. It orders from a supplier with a
+- **ingredient supplier** (optional): the plant needs a key ingredient for every case. It orders from a supplier with a
   long lead time and limited capacity, which can stop shipping for weeks. Production slows once less than a week of
-  API is on hand.
+  of the ingredient is on hand.
 - **QA release**: a three-stage delay with a rejection rate, limited by what the lab can test each week, so in a
   surge the lab can become the bottleneck. QA can be expedited when stock is low: faster, with extra lab shifts, but
-  it costs money per pack and brings more deviations.
-- **Shelf life**: finished goods are kept by age and shipped oldest first. A pack older than its shelf life minus
+  it costs money per case and brings more deviations.
+- **Shelf life**: finished goods are kept by age and shipped oldest first. A case older than its shelf life minus
   the remaining life customers require at delivery is written off.
 - **Service**: everything ships while the plant holds at least two weeks of stock. Below that, service falls
-  smoothly, because stock is spread over many presentations and markets.
-- **Patients**: a share of demand is critical (hospitals, no substitute). When stock is short, an allocation rule
-  shares it in proportion or serves critical patients first, and a critical shortage can carry a higher penalty.
+  smoothly, because stock is spread over many pack sizes, flavours and customers.
+- **Customers**: a share of demand is critical (key accounts and institutions with strict service terms). When stock is short, an allocation rule
+  shares it in proportion or serves priority customers first, and a critical shortage can carry a higher penalty.
 - **Distributor tier** (optional): its own stock, forecast and ordering rule, a backlog at the plant, transit in
   between, and the option to share sales data with the plant.
 - **Planning**: the forecast, plus a correction for the stock gap, plus a weight on the supply line (stock in QA,
   and what the distributor has on order).
 - **Money**: the plant's profit. Revenue, minus materials, wages, hiring, overtime, holding, disposal, expediting,
-  and a penalty for each pack not supplied.
+  and a penalty for each case not supplied.
 - **Results**: fill rate, weeks short, bullwhip (standard deviation of production ÷ standard deviation of demand,
   plus the same ratio for the distributor's orders), waste, average stock and workforce.
 
@@ -68,21 +68,21 @@ The same random futures are used for every option, so a difference is never luck
 
 ## Play the planner
 
-[play.html](https://kathuman.github.io/pharma-sim/play.html) puts you in the planner's seat. You choose a scenario (or
+[play.html](https://kathuman.github.io/supply-pulse/play.html) puts you in the planner's seat. You choose a scenario (or
 "surprise me"), and each turn of 1, 2 or 4 weeks you set the production plan. Hiring follows it, and you see only what
-a planner sees: orders received, stock, the QA quarantine, the workforce and its capacity. An optional hint shows
+a planner sees: orders received, stock, the QA hold, the workforce and its capacity. An optional hint shows
 what the planning rule would plan. At the end your two years are compared with the rule on the same demand, with the
 market demand revealed. Best results are remembered in the browser.
 
 ## What the tests check
 
 `node tests/model.test.js` (114 checks):
-- Every structure starts in exact balance, and every pack is accounted for in every scenario.
+- Every structure starts in exact balance, and every case is accounted for in every scenario.
 - Halving and quartering the time step gives the same answers, and the noise has the chosen size at any step.
 - The forecast matches its exact solution.
 - Each lever produces its trade-off. For example, overtime ends the shortage after a demand step, but for a
   short-life product it makes more stock expire.
-- Every unit of API is accounted for, and the QA lab never releases more than it can test.
+- Every unit of the ingredient is accounted for, and the QA lab never releases more than it can test.
 - The model can be advanced in pieces, giving exactly the same run, and a fixed plan can replace the planning rule
   (for the coming play mode).
 
@@ -113,17 +113,18 @@ Plain JavaScript with no build step: serve the folder with any static server (`p
 
 ## Version history
 
+- **4.0.0**: Supply Pulse. The simulator now models a packaged food and dairy supply chain (positive-release QA holds, retailers' shelf-life rules, a key ingredient such as milk powder, priority customers, summer and holiday peaks), with a new name and address.
 - **3.3.0**: your own demand data, the printable decision report, and a table view behind every chart.
 - **3.2.0**: play the planner (play.html).
 - **3.1.0**: the decision lab (scenarios side by side, many futures, sensitivity, the optimiser), and two new
   tutorial steps.
-- **3.0.0**: pharma realism.
-  - An API supplier tier, with a lead time, capacity and outages.
+- **3.0.0**: food and dairy realism.
+  - An ingredient supplier tier, with a lead time, capacity and outages.
   - Campaign production with changeovers and cycle stock.
   - QA lab capacity.
-  - Critical patients, with an allocation rule.
+  - Priority customers, with an allocation rule.
   - Warnings for settings that will keep stock expiring.
-  - Four new case presets: an API supplier outage, a biologic, a generic antibiotic and a pandemic vaccine.
+  - Four new case presets: an ingredient supplier outage, premium nutrition, private-label snacks and a holiday peak.
   - Seven new tutorial steps, in English and Spanish.
   - With the new features off, every v2 result is reproduced exactly.
 - **2.0.0**: a complete rebuild.

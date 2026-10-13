@@ -1,11 +1,11 @@
-// PharmaSim — the decision lab: saved scenarios side by side, many demand futures, sensitivity and the policy search,
-// on top of src/analysis.js. Works through window.PSApp; every option is run on the same random futures.
+// Supply Pulse — the decision lab: saved scenarios side by side, many demand futures, sensitivity and the policy search,
+// on top of src/analysis.js. Works through window.SPApp; every option is run on the same random futures.
 (function () {
   "use strict";
-  var APP = window.PSApp, A = window.PSAnalysis, M = window.PSModel, S = window.PSSpecs, I18 = window.PSi18n, T = I18.T, CH = window.PSCharts;
+  var APP = window.SPApp, A = window.SPAnalysis, M = window.SPModel, S = window.SPSpecs, I18 = window.PSi18n, T = I18.T, CH = window.SPCharts;
   if (!APP || !A) return;
   var $ = function (id) { return document.getElementById(id); };
-  var KEY = "ps-scenarios-v1", tab = "scn", timer = null, optRun = null, optResult = null, optStamp = null;
+  var KEY = "sp-scenarios-v1", tab = "scn", timer = null, optRun = null, optResult = null, optStamp = null;
   var num = function (v, d) { return v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
   var money = function (v, sign) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : ""; return s + (a >= 1e6 ? "$" + (a / 1e6).toFixed(2) + "M" : a >= 1e3 ? "$" + (a / 1e3).toFixed(0) + "k" : "$" + a.toFixed(0)); };
   var pct = function (v, d) { return v == null ? "—" : (v * 100).toFixed(d == null ? 2 : d) + "%"; };
@@ -34,7 +34,7 @@
   var ROWS = [
     [T("Profit"), "profit", 1, function (k) { return money(k.profit); }],
     [T("Fill rate"), "fillRate", 1, function (k) { return pct(k.fillRate); }],
-    [T("Critical patients served"), "criticalFill", 1, function (k) { return pct(k.criticalFill); }],
+    [T("Priority customers served"), "criticalFill", 1, function (k) { return pct(k.criticalFill); }],
     [T("Weeks short"), "shortWeeks", -1, function (k) { return num(k.shortWeeks); }],
     [T("Bullwhip"), "bullwhip", -1, function (k) { return k.bullwhip == null ? "—" : k.bullwhip.toFixed(2) + "×"; }],
     [T("Waste"), "wasteUnits", -1, function (k) { return num(k.wasteUnits); }],
@@ -70,7 +70,7 @@
   $("scn-csv").addEventListener("click", function () {
     var cols = state.cols, lines = [["result"].concat(cols.map(function (c) { return '"' + String(c.name).replace(/"/g, '""') + '"'; })).join(",")];
     ROWS.forEach(function (row) { lines.push([row[1]].concat(cols.map(function (c) { var v = c.kpi ? c.kpi[row[1]] : null; return v == null ? "" : +(+v).toFixed(6); })).join(",")); });
-    download("pharmasim-scenarios.csv", lines.join("\n"));
+    download("supply-pulse-scenarios.csv", lines.join("\n"));
   });
   function download(name, text) { var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); }
 
@@ -82,7 +82,7 @@
       n: n, lo: pct(s.fillRate.p10), hi: pct(s.fillRate.p90), mid: pct(s.fillRate.p50), sh: pct(f.shortageChance, 0), plo: money(s.profit.p10), phi: money(s.profit.p90) });
     if (b && b.ok) {
       var hp = A.headToHead(f, b, "profit"), hf = A.headToHead(f, b, "fillRate");
-      txt += " " + T("Against the baseline, in the very same futures, it makes more profit in <b>{w}</b> of {n} and serves more patients in <b>{f}</b>.", { w: hp.wins, f: hf.wins, n: hp.n });
+      txt += " " + T("Against the baseline, in the very same futures, it makes more profit in <b>{w}</b> of {n} and serves more customers in <b>{f}</b>.", { w: hp.wins, f: hf.wins, n: hp.n });
     } else txt += " " + T("Save a baseline to see in how many futures your change wins.");
     $("fut-sum").innerHTML = txt;
     var C = { s1: css("--s1"), s2: css("--s2"), b: css("--s-base"), d: css("--s-demand") };
@@ -169,5 +169,5 @@
   }
 
   refresh(true);
-  window.PSLab = { refresh: function () { refresh(true); }, tab: function () { return tab; } };
+  window.SPLab = { refresh: function () { refresh(true); }, tab: function () { return tab; } };
 })();

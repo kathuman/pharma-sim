@@ -1,4 +1,4 @@
-// PharmaSim demand-history tests — run with: node tests/data.test.js
+// Supply Pulse demand-history tests — run with: node tests/data.test.js
 const D = require("../src/data.js"), M = require("../src/model.js");
 let pass = 0, fail = 0;
 function check(name, cond, detail) { if (cond) pass++; else fail++; if (!cond || process.env.VERBOSE) console.log((cond ? "ok   " : "FAIL ") + name + (detail !== undefined ? "  → " + detail : "")); }

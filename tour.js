@@ -1,13 +1,13 @@
-// PharmaSim — the tutorial player (window.PSTour). It shows one step at a time in a card, highlights the element the
-// step is about, sets up the scenario through window.PSApp, and asks the step's question. Progress is kept in this
+// Supply Pulse — the tutorial player (window.SPTour). It shows one step at a time in a card, highlights the element the
+// step is about, sets up the scenario through window.SPApp, and asks the step's question. Progress is kept in this
 // browser for convenience only.
 (function () {
   "use strict";
-  var CONTENT = window.PSTourContent, APP = window.PSApp;
+  var CONTENT = window.SPTourContent, APP = window.SPApp;
   if (!CONTENT || !APP) return;
   var I18 = window.PSi18n, T = I18.T;
   // in Spanish, each level and step takes its text from tour-content-es.js (same ids; the setups stay as they are)
-  var ES = I18.lang === "es" ? window.PSTourContentES : null;
+  var ES = I18.lang === "es" ? window.SPTourContentES : null;
   if (ES) CONTENT = { TOKENS: CONTENT.TOKENS, LEVELS: CONTENT.LEVELS.map(function (l) {
     var lt = ES.levels[l.id] || {};
     return Object.assign({}, l, { title: lt.title || l.title, blurb: lt.blurb || l.blurb, steps: l.steps.map(function (st) {
@@ -17,7 +17,7 @@
       return out;
     }) });
   }) };
-  var KEY = "ps-tour-v1", level = null, idx = 0, card = null, menu = null, lit = null;
+  var KEY = "sp-tour-v1", level = null, idx = 0, card = null, menu = null, lit = null;
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { return {}; } }
   function save(o) { try { localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { /* storage blocked: progress is just not remembered */ } }
   function levelById(id) { return CONTENT.LEVELS.filter(function (l) { return l.id === id; })[0]; }
@@ -61,13 +61,13 @@
     var sg = function (v, d) { var s = Math.abs(v).toFixed(d); return (+s === 0 ? "±" : v > 0 ? "+" : "−") + s; };
     var V = {
       fill: (k.fillRate * 100).toFixed(2) + "%", bw: k.bullwhip == null ? "—" : k.bullwhip.toFixed(2) + "×", obw: k.orderBullwhip == null ? "—" : k.orderBullwhip.toFixed(2) + "×",
-      abw: k.apiBullwhip == null ? "—" : k.apiBullwhip.toFixed(2) + "×", crit: k.criticalFill == null ? "—" : (k.criticalFill * 100).toFixed(2) + "%", other: k.otherFill == null ? "—" : (k.otherFill * 100).toFixed(2) + "%",
+      abw: k.ingBullwhip == null ? "—" : k.ingBullwhip.toFixed(2) + "×", crit: k.criticalFill == null ? "—" : (k.criticalFill * 100).toFixed(2) + "%", other: k.otherFill == null ? "—" : (k.otherFill * 100).toFixed(2) + "%",
       waste: num(k.wasteUnits), expired: num(k.expiredUnits), profit: money(k.profit), short: String(k.shortWeeks), lost: num(k.lost)
     };
     if (bk) {
       V.dProfit = money(k.profit - bk.profit, true); V.dFill = sg((k.fillRate - bk.fillRate) * 100, 2); V.dWaste = sg(k.wasteUnits - bk.wasteUnits, 0).replace(/(\d)(?=(\d{3})+$)/g, "$1,");
       V.dBw = k.bullwhip != null && bk.bullwhip != null ? sg(k.bullwhip - bk.bullwhip, 2) : "—"; V.dObw = k.orderBullwhip != null && bk.orderBullwhip != null ? sg(k.orderBullwhip - bk.orderBullwhip, 2) : "—"; V.dShort = sg(k.shortWeeks - bk.shortWeeks, 0);
-      V.dAbw = k.apiBullwhip != null && bk.apiBullwhip != null ? sg(k.apiBullwhip - bk.apiBullwhip, 2) : "—"; V.dCrit = k.criticalFill != null && bk.criticalFill != null ? sg((k.criticalFill - bk.criticalFill) * 100, 2) : "—";
+      V.dAbw = k.ingBullwhip != null && bk.ingBullwhip != null ? sg(k.ingBullwhip - bk.ingBullwhip, 2) : "—"; V.dCrit = k.criticalFill != null && bk.criticalFill != null ? sg((k.criticalFill - bk.criticalFill) * 100, 2) : "—";
     }
     return String(text).replace(/\{\{(\w+)\}\}/g, function (m, t) { return V[t] != null ? V[t] : m; });
   }
@@ -132,5 +132,5 @@
   // ?tour=beginner opens a level directly
   var q = new URLSearchParams(location.search), t = q.get("tour");
   if (t && levelById(t)) setTimeout(function () { start(t, +q.get("step") || 0); }, 60);
-  window.PSTour = { start: start, stop: stop, levels: CONTENT.LEVELS };
+  window.SPTour = { start: start, stop: stop, levels: CONTENT.LEVELS };
 })();

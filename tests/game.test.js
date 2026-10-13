@@ -1,4 +1,4 @@
-// PharmaSim play-mode tests — run with: node tests/game.test.js
+// Supply Pulse play-mode tests — run with: node tests/game.test.js
 const M = require("../src/model.js"), G = require("../src/game.js");
 let pass = 0, fail = 0;
 function check(name, cond, detail) { if (cond) pass++; else fail++; if (!cond || process.env.VERBOSE) console.log((cond ? "ok   " : "FAIL ") + name + (detail !== undefined ? "  → " + detail : "")); }
@@ -15,7 +15,7 @@ G.SCENARIOS.forEach((s) => check("scenario " + s + " exists and starts", !!M.PRE
 }
 {
   // the suggestion is the rule's plan from the last step, held for a turn: the shorter the turn, the closer to the rule
-  const gap = (t) => { const g = G.create("flu", { turnWeeks: t, seed: 5 }); while (!g.done()) g.play(g.view().rule); const c = g.compare(); return c.rule.profit - c.you.profit; };
+  const gap = (t) => { const g = G.create("summer", { turnWeeks: t, seed: 5 }); while (!g.done()) g.play(g.view().rule); const c = g.compare(); return c.rule.profit - c.you.profit; };
   const g1 = gap(0.25), g2 = gap(1), g4 = gap(4);
   check("following the suggestion with one-step turns is within 0.5% of the rule", Math.abs(g1) < 0.005 * 11e6, g1);
   check("…and holding a plan for longer turns costs more", g1 < g2 && g2 < g4, [g1, g2, g4].map((x) => Math.round(x)).join(" "));
@@ -31,8 +31,8 @@ G.SCENARIOS.forEach((s) => check("scenario " + s + " exists and starts", !!M.PRE
   check("a negative plan is treated as zero", g.result().rows.slice(0, 16).every((r) => r.production === 0));
   const h = G.create("twoTier"), v = h.view();
   check("with a distributor the planner sees the distributor's orders", Math.abs(v.orders - h.params.demand) < 1e-9);
-  const a = G.create("apiOutage").view();
-  check("with an API supplier the planner sees the API stock", a.apiStock > 0);
+  const a = G.create("ingredientOutage").view();
+  check("with an ingredient supplier the planner sees the ingredient stock", a.ingStock > 0);
   check("verdicts", G.verdict({ you: { profit: 2, fillRate: 0.99 }, rule: { profit: 1, fillRate: 0.98 } }) === "both" && G.verdict({ you: { profit: 0, fillRate: 0.99 }, rule: { profit: 1, fillRate: 0.98 } }) === "service" && G.verdict({ you: { profit: 2, fillRate: 0.97 }, rule: { profit: 1, fillRate: 0.98 } }) === "profit" && G.verdict({ you: { profit: 0, fillRate: 0.97 }, rule: { profit: 1, fillRate: 0.98 } }) === "neither");
 }
 console.log(pass + "/" + (pass + fail) + " checks passed");

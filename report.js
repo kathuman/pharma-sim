@@ -1,9 +1,9 @@
-// PharmaSim — the decision report: the scenario (and baseline) from the address, its results, the range over 100
+// Supply Pulse — the decision report: the scenario (and baseline) from the address, its results, the range over 100
 // demand futures, the charts, what moves profit most and every input changed. Light, to print or save as PDF.
 (function () {
   "use strict";
-  var APP_VERSION = "3.3.0";
-  var M = window.PSModel, S = window.PSSpecs, A = window.PSAnalysis, CH = window.PSCharts, I18 = window.PSi18n, T = I18.T;
+  var APP_VERSION = "4.0.0";
+  var M = window.SPModel, S = window.SPSpecs, A = window.SPAnalysis, CH = window.SPCharts, I18 = window.PSi18n, T = I18.T;
   var $ = function (id) { return document.getElementById(id); };
   var num = function (v, d) { return v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
   var money = function (v, sign) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : ""; return s + (a >= 1e6 ? "$" + (a / 1e6).toFixed(2) + "M" : a >= 1e3 ? "$" + (a / 1e3).toFixed(0) + "k" : "$" + a.toFixed(0)); };
@@ -22,17 +22,17 @@
 
   // ---- title and summary
   $("r-title").textContent = T(M.PRESETS[preset].label);
-  $("r-meta").textContent = T("Generated on {d} with PharmaSim v{v}, over {w} weeks", { d: new Date().toLocaleDateString(I18.lang === "es" ? "es-419" : "en-GB", { year: "numeric", month: "long", day: "numeric" }), v: APP_VERSION, w: p.weeks }) +
+  $("r-meta").textContent = T("Generated on {d} with Supply Pulse v{v}, over {w} weeks", { d: new Date().toLocaleDateString(I18.lang === "es" ? "es-419" : "en-GB", { year: "numeric", month: "long", day: "numeric" }), v: APP_VERSION, w: p.weeks }) +
     (b ? " · " + T("compared with the baseline {name}", { name: T(M.PRESETS[base.pr] ? M.PRESETS[base.pr].label : "Your scenario") }) : "");
-  var h = T("Over {w} weeks the plant served <b>{fill}</b> of demand", { w: p.weeks, fill: pct(k.fillRate) }) + (k.lost > 0.5 ? T(" ({lost} packs short, in {n} weeks)", { lost: num(k.lost), n: k.shortWeeks }) : "") + ". ";
+  var h = T("Over {w} weeks the plant served <b>{fill}</b> of demand", { w: p.weeks, fill: pct(k.fillRate) }) + (k.lost > 0.5 ? T(" ({lost} cases short, in {n} weeks)", { lost: num(k.lost), n: k.shortWeeks }) : "") + ". ";
   h += k.bullwhip == null ? T("Demand stayed level, so there was nothing to amplify") : T("Production swung <b>{bw}×</b> as much as demand", { bw: k.bullwhip.toFixed(2) });
-  h += T("; <b>{waste}</b> packs were wasted and profit was <b>{profit}</b>.", { waste: num(k.wasteUnits), profit: money(k.profit) });
+  h += T("; <b>{waste}</b> cases were wasted and profit was <b>{profit}</b>.", { waste: num(k.wasteUnits), profit: money(k.profit) });
   $("r-headline").innerHTML = h;
 
   // ---- results against the baseline
   var ROWS = [[T("Profit"), "profit", 1, function (v) { return money(v); }, function (d) { return money(d, true); }],
     [T("Fill rate"), "fillRate", 1, function (v) { return pct(v); }, function (d) { return (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(2) + " " + T("pts"); }],
-    [T("Critical patients served"), "criticalFill", 1, function (v) { return pct(v); }, function (d) { return (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(2) + " " + T("pts"); }],
+    [T("Priority customers served"), "criticalFill", 1, function (v) { return pct(v); }, function (d) { return (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(2) + " " + T("pts"); }],
     [T("Weeks short"), "shortWeeks", -1, function (v) { return num(v); }, function (d) { return (d >= 0 ? "+" : "−") + num(Math.abs(d)); }],
     [T("Bullwhip"), "bullwhip", -1, function (v) { return v == null ? "—" : v.toFixed(2) + "×"; }, function (d) { return (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(2); }],
     [T("Waste"), "wasteUnits", -1, function (v) { return num(v); }, function (d) { return (d >= 0 ? "+" : "−") + num(Math.abs(d)); }],
@@ -47,7 +47,7 @@
   var f = A.futures(p, 100), fb = bp ? A.futures(bp, 100) : null, s = f.summary;
   var ft = T("In {n} demand futures the fill rate runs from <b>{lo}</b> to <b>{hi}</b> (median {mid}), at least one week is short in <b>{sh}</b> of them, and profit runs from {plo} to {phi}.", {
     n: 100, lo: pct(s.fillRate.p10), hi: pct(s.fillRate.p90), mid: pct(s.fillRate.p50), sh: pct(f.shortageChance, 0), plo: money(s.profit.p10), phi: money(s.profit.p90) });
-  if (fb && fb.ok) { var hp = A.headToHead(f, fb, "profit"), hf = A.headToHead(f, fb, "fillRate"); ft += " " + T("Against the baseline, in the very same futures, it makes more profit in <b>{w}</b> of {n} and serves more patients in <b>{f}</b>.", { w: hp.wins, f: hf.wins, n: hp.n }); }
+  if (fb && fb.ok) { var hp = A.headToHead(f, fb, "profit"), hf = A.headToHead(f, fb, "fillRate"); ft += " " + T("Against the baseline, in the very same futures, it makes more profit in <b>{w}</b> of {n} and serves more customers in <b>{f}</b>.", { w: hp.wins, f: hf.wins, n: hp.n }); }
   $("r-futures").innerHTML = ft;
   var F = { profit: money, fillRate: function (v) { return pct(v); }, shortWeeks: function (v) { return num(v, 1); }, wasteUnits: function (v) { return num(v); } };
   $("r-fut-table").innerHTML = "<thead><tr><th></th><th>" + T("10th percentile") + "</th><th>" + T("Median") + "</th><th>" + T("90th percentile") + "</th>" + (fb ? "<th>" + T("Baseline median") + "</th>" : "") + "</tr></thead><tbody>" +
@@ -88,6 +88,6 @@
   }); });
   $("r-inputs-note").textContent = changed.length ? T("Every input that differs from the model's defaults; everything else is as described in the simulator.") : T("Every input is at the model's defaults.");
   $("r-inputs").innerHTML = changed.length ? "<thead><tr><th></th><th>" + T("This scenario") + "</th><th>" + T("Default") + "</th></tr></thead><tbody>" + changed.join("") + "</tbody>" : "";
-  $("r-foot").innerHTML = T("PharmaSim v{v} · kathuman.github.io/pharma-sim · a system-dynamics model by Daniel Alberto Sepulveda Estay, PhD (Estay Dynamics). The figures are illustrative; every equation is shown in the simulator.", { v: APP_VERSION });
-  window.PSReport = { result: r, baseline: b, version: APP_VERSION };
+  $("r-foot").innerHTML = T("Supply Pulse v{v} · kathuman.github.io/supply-pulse · a system-dynamics model by Daniel Alberto Sepulveda Estay, PhD (Estay Dynamics). The figures are illustrative; every equation is shown in the simulator.", { v: APP_VERSION });
+  window.SPReport = { result: r, baseline: b, version: APP_VERSION };
 })();

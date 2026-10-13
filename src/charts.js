@@ -1,4 +1,4 @@
-// PharmaSim — small SVG line charts with one y-axis, a legend, shaded periods and a hover read-out (window.PSCharts).
+// Supply Pulse — small SVG line charts with one y-axis, a legend, shaded periods and a hover read-out (window.SPCharts).
 (function () {
   "use strict";
   var NS = "http://www.w3.org/2000/svg";
@@ -178,5 +178,5 @@
     });
     if (opts.legend) { var lg = document.createElement("div"); lg.className = "chart-legend"; lg.innerHTML = opts.legend; host.appendChild(lg); }
   }
-  window.PSCharts = { line: line, tornado: tornado, scatter: scatter, nice: nice };
+  window.SPCharts = { line: line, tornado: tornado, scatter: scatter, nice: nice };
 })();

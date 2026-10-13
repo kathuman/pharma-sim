@@ -1,11 +1,11 @@
-// PharmaSim — the play page: you set the production plan turn by turn (src/game.js), then see your two years against
+// Supply Pulse — the play page: you set the production plan turn by turn (src/game.js), then see your two years against
 // the planning rule on the same demand. Best results are remembered in this browser for convenience only.
 (function () {
   "use strict";
-  var APP_VERSION = "3.3.0";
-  var M = window.PSModel, G = window.PSGame, CH = window.PSCharts, I18 = window.PSi18n, T = I18.T;
+  var APP_VERSION = "4.0.0";
+  var M = window.SPModel, G = window.SPGame, CH = window.SPCharts, I18 = window.PSi18n, T = I18.T;
   var $ = function (id) { return document.getElementById(id); };
-  var KEY = "ps-play-best-v1", game = null, chosen = null, surprise = false, seed = 1;
+  var KEY = "sp-play-best-v1", game = null, chosen = null, surprise = false, seed = 1;
   var num = function (v, d) { return v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
   var money = function (v, sign) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : ""; return s + (a >= 1e6 ? "$" + (a / 1e6).toFixed(2) + "M" : "$" + (a / 1e3).toFixed(0) + "k"); };
   var pct = function (v) { return v == null ? "—" : (v * 100).toFixed(2) + "%"; };
@@ -44,10 +44,10 @@
     $("g-facts").innerHTML = [
       fact(T("Orders this week"), num(v.orders), T("{x} a week over the last 4 weeks", { x: num(v.orders4) })),
       fact(T("Your stock"), num(v.stock), T("{x} weeks of this week's orders", { x: num(v.coverWeeks, 1) })),
-      v.qa != null ? fact(T("In QA quarantine"), num(v.qa), T("released after about {w} weeks", { w: num(p.qaTime, 1) })) : "",
+      v.qa != null ? fact(T("On QA hold"), num(v.qa), T("released after about {w} weeks", { w: num(p.qaTime, 1) })) : "",
       fact(T("Workforce"), num(v.workforce, 1), T("can make {x} a week", { x: num(v.capacity) })),
-      fact(T("Production last week"), num(v.production), T("patients served: {x}", { x: num(v.served) })),
-      v.apiStock != null ? fact(T("API stock"), num(v.apiStock), T("enough for {x} weeks at that rate", { x: num(v.apiStock / Math.max(1, v.production), 1) })) : ""
+      fact(T("Production last week"), num(v.production), T("customers served: {x}", { x: num(v.served) })),
+      v.ingStock != null ? fact(T("Ingredient stock"), num(v.ingStock), T("enough for {x} weeks at that rate", { x: num(v.ingStock / Math.max(1, v.production), 1) })) : ""
     ].join("");
     $("g-hintline").innerHTML = hint ? T("The planning rule would plan <b>{x}</b> a week now.", { x: num(v.rule) }) : "";
     $("g-quick-rule").hidden = !hint;
@@ -89,8 +89,8 @@
   // ---- the end
   var VERDICT = {
     both: T("You beat the planning rule on both profit and service."),
-    profit: T("More profit than the rule, but fewer patients served."),
-    service: T("More patients served than the rule, at a lower profit."),
+    profit: T("More profit than the rule, but fewer customers served."),
+    service: T("More customers served than the rule, at a lower profit."),
     neither: T("The rule did better on both. Try again: watch the stock and what is already in QA, not only this week's orders.")
   };
   function finish() {
@@ -117,5 +117,5 @@
   }
   $("g-again").addEventListener("click", function () { begin(surprise ? "surprise" : chosen, 1 + Math.floor(Math.random() * 99999)); });
   $("g-other").addEventListener("click", function () { $("end").hidden = true; $("setup").hidden = false; });
-  window.PSPlay = { game: function () { return game; }, begin: begin, version: APP_VERSION };
+  window.SPPlay = { game: function () { return game; }, begin: begin, version: APP_VERSION };
 })();

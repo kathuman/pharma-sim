@@ -1,4 +1,4 @@
-// PharmaSim analysis tests — run with: node tests/analysis.test.js
+// Supply Pulse analysis tests — run with: node tests/analysis.test.js
 // Many futures, head-to-head comparisons, the tornado, the sweep and the policy search, checked against direct runs.
 const M = require("../src/model.js"), A = require("../src/analysis.js"), S = require("../src/specs.js");
 let pass = 0, fail = 0;

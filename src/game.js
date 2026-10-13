@@ -1,13 +1,13 @@
-// PharmaSim — the play mode (window.PSGame / module.exports): you are the planner. Each turn you set the production
-// plan (packs a week); hiring follows it, as it follows the rule's plan in the simulator. You see what a planner sees:
+// Supply Pulse — the play mode (window.SPGame / module.exports): you are the planner. Each turn you set the production
+// plan (cases a week); hiring follows it, as it follows the rule's plan in the simulator. You see what a planner sees:
 // the orders received, the stock, the QA pipeline and the workforce, never the demand to come. At the end your run is
 // compared with the planning rule on the very same demand future. Pure: no DOM.
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory(require("./model.js"));
-  else root.PSGame = factory(root.PSModel);
+  else root.SPGame = factory(root.SPModel);
 })(typeof self !== "undefined" ? self : this, function (M) {
   "use strict";
-  var SCENARIOS = ["step", "flu", "shortLife", "outage", "twoTier", "apiOutage"];
+  var SCENARIOS = ["step", "summer", "shortLife", "outage", "twoTier", "ingredientOutage"];
 
   function create(preset, opts) {
     opts = opts || {};
@@ -27,14 +27,14 @@
         capacity: capNow, production: last ? last.production : P0, served: last ? last.served : params.demand,
         coverWeeks: last && last.ordersToMfg > 0 ? last.inventory / last.ordersToMfg : params.coverage,
         rule: last ? last.rule : P0, startOutput: P0, maxPlan: Math.round(P0 * Math.max(2, params.ceiling / 100 * 1.25)),
-        apiStock: params.apiTier ? (last ? last.apiStock : P0 * params.apiCoverage) : null
+        ingStock: params.ingTier ? (last ? last.ingStock : P0 * params.ingCoverage) : null
       };
     }
     return {
       ok: true, params: params, preset: preset, turnWeeks: turn,
       view: view,
       done: function () { return sim.done(); },
-      // play one turn with a production plan (packs a week)
+      // play one turn with a production plan (cases a week)
       play: function (plan) {
         if (sim.done()) return view();
         var p = Math.max(0, +plan || 0), from = sim.time();

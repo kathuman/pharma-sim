@@ -1,4 +1,4 @@
-name: PharmaSim tests
+name: Supply Pulse tests
 
 # The model (balance, conservation, time-step convergence, noise, levers), the tutorial's claims and the Spanish
 # translation. No build step: the app is plain JavaScript served as it is.

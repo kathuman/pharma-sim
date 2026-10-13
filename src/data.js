@@ -1,13 +1,13 @@
-// PharmaSim — reading a demand history (window.PSData / module.exports). A CSV of weekly (or daily) demand, with or
+// Supply Pulse — reading a demand history (window.SPData / module.exports). A CSV of weekly (or daily) demand, with or
 // without dates, headers in English or Spanish, commas or semicolons, decimal points or commas. Daily rows are added
 // up into weeks. The result drives the model: demand = the level of the first weeks × the history as a multiple of
 // that level. Messages are English and translated by pattern in the app. Pure: no DOM.
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
-  else root.PSData = factory();
+  else root.SPData = factory();
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
-  var DEMAND = ["demand", "demanda", "units", "unidades", "qty", "quantity", "cantidad", "packs", "envases", "sales", "ventas", "orders", "pedidos", "consumption", "consumo", "value", "valor"];
+  var DEMAND = ["demand", "demanda", "units", "unidades", "qty", "quantity", "cantidad", "cases", "envases", "sales", "ventas", "orders", "pedidos", "consumption", "consumo", "value", "valor"];
   var DATE = ["date", "fecha", "week", "semana", "period", "periodo", "día", "dia", "day", "mes", "month"];
   function norm(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase().replace(/^"|"$/g, ""); }
 

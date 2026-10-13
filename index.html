@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="title.index">PharmaSim — Pharmaceutical Supply Chain Dynamics</title>
-  <meta data-i18n-attr="content=meta.index" name="description" content="A system-dynamics simulator of a pharmaceutical supply chain: demand shocks, QA release, shelf life, workforce and a distributor tier, with overtime, expedited QA and planning policies measured on profit, service, amplification and waste." />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>" />
+  <title data-i18n="title.index">Supply Pulse — Food and Dairy Supply Chain Dynamics</title>
+  <meta data-i18n-attr="content=meta.index" name="description" content="A system-dynamics simulator of a packaged food and dairy supply chain: demand shocks, QA release, shelf life, workforce and a distributor tier, with overtime, expedited QA and planning policies measured on profit, service, amplification and waste." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥛</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -14,9 +14,9 @@
 <body>
 <header class="topbar">
   <div class="brand">
-    <a class="mark" href="index.html">PHARMA<span>SIM</span></a>
+    <a class="mark" href="index.html">SUPPLY<span>PULSE</span></a>
     <span class="ver" id="ver" data-i18n-attr="title=attr.ver" title="App version"></span>
-    <div class="sub"><span class="rest" data-i18n="brand.sub">SYSTEM DYNAMICS · PHARMACEUTICAL SUPPLY CHAIN</span></div>
+    <div class="sub"><span class="rest" data-i18n="brand.sub">SYSTEM DYNAMICS · FOOD AND DAIRY SUPPLY CHAIN</span></div>
   </div>
   <div class="header-actions">
     <button class="back-link tour" type="button" id="tourBtn" data-i18n="nav.tour">Tutorial</button>
@@ -72,12 +72,12 @@
       <h2 data-i18n="h.charts">What happens week by week</h2>
       <p class="panel-note" data-i18n="charts.note">Point at any chart to read the values for that week; the model diagram below follows the same week. Dashed grey lines are the saved baseline.</p>
       <div class="chart-grid">
-        <div class="wide"><p class="chart-title" data-i18n="c.prod">Demand and production</p><p class="chart-sub" data-i18n="c.prod.sub">Packs per week. The bullwhip is production swinging wider than the demand that drives it.</p><div id="ch-prod"></div></div>
-        <div><p class="chart-title" data-i18n="c.stock">Stock</p><p class="chart-sub" data-i18n="c.stock.sub">Packs on hand that can still be sold.</p><div id="ch-stock"></div></div>
-        <div><p class="chart-title" data-i18n="c.service">Service</p><p class="chart-sub" data-i18n="c.service.sub">Share of each week's demand that reached patients.</p><div id="ch-service"></div></div>
+        <div class="wide"><p class="chart-title" data-i18n="c.prod">Demand and production</p><p class="chart-sub" data-i18n="c.prod.sub">Cases per week. The bullwhip is production swinging wider than the demand that drives it.</p><div id="ch-prod"></div></div>
+        <div><p class="chart-title" data-i18n="c.stock">Stock</p><p class="chart-sub" data-i18n="c.stock.sub">Cases on hand that can still be sold.</p><div id="ch-stock"></div></div>
+        <div><p class="chart-title" data-i18n="c.service">Service</p><p class="chart-sub" data-i18n="c.service.sub">Share of each week's demand that reached customers.</p><div id="ch-service"></div></div>
         <div><p class="chart-title" data-i18n="c.profit">Cumulative profit</p><p class="chart-sub" data-i18n="c.profit.sub">The plant's revenue minus every cost, from week 0.</p><div id="ch-profit"></div></div>
         <div><p class="chart-title" data-i18n="c.people">Workforce</p><p class="chart-sub" data-i18n="c.people.sub">People on the payroll; capacity follows them.</p><div id="ch-people"></div></div>
-        <div class="wide"><p class="chart-title" data-i18n="c.waste">Waste</p><p class="chart-sub" data-i18n="c.waste.sub">Packs lost so far: batches rejected in QA, and stock written off because too little shelf life remained.</p><div id="ch-waste"></div></div>
+        <div class="wide"><p class="chart-title" data-i18n="c.waste">Waste</p><p class="chart-sub" data-i18n="c.waste.sub">Cases lost so far: batches rejected in QA, and stock written off because too little shelf life remained.</p><div id="ch-waste"></div></div>
       </div>
     </section>
 
@@ -147,10 +147,10 @@
       <details class="rules" id="why">
         <summary data-i18n="why.sum">How to read it: what the results mean</summary>
         <div data-i18n="why.body">
-          <p><b>Fill rate</b> is the share of market demand that reached patients. In pharma the target is usually 98–99.5%, so a fraction of a point is a real shortage. Service slips before the stock runs out, because stock is spread over many presentations and markets.</p>
+          <p><b>Fill rate</b> is the share of market demand that reached customers. In food retail the target is usually 98–99.5%, so a fraction of a point is a real shortage. Service slips before the stock runs out, because stock is spread over many pack sizes, flavours and customers.</p>
           <p><b>Bullwhip</b> is how much more production varies than demand (standard deviation of production ÷ standard deviation of demand). Above 1, the plant amplifies what the market does: it is chasing its own stock gap, not just demand. With a distributor, the same ratio for its orders shows where the amplification starts.</p>
           <p><b>Waste</b> is batches rejected in QA plus stock written off because too little shelf life remained for customers to accept it. With a long shelf life it is almost all rejections; with a short one, an overshoot after a surge becomes expired stock.</p>
-          <p><b>Profit</b> is the plant's view: revenue minus materials, the workforce (paid whether busy or not), hiring, overtime, holding, disposal, expediting and a penalty for each pack not supplied. The figures are illustrative, chosen for a mid-priced branded medicine.</p>
+          <p><b>Profit</b> is the plant's view: revenue minus materials, the workforce (paid whether busy or not), hiring, overtime, holding, disposal, expediting and a penalty for each case not supplied. The figures are illustrative, chosen for a mid-priced branded food product.</p>
           <p><b>The baseline</b> is a saved run for comparison. It uses the same random demand as the current run, so every difference is due to what you changed, not to luck. <b>New demand future</b> draws another random future for both.</p>
         </div>
       </details>
@@ -158,7 +158,7 @@
         <summary data-i18n="lim.sum">What the model leaves out</summary>
         <div data-i18n="lim.body">
           <ul>
-            <li>One product family, one plant, at most one distributor and one API supplier. Several markets, other products competing for the same line, and allocation between markets are not modelled.</li>
+            <li>One product family, one plant, at most one distributor and one ingredient supplier. Several markets, other products competing for the same line, and allocation between markets are not modelled.</li>
             <li>Campaigns are averaged: their lost capacity, delay and cycle stock are modelled, but not individual batches and when each is made.</li>
             <li>The distributor's stock is not aged; shelf life is tracked at the plant only.</li>
             <li>Nobody is laid off: the workforce shrinks only as people leave.</li>
@@ -169,8 +169,8 @@
     </div>
 
     <footer class="foot">
-      <span class="consult" data-i18n="foot.consult">PharmaSim <span id="ver-foot"></span> · <a href="about.html">About</a> · Available for consulting — <a href="https://github.com/kathuman" target="_blank" rel="noopener">get in touch</a></span>
-      <span data-i18n="foot.note">A system-dynamics model of a pharmaceutical supply chain: tested equations, a fair baseline and the trade-offs of each lever. Built with <a href="https://claude.com" target="_blank" rel="noopener">Claude</a>.</span>
+      <span class="consult" data-i18n="foot.consult">Supply Pulse <span id="ver-foot"></span> · <a href="about.html">About</a> · Available for consulting — <a href="https://github.com/kathuman" target="_blank" rel="noopener">get in touch</a></span>
+      <span data-i18n="foot.note">A system-dynamics model of a packaged food and dairy supply chain: tested equations, a fair baseline and the trade-offs of each lever. Built with <a href="https://claude.com" target="_blank" rel="noopener">Claude</a>.</span>
     </footer>
   </main>
 </div>

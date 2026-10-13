@@ -1,10 +1,10 @@
-// PharmaSim — the page: builds the inputs from src/specs.js, runs src/model.js on every change, and shows the
+// Supply Pulse — the page: builds the inputs from src/specs.js, runs src/model.js on every change, and shows the
 // headline, the results, the charts, the diagram and the equations, with a saved baseline that sees the same random
-// demand. window.PSApp is the interface the tutorial uses.
+// demand. window.SPApp is the interface the tutorial uses.
 (function () {
   "use strict";
-  var APP_VERSION = "3.3.0";
-  var M = window.PSModel, S = window.PSSpecs, EQ = window.PSEquations, I18 = window.PSi18n, T = I18.T, tw = I18.tw;
+  var APP_VERSION = "4.0.0";
+  var M = window.SPModel, S = window.SPSpecs, EQ = window.SPEquations, I18 = window.PSi18n, T = I18.T, tw = I18.tw;
   var $ = function (id) { return document.getElementById(id); }, listeners = [];
   var state = { p: M.merge(M.PRESETS.step.values), preset: "step", base: null, baseParams: null, res: null, hoverT: null, diagram: null, diagramMulti: null, charts: {} };
 
@@ -86,10 +86,10 @@
   function headline() {
     var k = state.res.kpi, p = state.res.params, b = state.base && state.base.kpi;
     var parts = T("Over {w} weeks the plant served <b>{fill}</b> of demand", { w: p.weeks, fill: pct(k.fillRate, 2) }) +
-      (k.lost > 0.5 ? T(" ({lost} packs short, in {n} weeks)", { lost: num(k.lost), n: k.shortWeeks }) : "") + ". ";
+      (k.lost > 0.5 ? T(" ({lost} cases short, in {n} weeks)", { lost: num(k.lost), n: k.shortWeeks }) : "") + ". ";
     parts += k.bullwhip == null ? T("Demand stayed level, so there was nothing to amplify") : T("Production swung <b>{bw}×</b> as much as demand", { bw: k.bullwhip.toFixed(2) }) + (state.res.multi && k.orderBullwhip != null ? T(", and the distributor's orders {obw}×", { obw: k.orderBullwhip.toFixed(2) }) : "");
-    parts += T("; <b>{waste}</b> packs were wasted and profit was <b>{profit}</b>.", { waste: num(k.wasteUnits), profit: money(k.profit) });
-    if (b) parts += "<span class='cmp'>" + T("Against the baseline: profit {dp}, fill rate {df} points, waste {dw} packs, bullwhip {db}.", {
+    parts += T("; <b>{waste}</b> cases were wasted and profit was <b>{profit}</b>.", { waste: num(k.wasteUnits), profit: money(k.profit) });
+    if (b) parts += "<span class='cmp'>" + T("Against the baseline: profit {dp}, fill rate {df} points, waste {dw} cases, bullwhip {db}.", {
       dp: money(k.profit - b.profit, true), df: signed((k.fillRate - b.fillRate) * 100, 2), dw: signed(k.wasteUnits - b.wasteUnits, 0).replace(/(\d)(?=(\d{3})+$)/g, "$1,"),
       db: k.bullwhip != null && b.bullwhip != null ? signed(k.bullwhip - b.bullwhip, 2) : "—" }) + "</span>";
     $("headline").innerHTML = parts;
@@ -109,14 +109,14 @@
     var avgDemand = r.totals.demand / p.weeks, waste = k.wasteUnits / Math.max(1, r.totals.demand);
     var html = [
       tile(T("Profit"), money(k.profit), T("revenue minus every cost, {w} weeks", { w: p.weeks }), delta(k.profit, B(function (x) { return x.profit; }), 1, function (d) { return money(d, true); })),
-      tile(T("Fill rate"), pct(k.fillRate, 2), T("{n} packs not supplied", { n: num(k.lost) }) + (k.criticalFill != null && p.criticalShare < 100 ? " · " + T("critical patients {c}", { c: pct(k.criticalFill, 2) }) : ""), delta(k.fillRate * 100, B(function (x) { return x.fillRate * 100; }), 1, function (d) { return signed(d, 2, " " + T("pts")); }), k.fillRate < 0.98 ? "critical" : k.fillRate < 0.995 ? "warning" : null),
+      tile(T("Fill rate"), pct(k.fillRate, 2), T("{n} cases not supplied", { n: num(k.lost) }) + (k.criticalFill != null && p.criticalShare < 100 ? " · " + T("priority customers {c}", { c: pct(k.criticalFill, 2) }) : ""), delta(k.fillRate * 100, B(function (x) { return x.fillRate * 100; }), 1, function (d) { return signed(d, 2, " " + T("pts")); }), k.fillRate < 0.98 ? "critical" : k.fillRate < 0.995 ? "warning" : null),
       tile(T("Weeks short"), num(k.shortWeeks), T("weeks with under 99% of demand served"), delta(k.shortWeeks, B(function (x) { return x.shortWeeks; }), -1, function (d) { return signed(d, 0); }), k.shortWeeks > 8 ? "warning" : null),
       tile(T("Bullwhip"), k.bullwhip == null ? "—" : k.bullwhip.toFixed(2) + "×", k.bullwhip == null ? T("demand did not vary") : T("production varies {x}× as much as demand", { x: k.bullwhip.toFixed(2) }), delta(k.bullwhip, B(function (x) { return x.bullwhip; }), -1, function (d) { return signed(d, 2); }), k.bullwhip > 1.5 ? "warning" : null),
       r.multi ? tile(T("Distributor's orders"), k.orderBullwhip == null ? "—" : k.orderBullwhip.toFixed(2) + "×", T("its orders vary this much more than demand"), delta(k.orderBullwhip, B(function (x) { return x.orderBullwhip; }), -1, function (d) { return signed(d, 2); }), k.orderBullwhip > 1.5 ? "warning" : null)
-        : tile(T("Peak production"), num(k.peakProduction), T("packs/wk · {x} of the starting output", { x: pct(k.peakProduction / (p.demand / (1 - p.rejectRate / 100)), 0) }) + (k.labWeeks > 0 ? " · " + T("the QA lab at its limit for {w} weeks", { w: num(k.labWeeks, 0) }) : ""), delta(k.peakProduction, B(function (x) { return x.peakProduction; }), 0, function (d) { return signed(d, 0); }), k.labWeeks > 0 ? "warning" : null),
-      r.api ? tile(T("API supplier orders"), k.apiBullwhip == null ? "—" : k.apiBullwhip.toFixed(2) + "×", T("vary this much more than demand") + (k.apiShortUnits > 0.5 ? " · " + T("{n} packs not made for lack of API", { n: num(k.apiShortUnits) }) : ""), delta(k.apiBullwhip, B(function (x) { return x.apiBullwhip; }), -1, function (d) { return signed(d, 2); }), k.apiShortUnits > 0.5 ? "critical" : k.apiBullwhip > 3 ? "warning" : null) : null,
-      tile(T("Waste"), num(k.wasteUnits) + " " + T("packs"), T("{e} written off · {r} rejected · {v}", { e: num(k.expiredUnits), r: num(k.rejectedUnits), v: money(k.wasteCost) }), delta(k.wasteUnits, B(function (x) { return x.wasteUnits; }), -1, function (d) { return signed(d, 0); }), waste > 0.04 ? "warning" : null),
-      tile(T("Average stock"), num(k.avgInventory / avgDemand, 1) + " " + T("wk"), T("{n} packs on hand on average", { n: num(k.avgInventory) }), delta(k.avgInventory, B(function (x) { return x.avgInventory; }), 0, function (d) { return signed(d, 0); })),
+        : tile(T("Peak production"), num(k.peakProduction), T("cases/wk · {x} of the starting output", { x: pct(k.peakProduction / (p.demand / (1 - p.rejectRate / 100)), 0) }) + (k.labWeeks > 0 ? " · " + T("the QA lab at its limit for {w} weeks", { w: num(k.labWeeks, 0) }) : ""), delta(k.peakProduction, B(function (x) { return x.peakProduction; }), 0, function (d) { return signed(d, 0); }), k.labWeeks > 0 ? "warning" : null),
+      r.ing ? tile(T("Ingredient supplier orders"), k.ingBullwhip == null ? "—" : k.ingBullwhip.toFixed(2) + "×", T("vary this much more than demand") + (k.ingShortUnits > 0.5 ? " · " + T("{n} cases not made for lack of the ingredient", { n: num(k.ingShortUnits) }) : ""), delta(k.ingBullwhip, B(function (x) { return x.ingBullwhip; }), -1, function (d) { return signed(d, 2); }), k.ingShortUnits > 0.5 ? "critical" : k.ingBullwhip > 3 ? "warning" : null) : null,
+      tile(T("Waste"), num(k.wasteUnits) + " " + T("cases"), T("{e} written off · {r} rejected · {v}", { e: num(k.expiredUnits), r: num(k.rejectedUnits), v: money(k.wasteCost) }), delta(k.wasteUnits, B(function (x) { return x.wasteUnits; }), -1, function (d) { return signed(d, 0); }), waste > 0.04 ? "warning" : null),
+      tile(T("Average stock"), num(k.avgInventory / avgDemand, 1) + " " + T("wk"), T("{n} cases on hand on average", { n: num(k.avgInventory) }), delta(k.avgInventory, B(function (x) { return x.avgInventory; }), 0, function (d) { return signed(d, 0); })),
       tile(T("Workforce"), num(k.peakWorkforce, 0) + " " + T("people"), T("at the peak · {h} hired", { h: num(k.hires) }), delta(k.peakWorkforce, B(function (x) { return x.peakWorkforce; }), -1, function (d) { return signed(d, 1); }))
     ];
     $("kpis").innerHTML = html.filter(Boolean).join("");
@@ -145,18 +145,18 @@
   function bands(res) {
     var out = [], p = res.params;
     if (p.outage) out.push({ from: p.outageWeek, to: Math.min(p.weeks, p.outageWeek + p.outageWeeks), cls: "outage", label: T("Plant outage") });
-    if (p.apiTier && p.apiOutage) out.push({ from: p.apiOutageWeek, to: Math.min(p.weeks, p.apiOutageWeek + p.apiOutageWeeks), cls: "apioutage", label: T("API supplier outage") });
+    if (p.ingTier && p.ingOutage) out.push({ from: p.ingOutageWeek, to: Math.min(p.weeks, p.ingOutageWeek + p.ingOutageWeeks), cls: "ingoutage", label: T("Ingredient supplier outage") });
     var lab = null; res.rows.forEach(function (r, i) { if (r.labBound && lab == null) lab = r.t; if ((!r.labBound || i === res.rows.length - 1) && lab != null) { out.push({ from: lab, to: r.t, cls: "lab", label: T("QA lab at its limit") }); lab = null; } });
     var on = null; res.rows.forEach(function (r, i) { if (r.expediting && on == null) on = r.t; if ((!r.expediting || i === res.rows.length - 1) && on != null) { out.push({ from: on, to: r.t, cls: "expedite", label: T("Expediting QA") }); on = null; } });
     return out;
   }
   function charts() {
-    var res = state.res, base = state.base, multi = res.multi, api = res.api, crit = res.params.criticalShare > 0 && res.params.allocation === "critical";
+    var res = state.res, base = state.base, multi = res.multi, ing = res.ing, crit = res.params.criticalShare > 0 && res.params.allocation === "critical";
     var bw = base ? withWaste(base) : null, rw = withWaste(res), wk = weekly(res), bwk = base ? weekly(base) : null;
     var same = base && base.rows.length === res.rows.length && base.params.dt === res.params.dt;
     var rows = res.rows.map(function (r, i) {
       var o = { t: r.t, demand: r.demand, orders: multi ? r.ordersToMfg : null, production: r.production, capacity: r.capacity, inventory: r.inventory, target: r.target,
-        dist: multi ? r.distInventory : null, api: api ? r.apiStock : null, apiOrders: api ? r.apiOrders : null, profit: r.profit / 1e6, workforce: r.workforce, cumRej: rw[i].cumRej, cumExp: rw[i].cumExp };
+        dist: multi ? r.distInventory : null, ing: ing ? r.ingStock : null, ingOrders: ing ? r.ingOrders : null, profit: r.profit / 1e6, workforce: r.workforce, cumRej: rw[i].cumRej, cumExp: rw[i].cumExp };
       if (same) { var b = base.rows[i]; o.bProduction = b.production; o.bInventory = b.inventory; o.bProfit = b.profit / 1e6; o.bWorkforce = b.workforce; o.bWaste = bw[i].cumWaste; }
       return o;
     });
@@ -168,7 +168,7 @@
       "ch-prod": { height: 250, auto: true, yFmt: function (v) { return num(v); }, series: [
         { key: "demand", label: T("Market demand"), color: C.d, width: 1.5 },
         multi ? { key: "orders", label: T("Distributor's orders"), color: C.s2 } : null,
-        api ? { key: "apiOrders", label: T("API orders"), color: C.s3, width: 1.5 } : null,
+        ing ? { key: "ingOrders", label: T("Ingredient orders"), color: C.s3, width: 1.5 } : null,
         { key: "production", label: T("Production"), color: C.s1, width: 2.5 },
         { key: "capacity", label: T("Capacity"), color: C.s4, width: 1.5, dash: "2 4" },
         same ? { key: "bProduction", label: T("Baseline production"), color: C.b, dash: "5 4" } : null ] },
@@ -176,7 +176,7 @@
         { key: "inventory", label: T("Plant stock"), color: C.s1, area: true },
         { key: "target", label: T("Target stock"), color: C.d, width: 1.2, dash: "4 4" },
         multi ? { key: "dist", label: T("Distributor stock"), color: C.s3 } : null,
-        api ? { key: "api", label: T("API stock"), color: C.s4 } : null,
+        ing ? { key: "ing", label: T("Ingredient stock"), color: C.s4 } : null,
         same ? { key: "bInventory", label: T("Baseline plant stock"), color: C.b, dash: "5 4" } : null ] },
       "ch-profit": { yFmt: function (v) { return money(v * 1e6); }, series: [
         { key: "profit", label: T("Profit"), color: C.s1, width: 2.5 },
@@ -192,25 +192,25 @@
     Object.keys(defs).forEach(function (id) {
       var d = defs[id];
       var opts = { rows: rows, series: d.series.filter(Boolean), bands: bd, yFmt: d.yFmt, tipFmt: d.tipFmt, yMin: d.auto ? null : 0, height: d.height || 200, xLabel: wkLabel, tipTitle: tipT, onHover: hover, ariaLabel: T("Chart") };
-      if (state.charts[id]) state.charts[id].update(opts); else state.charts[id] = window.PSCharts.line($(id), opts);
+      if (state.charts[id]) state.charts[id].update(opts); else state.charts[id] = window.SPCharts.line($(id), opts);
     });
     var lows = [];
     wrows.forEach(function (r) { [r.fill, r.crit, r.other, r.bFill].forEach(function (v) { if (v != null) lows.push(v); }); });
     var sopts = { rows: wrows, series: [{ key: "fill", label: T("Demand served"), color: C.s1, width: 2 }]
-        .concat(crit ? [{ key: "crit", label: T("Critical patients"), color: C.s3, width: 1.5 }, { key: "other", label: T("Other patients"), color: C.s2, width: 1.5 }] : [])
+        .concat(crit ? [{ key: "crit", label: T("Priority customers"), color: C.s3, width: 1.5 }, { key: "other", label: T("Other customers"), color: C.s2, width: 1.5 }] : [])
         .concat(same && bwk ? [{ key: "bFill", label: T("Baseline"), color: C.b, dash: "5 4" }] : []), bands: bd,
       yFmt: function (v) { return v.toFixed(0) + "%"; }, tipFmt: function (v) { return v.toFixed(1) + "%"; }, yMax: 100, yMin: Math.min(90, Math.floor(Math.min.apply(null, lows) / 5) * 5), height: 200, xLabel: wkLabel, tipTitle: tipT, onHover: hover, ariaLabel: T("Chart") };
-    if (state.charts["ch-service"]) state.charts["ch-service"].update(sopts); else state.charts["ch-service"] = window.PSCharts.line($("ch-service"), sopts);
+    if (state.charts["ch-service"]) state.charts["ch-service"].update(sopts); else state.charts["ch-service"] = window.SPCharts.line($("ch-service"), sopts);
   }
 
   // ---- the model panel: diagram and equations, at the week the reader points at
   function model() {
-    var shape = (state.res.multi ? "m" : "") + (state.res.api ? "a" : "");
-    if (state.diagramMulti !== shape) { state.diagram = window.PSDiagram.render($("diagram"), state.res.multi, state.res.api); state.diagramMulti = shape; }
+    var shape = (state.res.multi ? "m" : "") + (state.res.ing ? "a" : "");
+    if (state.diagramMulti !== shape) { state.diagram = window.SPDiagram.render($("diagram"), state.res.multi, state.res.ing); state.diagramMulti = shape; }
     var html = "";
     EQ.SECTIONS.forEach(function (sec, si) {
       if (sec.tier && !state.res.multi) return;
-      if (sec.api && !state.res.api) return;
+      if (sec.ing && !state.res.ing) return;
       html += "<div class='eq-sec'><h3>" + T(sec.title) + "</h3>" + sec.items.map(function (it, ii) {
         return "<div class='eq-row'><span class='n'>" + T(it.name) + "</span><span class='e'>" + T(it.eq) + (it.note ? "<small>" + T(it.note) + "</small>" : "") + "</span><span class='v' data-eq='" + si + "." + ii + "'></span></div>";
       }).join("") + "</div>";
@@ -223,7 +223,7 @@
     var rows = res.rows, r = rows[rows.length - 1], hovering = state.hoverT != null;
     if (hovering) r = rows.reduce(function (a, x) { return Math.abs(x.t - state.hoverT) < Math.abs(a.t - state.hoverT) ? x : a; }, rows[0]);
     $("eq-week").textContent = hovering ? T("Values in week {w}", { w: num(r.t, r.t % 1 ? 2 : 0) }) : T("Values at the end of week {w} — point at a chart to see another week", { w: num(r.t, r.t % 1 ? 2 : 0) });
-    window.PSDiagram.update(state.diagram, r);
+    window.SPDiagram.update(state.diagram, r);
     var k = res.kpi;
     document.querySelectorAll("#equations [data-eq]").forEach(function (span) {
       var ix = span.getAttribute("data-eq").split("."), it = EQ.SECTIONS[+ix[0]].items[+ix[1]];
@@ -260,13 +260,13 @@
   $("btn-csv").addEventListener("click", function () {
     var cols = ["t", "demand", "served", "lost", "ordersToMfg", "forecast", "desired", "production", "capacity", "overtime", "qa", "approved", "rejected", "expired", "inventory", "target", "shipped", "workforce", "distInventory", "transit", "backlog", "profitRate", "profit"];
     var csv = ["week," + cols.slice(1).join(",")].concat(state.res.rows.map(function (r) { return cols.map(function (c) { var v = r[c]; return typeof v === "number" ? +v.toFixed(4) : v; }).join(","); })).join("\n");
-    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "pharmasim-run.csv"; document.body.appendChild(a); a.click(); a.remove();
+    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "supply-pulse-run.csv"; document.body.appendChild(a); a.click(); a.remove();
   });
   // ---- your own demand: read a CSV (src/data.js) and replay it
   function useHistory(text) {
-    var h = window.PSData.read(text), msg = $("imp-msg");
+    var h = window.SPData.read(text), msg = $("imp-msg");
     if (!h.ok) { msg.innerHTML = "<span class='bad'>" + h.errors.map(tw).join(" ") + "</span>"; return; }
-    window.PSApp.set(window.PSData.toParams(h));
+    window.SPApp.set(window.SPData.toParams(h));
     msg.innerHTML = T("Read {n} weeks: a starting level of {l} a week, a trend of {t} a year and week-to-week variation of {v}. The model now replays them.", {
       n: h.weeks.length, l: num(h.level), t: (h.trend >= 0 ? "+" : "−") + Math.abs(h.trend * 100).toFixed(1) + "%", v: (h.variation * 100).toFixed(1) + "%" }) + (h.notes.length ? " " + h.notes.map(tw).join(" ") : "");
   }
@@ -275,9 +275,9 @@
     var rd = new FileReader(); rd.onload = function () { useHistory(String(rd.result)); }; rd.readAsText(f);
     this.value = "";
   });
-  $("imp-sample").addEventListener("click", function () { useHistory(window.PSData.sample()); });
+  $("imp-sample").addEventListener("click", function () { useHistory(window.SPData.sample()); });
   $("imp-dl").addEventListener("click", function () {
-    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([window.PSData.sample()], { type: "text/csv" })); a.download = "pharmasim-sample-demand.csv"; document.body.appendChild(a); a.click(); a.remove();
+    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([window.SPData.sample()], { type: "text/csv" })); a.download = "supply-pulse-sample-demand.csv"; document.body.appendChild(a); a.click(); a.remove();
   });
   // the report opens with this scenario and the baseline
   function reportLink() {
@@ -302,7 +302,7 @@
   }
 
   // ---- the interface the tutorial drives
-  window.PSApp = {
+  window.SPApp = {
     // opts.preset: start from a preset (defaults otherwise); opts.baseline: "save" (after the preset) or "clear"
     set: function (values, opts) {
       opts = opts || {};

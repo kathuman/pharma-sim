@@ -1,4 +1,4 @@
-/* PharmaSim — the blueprint theme of the Warehouse Model (same tokens, type and panels). */
+/* Supply Pulse — the blueprint theme of the Warehouse Model (same tokens, type and panels). */
 :root{
   --bg:#0a2f52; --panel:#0d3a63; --panel-2:#082444; --line:#2a5580; --line-soft:#1d4470;
   --ink:#bfe4ff; --ink-dim:#8fd0f2; --ink-faint:#6fa8c9; --accent:#7dd3fc; --accent-ink:#04202b; --tele:#7be0c4;
@@ -115,7 +115,7 @@ select.choice:focus{outline:none; border-color:var(--accent);}
 .chart .band.outage{fill:rgba(227,73,72,.13);}
 .chart .band.expedite{fill:rgba(201,133,0,.16);}
 .chart .band.shock{fill:rgba(125,211,252,.07);}
-.chart .band.apioutage{fill:rgba(217,89,38,.14);}
+.chart .band.ingoutage{fill:rgba(217,89,38,.14);}
 .chart .band.lab{fill:rgba(25,158,112,.14);}
 .chart-legend{display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:6px; font-family:var(--mono); font-size:11px; color:var(--ink-dim);}
 .legend-item{display:inline-flex; align-items:center; gap:6px; white-space:nowrap;}
@@ -124,7 +124,7 @@ select.choice:focus{outline:none; border-color:var(--accent);}
 .rail-section[hidden]{display:none;}
 .band-key{display:inline-block; width:14px; height:10px; border-radius:2px;}
 .band-key.outage{background:rgba(227,73,72,.35);} .band-key.expedite{background:rgba(201,133,0,.4);} .band-key.shock{background:rgba(125,211,252,.2);}
-.band-key.apioutage{background:rgba(217,89,38,.4);} .band-key.lab{background:rgba(25,158,112,.4);}
+.band-key.ingoutage{background:rgba(217,89,38,.4);} .band-key.lab{background:rgba(25,158,112,.4);}
 .chart-tip{position:absolute; top:6px; pointer-events:none; z-index:5; background:rgba(4,32,60,.96); border:1px solid var(--line); border-radius:6px; padding:7px 9px; font-family:var(--mono); font-size:11px; color:var(--ink); min-width:150px; box-shadow:0 6px 18px rgba(0,0,0,.35);}
 .chart-tip[hidden]{display:none;}
 .chart-tip b{display:block; font-family:var(--head); font-size:12px; letter-spacing:.04em; color:var(--ink-dim); margin-bottom:3px;}
