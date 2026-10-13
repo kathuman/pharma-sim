@@ -227,7 +227,7 @@ footer.foot .consult a{color:var(--accent);}
 .import-box .bad{color:#ffb3b2;}
 
 /* ---- play mode */
-.back-link.play{color:var(--s4); border-color:rgba(201,133,0,.55);}
+.back-link.playlink{color:var(--s4); border-color:rgba(201,133,0,.55);}
 .play{max-width:1280px; margin:0 auto; padding:20px 22px 0; display:flex; flex-direction:column; gap:18px;}
 .play .foot{margin-top:6px;}
 .switch.inline{gap:8px; justify-content:flex-start;}
