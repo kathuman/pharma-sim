@@ -32,7 +32,7 @@
       { id: "b-ot", title: "Overtime pays here", target: "#kpis", setup: { preset: "step", baseline: "save", values: { overtime: true } },
         body: "With overtime the fill rate is <b>{{fill}}</b> ({{dFill}} points against the baseline) and profit changes by <b>{{dProfit}}</b>: for a medicine with a healthy margin, the extra packs are worth far more than the premium. Look at the dashed line on the production chart to compare." },
       { id: "b-done", title: "You know the basics", target: "#tourBtn", setup: { preset: "step", baseline: "save", values: { overtime: true } },
-        body: "You can read the charts and results, compare with a baseline, and test a lever. The <b>intermediate</b> level adds what is special about medicines: QA release, shelf life, and the supply line planners often forget to count." }
+        body: "You can read the charts and results, compare with a baseline, and test a lever. To feel the delays yourself, take the planner's seat: <b>Play</b> in the header. The <b>intermediate</b> level adds what is special about medicines: QA release, shelf life, and the supply line planners often forget to count." }
     ] },
     { id: "intermediate", title: "Intermediate", minutes: 12, blurb: "What is special about pharma: QA release delays, shelf life and expiry, and why counting the supply line matters.", steps: [
       { id: "i-qa", title: "The QA pipeline", target: "#diagram", setup: { preset: "step", baseline: "clear" },

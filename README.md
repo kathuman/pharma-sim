@@ -56,6 +56,14 @@ The same random futures are used for every option, so a difference is never luck
   overtime, expedited QA) over the same futures. It ranks those that meet a fill-rate target by profit and plots the
   trade-off frontier; click a point to apply that policy.
 
+## Play the planner
+
+[play.html](https://kathuman.github.io/pharma-sim/play.html) puts you in the planner's seat. You choose a scenario (or
+"surprise me"), and each turn of 1, 2 or 4 weeks you set the production plan. Hiring follows it, and you see only what
+a planner sees: orders received, stock, the QA quarantine, the workforce and its capacity. An optional hint shows
+what the planning rule would plan. At the end your two years are compared with the rule on the same demand, with the
+market demand revealed. Best results are remembered in the browser.
+
 ## What the tests check
 
 `node tests/model.test.js` (114 checks):
@@ -77,9 +85,12 @@ The same random futures are used for every option, so a difference is never luck
 correctly, tornado ends are direct runs within the slider ranges, and the optimiser's best is feasible, on the
 frontier, at least as good as the default policy, and the same when run in slices.
 
+`node tests/game.test.js` (18 checks): the play mode's turns, its comparison on the same demand, a plan that is
+followed exactly, and that following the rule's suggestion tracks the rule more closely the shorter the turn.
+
 `node tests/i18n.test.js` checks the Spanish translation for completeness, including the validation messages.
 
-CI runs all four on every push.
+CI runs all of them on every push.
 
 ## Run it
 
@@ -88,6 +99,7 @@ Plain JavaScript with no build step: serve the folder with any static server (`p
 
 ## Version history
 
+- **3.2.0**: play the planner (play.html).
 - **3.1.0**: the decision lab (scenarios side by side, many futures, sensitivity, the optimiser), and two new
   tutorial steps.
 - **3.0.0**: pharma realism.

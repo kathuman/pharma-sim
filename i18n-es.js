@@ -160,6 +160,16 @@
     "Expedite QA": "Acelerar QA", "Apply": "Aplicar", "Current policy": "Política actual", "fill rate (average over the futures) →": "tasa de cumplimiento (promedio en los futuros) →", "↑ profit": "↑ utilidad",
     "a policy": "una política", "the trade-off frontier: nothing else has both more profit and a higher fill rate": "la frontera de compromiso: ninguna otra tiene a la vez más utilidad y mayor tasa de cumplimiento",
     "best that meets the target": "la mejor que cumple la meta", "current policy": "política actual",
+    // ---- v3.2: play the planner
+    "Surprise me (the scenario stays hidden)": "Sorpréndame (el escenario queda oculto)", "Your best so far:": "Su mejor resultado hasta ahora:", "Week <b>{w}</b> of {n}": "Semana <b>{w}</b> de {n}",
+    "Orders this week": "Pedidos esta semana", "{x} a week over the last 4 weeks": "{x} por semana en las últimas 4 semanas", "Your stock": "Su inventario", "{x} weeks of this week's orders": "{x} semanas de los pedidos de esta semana",
+    "In QA quarantine": "En cuarentena de QA", "released after about {w} weeks": "se libera en unas {w} semanas", "can make {x} a week": "puede fabricar {x} por semana", "Production last week": "Producción de la semana pasada",
+    "patients served: {x}": "pacientes atendidos: {x}", "enough for {x} weeks at that rate": "alcanza para {x} semanas a ese ritmo", "The planning rule would plan <b>{x}</b> a week now.": "La regla de planificación planificaría ahora <b>{x}</b> por semana.",
+    "Plan this for the next {n} weeks →": "Planificar esto para las próximas {n} semanas →", "Orders received": "Pedidos recibidos", "The scenario was: {s}.": "El escenario era: {s}.", "Profit {d} against the rule.": "Utilidad {d} frente a la regla.",
+    "You": "Usted", "The planning rule": "La regla de planificación", "Your production": "Su producción", "The rule's production": "La producción de la regla",
+    "You beat the planning rule on both profit and service.": "Le ganó a la regla de planificación en utilidad y en servicio.", "More profit than the rule, but fewer patients served.": "Más utilidad que la regla, pero menos pacientes atendidos.",
+    "More patients served than the rule, at a lower profit.": "Más pacientes atendidos que la regla, con menos utilidad.",
+    "The rule did better on both. Try again: watch the stock and what is already in QA, not only this week's orders.": "La regla lo hizo mejor en ambas. Vuelva a intentarlo: mire el inventario y lo que ya está en QA, no solo los pedidos de esta semana.",
     // ---- escenarios
     "Demand step (+25%)": "Escalón de demanda (+25%)", "Flu season (16-week surge)": "Temporada de influenza (alza de 16 semanas)", "Short-life product (6-month shelf life)": "Producto de vida corta (vida útil de 6 meses)",
     "Plant outage (4 weeks)": "Detención de planta (4 semanas)", "Two-tier chain (distributor)": "Cadena de dos eslabones (distribuidor)", "Calm market (noise only)": "Mercado tranquilo (solo ruido)"
@@ -190,6 +200,15 @@
     "sens.kpi": "Resultado", "sens.input": "Barrido",
     "opt.note": "Busca entre <span id=\"opt-count\">540</span> políticas de planificación (cobertura meta, tiempo para corregir el inventario, peso de la línea de suministro, suavizamiento del pronóstico, horas extra y QA acelerado) en los mismos futuros de demanda, y ordena por utilidad promedio las que alcanzan la meta de servicio. Todo lo demás queda como en el escenario actual. Aplique cualquier resultado, o haga clic en un punto, para explorarlo.",
     "opt.target": "Tasa de cumplimiento de al menos", "opt.futures": "Futuros", "opt.run": "Buscar políticas",
+    "nav.play": "Jugar", "nav.sim": "← Simulador", "title.play": "PharmaSim — Juegue a ser el planificador", "play.sub": "JUEGUE A SER EL PLANIFICADOR",
+    "meta.play": "Tome el puesto del planificador en una cadena de suministro farmacéutica: fije el plan de producción semana a semana, viendo solo lo que ve un planificador, y compare su resultado con la regla de planificación en la misma demanda.",
+    "play.h": "Juegue a ser el planificador",
+    "play.intro": "Usted dirige la planta. En cada turno decide cuántas unidades por semana planificar; la contratación sigue su plan, y los lotes igual esperan en QA antes de poder venderse. Ve lo que ve un planificador real: los pedidos que llegan, su inventario, lo que está en cuarentena y su dotación. Nunca ve la demanda que viene. Al final, sus dos años se comparan con la regla de planificación en la misma demanda.",
+    "play.scn": "Escenario", "play.turn": "Cada turno", "play.t1": "1 semana", "play.t2": "2 semanas", "play.t4": "4 semanas", "play.hint": "Mostrar lo que haría la regla de planificación", "play.start": "Comenzar",
+    "play.plan": "Plan de producción (unidades por semana)", "play.q1": "= pedidos de esta semana", "play.q2": "= promedio de 4 semanas", "play.q3": "= la regla", "play.quit": "Detenerse y ver el resultado",
+    "play.c1": "Pedidos recibidos y producción", "play.c2": "Su inventario", "play.c3": "Servicio", "play.endh": "Su resultado",
+    "play.c4": "Demanda del mercado (ahora revelada), su producción y la de la regla",
+    "play.again": "Jugar otra vez (otro futuro de demanda)", "play.other": "Elegir otro escenario", "play.open": "Abrir este escenario en el simulador",
     "h.model": "El modelo", "model.note": "Las cajas son stocks, las válvulas son flujos y los círculos son lo que ven los planificadores. Los números son de la semana indicada, que sigue a su puntero en los gráficos.",
     "eq.sum": "Todas las ecuaciones, con su valor en esa semana",
     "why.sum": "Cómo leerlo: qué significan los resultados",
@@ -221,8 +240,8 @@
     "a.author.h": "Autor",
     "a.author.p": "PharmaSim fue diseñado y construido por <b>Daniel Alberto Sepulveda Estay, PhD</b>, fundador de <a href=\"https://kathuman.github.io/estay-dynamics/\" target=\"_blank\" rel=\"noopener\">Estay Dynamics</a>. Trabaja en dinámica de sistemas, simulación y optimización de redes para cadenas de suministro y operaciones, incluida la manufactura farmacéutica. Es doctor de la Universidad Técnica de Dinamarca (DTU) y magíster del Instituto Tecnológico de Massachusetts (MIT), y es miembro del consejo de la System Dynamics Society.",
     "a.author.links": "<a href=\"https://kathuman.github.io/estay-dynamics/about.html\" target=\"_blank\" rel=\"noopener\">Más sobre Daniel →</a> · <a href=\"https://kathuman.github.io/estay-dynamics/contact.html\" target=\"_blank\" rel=\"noopener\">Contáctenos</a>",
-    "a.cite": "<b>Para citar:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (versión <span id=\"cite-ver\">3.1.0</span>) [Software]. https://kathuman.github.io/pharma-sim/",
-    "a.foot": "PharmaSim v3.1.0 · <a href=\"index.html\">Abrir el simulador</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>"
+    "a.cite": "<b>Para citar:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (versión <span id=\"cite-ver\">3.2.0</span>) [Software]. https://kathuman.github.io/pharma-sim/",
+    "a.foot": "PharmaSim v3.2.0 · <a href=\"index.html\">Abrir el simulador</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>"
   };
 
   // ---- mensajes de validación del modelo

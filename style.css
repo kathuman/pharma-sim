@@ -212,6 +212,30 @@ footer.foot a{color:var(--ink-faint);}
 footer.foot .consult{display:block; margin-bottom:6px; font-weight:600; color:var(--ink);}
 footer.foot .consult a{color:var(--accent);}
 
+/* ---- play mode */
+.back-link.play{color:var(--s4); border-color:rgba(201,133,0,.55);}
+.play{max-width:1280px; margin:0 auto; padding:20px 22px 0; display:flex; flex-direction:column; gap:18px;}
+.play .foot{margin-top:6px;}
+.switch.inline{gap:8px; justify-content:flex-start;}
+.game-grid{display:grid; grid-template-columns:340px minmax(0,1fr); gap:24px;}
+.decide{display:flex; flex-direction:column; gap:10px;}
+.game-week{font-family:var(--head); font-size:15px; letter-spacing:.04em; color:var(--ink-dim); margin:0;}
+.game-week b{font-size:24px; color:var(--ink);}
+.facts{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.fact{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 10px;}
+.fact span{display:block; font-family:var(--head); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);}
+.fact b{display:block; font-family:var(--head); font-size:19px; color:var(--ink); font-variant-numeric:tabular-nums;}
+.fact small{display:block; font-family:var(--mono); font-size:10px; color:var(--ink-faint); line-height:1.35; margin-top:2px;}
+.plan-row{display:flex; align-items:center; gap:10px;}
+.plan-row input[type=number]{width:110px; font-family:var(--mono); font-size:14px; background:var(--panel-2); color:var(--ink); border:1px solid var(--accent); border-radius:6px; padding:6px 8px; text-align:right;}
+.quick{display:flex; flex-wrap:wrap; gap:6px;}
+.quick [hidden]{display:none;}
+.btn.big{padding:12px 14px; font-size:14px;}
+.game-charts .chart-title{margin-top:6px;}
+.end-tools{margin-top:16px;}
+a.btn{text-decoration:none; display:inline-block;}
+@media (max-width:900px){ .game-grid{grid-template-columns:1fr;} }
+
 /* ---- tutorial */
 .tour-menu{position:fixed; z-index:60; width:min(360px, calc(100vw - 16px)); background:var(--panel-2); border:1px solid var(--accent); border-radius:10px; padding:10px; box-shadow:0 12px 32px rgba(0,0,0,.45);}
 .tour-menu-h{font-family:var(--head); font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:12px; color:var(--ink-faint); margin:2px 4px 8px;}

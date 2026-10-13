@@ -35,7 +35,7 @@
     });
     var t = document.querySelector("title[data-i18n]"); if (t && D.H[t.getAttribute("data-i18n")]) document.title = D.H[t.getAttribute("data-i18n")];
     // links between the app's pages keep the language even where the choice cannot be stored
-    doc.querySelectorAll("a[href]").forEach(function (a) { var h = a.getAttribute("href"); if (/^(index|about)\.html|^\.\/?(#|$)/.test(h)) a.setAttribute("href", withLang(h)); });
+    doc.querySelectorAll("a[href]").forEach(function (a) { var h = a.getAttribute("href"); if (/^(index|about|play)\.html|^\.\/?(#|$)/.test(h)) a.setAttribute("href", withLang(h)); });
   }
   // the switch in the header: reloads in the other language, keeping the scenario
   function other() { return lang === "es" ? "en" : "es"; }

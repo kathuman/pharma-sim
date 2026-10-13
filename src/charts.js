@@ -29,6 +29,7 @@
       wrap.insertBefore(svg, tip);
       var xs = rows.map(function (r) { return r.t; }), x0 = xs[0], x1 = xs[xs.length - 1];
       var vals = []; o.series.forEach(function (s) { rows.forEach(function (r) { (s.band || [s.key]).forEach(function (key) { var v = r[key]; if (v != null && isFinite(v)) vals.push(v); }); }); });
+      if (!vals.length) vals = [0, o.emptyMax || 1];   // nothing to show yet (the play mode at week 0)
       var lo = o.yMin != null ? Math.min(o.yMin, Math.min.apply(null, vals)) : Math.min.apply(null, vals), hi = o.yMax != null ? o.yMax : Math.max.apply(null, vals);
       if (o.yMin != null && o.yMin === 0 && lo > 0) lo = 0;
       var yt = nice(lo, o.yMax != null ? hi : hi + (hi - lo) * 0.04, 4);

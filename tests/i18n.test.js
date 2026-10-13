@@ -12,7 +12,7 @@ const ids = (s) => [...String(s).matchAll(/id="([^"]+)"/g)].map((m) => m[1]).sor
 
 // ---- strings
 const used = new Set();
-for (const f of ["app.js", "tour.js", "lab.js", "src/diagram.js"]) for (const m of fs.readFileSync(R + f, "utf8").matchAll(/\bT\(\s*(["'])((?:(?!\1)[^\\]|\\.)*)\1/g)) used.add(m[1] === '"' ? JSON.parse('"' + m[2] + '"') : m[2].replace(/\\'/g, "'"));
+for (const f of ["app.js", "tour.js", "lab.js", "play.js", "src/diagram.js"]) for (const m of fs.readFileSync(R + f, "utf8").matchAll(/\bT\(\s*(["'])((?:(?!\1)[^\\]|\\.)*)\1/g)) used.add(m[1] === '"' ? JSON.parse('"' + m[2] + '"') : m[2].replace(/\\'/g, "'"));
 S.GROUPS.forEach((g) => { used.add(g.title); g.controls.forEach((c) => { used.add(c.label); if (c.note) used.add(c.note); if (c.unit) used.add(c.unit); if (c.zero) used.add(c.zero); (c.options || []).forEach((o) => used.add(o[1])); }); });
 E.SECTIONS.forEach((s) => { used.add(s.title); s.items.forEach((i) => { used.add(i.name); used.add(i.eq); if (i.note) used.add(i.note); if (i.u && i.u[0] !== "$") used.add(i.u); }); });
 Object.values(M.PRESETS).forEach((p) => used.add(p.label));
@@ -26,7 +26,7 @@ check("nothing in the dictionary is unused", unused.length === 0, unused.join(" 
 
 // ---- page text
 const keys = new Set();
-for (const f of ["index.html", "about.html"]) {
+for (const f of ["index.html", "about.html", "play.html"]) {
   const h = fs.readFileSync(R + f, "utf8");
   for (const m of h.matchAll(/data-i18n="([^"]+)"/g)) keys.add(m[1]);
   for (const m of h.matchAll(/data-i18n-attr="([^"]+)"/g)) m[1].split(",").forEach((p) => keys.add(p.split("=")[1]));
@@ -38,10 +38,10 @@ for (const f of ["index.html", "about.html"]) {
 check("every marked element has a Spanish version (" + keys.size + " keys)", [...keys].every((k) => ES.H[k] != null), [...keys].filter((k) => ES.H[k] == null).join(" "));
 check("every Spanish page text is used", Object.keys(ES.H).every((k) => keys.has(k)), Object.keys(ES.H).filter((k) => !keys.has(k)).join(" "));
 check("the Spanish page text keeps the English markup", [...keys].every((k) => {
-  const h = fs.readFileSync(R + "index.html", "utf8") + fs.readFileSync(R + "about.html", "utf8");
+  const h = fs.readFileSync(R + "index.html", "utf8") + fs.readFileSync(R + "about.html", "utf8") + fs.readFileSync(R + "play.html", "utf8");
   const m = new RegExp('<([a-z0-9]+)[^>]*\\sdata-i18n="' + k.replace(/\./g, "\\.") + '"[^>]*>([\\s\\S]*?)</\\1>').exec(h);
   return !m || m[2].includes("<" + m[1]) || tags(m[2]) === tags(ES.H[k]);   // (an element nesting its own tag is checked by the id check above)
-}), [...keys].filter((k) => { const h = fs.readFileSync(R + "index.html", "utf8") + fs.readFileSync(R + "about.html", "utf8"); const m = new RegExp('<([a-z0-9]+)[^>]*\\sdata-i18n="' + k.replace(/\./g, "\\.") + '"[^>]*>([\\s\\S]*?)</\\1>').exec(h); return m && !m[2].includes("<" + m[1]) && tags(m[2]) !== tags(ES.H[k]); }).join(" "));
+}), [...keys].filter((k) => { const h = fs.readFileSync(R + "index.html", "utf8") + fs.readFileSync(R + "about.html", "utf8") + fs.readFileSync(R + "play.html", "utf8"); const m = new RegExp('<([a-z0-9]+)[^>]*\\sdata-i18n="' + k.replace(/\./g, "\\.") + '"[^>]*>([\\s\\S]*?)</\\1>').exec(h); return m && !m[2].includes("<" + m[1]) && tags(m[2]) !== tags(ES.H[k]); }).join(" "));
 
 // ---- the model's validation messages
 const msgs = new Set();
@@ -54,5 +54,11 @@ const tw = (m) => ES.P.reduce((s, p) => s.replace(new RegExp(p[0], "g"), p[1]), 
 const left = [...msgs].filter((m) => tw(m) === m);
 check("every validation and warning message is translated (" + msgs.size + " messages)", msgs.size >= 22 && left.length === 0, left.join(" | "));
 
+// ---- one version everywhere
+{
+  const v = (f, re) => (re.exec(fs.readFileSync(R + f, "utf8")) || [])[1];
+  const app = v("app.js", /APP_VERSION = "([\d.]+)"/), vs = [v("play.js", /APP_VERSION = "([\d.]+)"/), v("about.html", /id="cite-ver">([\d.]+)</), v("about.html", /PharmaSim v([\d.]+) ·/), (/cite-ver\\">([\d.]+)</.exec(fs.readFileSync(R + "i18n-es.js", "utf8")) || [])[1], v("i18n-es.js", /PharmaSim v([\d.]+) ·/)];
+  check("every page and the Spanish text show the same version (" + app + ")", !!app && vs.every((x) => x === app), vs.join(" "));
+}
 console.log(pass + "/" + (pass + fail) + " checks passed");
 process.exit(fail ? 1 : 0);

@@ -3,7 +3,7 @@
 // demand. window.PSApp is the interface the tutorial uses.
 (function () {
   "use strict";
-  var APP_VERSION = "3.1.0";
+  var APP_VERSION = "3.2.0";
   var M = window.PSModel, S = window.PSSpecs, EQ = window.PSEquations, I18 = window.PSi18n, T = I18.T, tw = I18.tw;
   var $ = function (id) { return document.getElementById(id); }, listeners = [];
   var state = { p: M.merge(M.PRESETS.step.values), preset: "step", base: null, baseParams: null, res: null, hoverT: null, diagram: null, diagramMulti: null, charts: {} };
