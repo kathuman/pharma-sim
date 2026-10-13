@@ -3,9 +3,9 @@
 // demand. window.PSApp is the interface the tutorial uses.
 (function () {
   "use strict";
-  var APP_VERSION = "3.0.0";
+  var APP_VERSION = "3.1.0";
   var M = window.PSModel, S = window.PSSpecs, EQ = window.PSEquations, I18 = window.PSi18n, T = I18.T, tw = I18.tw;
-  var $ = function (id) { return document.getElementById(id); };
+  var $ = function (id) { return document.getElementById(id); }, listeners = [];
   var state = { p: M.merge(M.PRESETS.step.values), preset: "step", base: null, baseParams: null, res: null, hoverT: null, diagram: null, diagramMulti: null, charts: {} };
 
   // ---- formatting
@@ -81,6 +81,7 @@
     state.res = res;
     var notes = $("notes"); notes.hidden = !res.warnings.length; notes.innerHTML = res.warnings.map(function (e) { return "● " + tw(e); }).join("<br>");
     headline(); kpis(); compareBar(); charts(); model(); saveHash();
+    listeners.forEach(function (fn) { try { fn(res); } catch (e) { if (window.console) console.error(e); } });
   }
   function headline() {
     var k = state.res.kpi, p = state.res.params, b = state.base && state.base.kpi;
@@ -293,6 +294,9 @@
     params: function () { return Object.assign({}, state.p); },
     result: function () { return state.res; },
     baseline: function () { return state.base; },
+    baselineParams: function () { return state.baseParams ? Object.assign({}, state.baseParams) : null; },
+    preset: function () { return state.preset; },
+    onChange: function (fn) { listeners.push(fn); },
     version: APP_VERSION
   };
 

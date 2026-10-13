@@ -145,6 +145,21 @@
     "QA lab capacity = QA lab capacity % × the starting output, raised by the QA time saved while expediting (extra shifts).": "Capacidad del laboratorio de QA = % de capacidad del laboratorio × la producción inicial, aumentada en el tiempo de QA ahorrado mientras se acelera (turnos extra).",
     "API supplier outage (16 weeks)": "Interrupción del proveedor de API (16 semanas)", "Biologic (long QA, high value)": "Biológico (QA largo, alto valor)",
     "Generic antibiotic (thin margin, campaigns)": "Antibiótico genérico (margen estrecho, campañas)", "Pandemic vaccine (surge, lab bottleneck)": "Vacuna pandémica (alza, cuello de botella en el laboratorio)",
+    // ---- v3.1: the decision lab
+    "Current scenario": "Escenario actual", "Load": "Cargar", "Delete {name}": "Eliminar {name}", "Scenario {n}": "Escenario {n}", "Saved ✓": "Guardado ✓",
+    "This browser cannot store scenarios.": "Este navegador no puede guardar escenarios.", "Peak workforce": "Dotación máxima",
+    "In {n} demand futures the fill rate runs from <b>{lo}</b> to <b>{hi}</b> (median {mid}), at least one week is short in <b>{sh}</b> of them, and profit runs from {plo} to {phi}.": "En {n} futuros de demanda la tasa de cumplimiento va de <b>{lo}</b> a <b>{hi}</b> (mediana {mid}), al menos una semana tiene faltantes en el <b>{sh}</b> de ellos, y la utilidad va de {plo} a {phi}.",
+    "Against the baseline, in the very same futures, it makes more profit in <b>{w}</b> of {n} and serves more patients in <b>{f}</b>.": "Frente a la línea base, en los mismos futuros, gana más en <b>{w}</b> de {n} y atiende a más pacientes en <b>{f}</b>.",
+    "Save a baseline to see in how many futures your change wins.": "Guarde una línea base para ver en cuántos futuros gana su cambio.",
+    "Middle 80% of futures": "80% central de los futuros", "Median future": "Futuro mediano", "Baseline median": "Mediana de la línea base", "10th percentile": "Percentil 10", "Median": "Mediana", "90th percentile": "Percentil 90",
+    "Nothing moves this result by a 20% change in any input.": "Ningún dato mueve este resultado con un cambio de 20%.", "input −20%": "dato −20%", "input +20%": "dato +20%", "now {v}": "ahora {v}", "at {v}": "con {v}",
+    "The scenario has changed since this search; run it again to update the results.": "El escenario cambió desde esta búsqueda; vuelva a correrla para actualizar los resultados.",
+    "Searching {n} policies in {f} futures each…": "Buscando entre {n} políticas, en {f} futuros cada una…",
+    "{n} policies tried in {f} futures each ({ms} ms): none reaches a fill rate of {t} on average. Lower the target, or change the plant (capacity, QA, campaigns) first.": "{n} políticas probadas en {f} futuros cada una ({ms} ms): ninguna alcanza en promedio una tasa de cumplimiento de {t}. Baje la meta o cambie primero la planta (capacidad, QA, campañas).",
+    "{n} policies tried in {f} futures each ({ms} ms); {k} reach the target. The best makes <b>{p}</b> on average with a fill rate of <b>{fill}</b>, {d} against the current policy.": "{n} políticas probadas en {f} futuros cada una ({ms} ms); {k} alcanzan la meta. La mejor gana <b>{p}</b> en promedio con una tasa de cumplimiento de <b>{fill}</b>, {d} frente a la política actual.",
+    "Expedite QA": "Acelerar QA", "Apply": "Aplicar", "Current policy": "Política actual", "fill rate (average over the futures) →": "tasa de cumplimiento (promedio en los futuros) →", "↑ profit": "↑ utilidad",
+    "a policy": "una política", "the trade-off frontier: nothing else has both more profit and a higher fill rate": "la frontera de compromiso: ninguna otra tiene a la vez más utilidad y mayor tasa de cumplimiento",
+    "best that meets the target": "la mejor que cumple la meta", "current policy": "política actual",
     // ---- escenarios
     "Demand step (+25%)": "Escalón de demanda (+25%)", "Flu season (16-week surge)": "Temporada de influenza (alza de 16 semanas)", "Short-life product (6-month shelf life)": "Producto de vida corta (vida útil de 6 meses)",
     "Plant outage (4 weeks)": "Detención de planta (4 semanas)", "Two-tier chain (distributor)": "Cadena de dos eslabones (distribuidor)", "Calm market (noise only)": "Mercado tranquilo (solo ruido)"
@@ -164,6 +179,17 @@
     "c.stock": "Inventario", "c.stock.sub": "Unidades en existencia que todavía se pueden vender.", "c.service": "Servicio", "c.service.sub": "Parte de la demanda de cada semana que llegó a los pacientes.",
     "c.profit": "Utilidad acumulada", "c.profit.sub": "Los ingresos de la planta menos todos los costos, desde la semana 0.", "c.people": "Dotación", "c.people.sub": "Personas en planilla; la capacidad las sigue.",
     "c.waste": "Pérdidas", "c.waste.sub": "Unidades perdidas hasta ahora: lotes rechazados en QA e inventario dado de baja porque le quedaba muy poca vida útil.",
+    "h.lab": "Laboratorio de decisiones",
+    "lab.note": "Compare escenarios guardados lado a lado, vea el rango de resultados en muchos futuros de demanda, encuentre qué datos importan más y deje que el optimizador busque la política de planificación. Cada opción se prueba en los mismos futuros aleatorios.",
+    "aria.labtabs": "Herramientas de decisión", "tab.scn": "Escenarios", "tab.fut": "Muchos futuros", "tab.sens": "Sensibilidad", "tab.opt": "Optimizador",
+    "scn.note": "Guarde el escenario actual, cambie cosas y vuelva a guardar: cada escenario guardado se vuelve a correr aquí lado a lado, con el mejor valor de cada fila destacado. Los escenarios guardados quedan en este navegador.",
+    "ph.scn": "Nombre del escenario", "scn.save": "Guardar escenario", "scn.csv": "Descargar tabla", "scn.empty": "Aún no hay escenarios guardados: la tabla muestra solo el actual.",
+    "fut.note": "El mismo escenario en muchos futuros de demanda aleatorios, y la línea base en los mismos futuros. La banda sombreada contiene el 80% central de los futuros; la línea es la mediana.",
+    "fut.n": "Futuros", "fut.c1": "Servicio en los futuros", "fut.c2": "Producción en los futuros",
+    "sens.note": "¿Qué datos importan más? Cada dato se mueve un 20% hacia abajo y un 20% hacia arriba, de a uno, y las barras muestran cuánto se mueve el resultado elegido. El barrido de abajo recorre un dato en todo su rango.",
+    "sens.kpi": "Resultado", "sens.input": "Barrido",
+    "opt.note": "Busca entre <span id=\"opt-count\">540</span> políticas de planificación (cobertura meta, tiempo para corregir el inventario, peso de la línea de suministro, suavizamiento del pronóstico, horas extra y QA acelerado) en los mismos futuros de demanda, y ordena por utilidad promedio las que alcanzan la meta de servicio. Todo lo demás queda como en el escenario actual. Aplique cualquier resultado, o haga clic en un punto, para explorarlo.",
+    "opt.target": "Tasa de cumplimiento de al menos", "opt.futures": "Futuros", "opt.run": "Buscar políticas",
     "h.model": "El modelo", "model.note": "Las cajas son stocks, las válvulas son flujos y los círculos son lo que ven los planificadores. Los números son de la semana indicada, que sigue a su puntero en los gráficos.",
     "eq.sum": "Todas las ecuaciones, con su valor en esa semana",
     "why.sum": "Cómo leerlo: qué significan los resultados",
@@ -195,8 +221,8 @@
     "a.author.h": "Autor",
     "a.author.p": "PharmaSim fue diseñado y construido por <b>Daniel Alberto Sepulveda Estay, PhD</b>, fundador de <a href=\"https://kathuman.github.io/estay-dynamics/\" target=\"_blank\" rel=\"noopener\">Estay Dynamics</a>. Trabaja en dinámica de sistemas, simulación y optimización de redes para cadenas de suministro y operaciones, incluida la manufactura farmacéutica. Es doctor de la Universidad Técnica de Dinamarca (DTU) y magíster del Instituto Tecnológico de Massachusetts (MIT), y es miembro del consejo de la System Dynamics Society.",
     "a.author.links": "<a href=\"https://kathuman.github.io/estay-dynamics/about.html\" target=\"_blank\" rel=\"noopener\">Más sobre Daniel →</a> · <a href=\"https://kathuman.github.io/estay-dynamics/contact.html\" target=\"_blank\" rel=\"noopener\">Contáctenos</a>",
-    "a.cite": "<b>Para citar:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (versión <span id=\"cite-ver\">3.0.0</span>) [Software]. https://kathuman.github.io/pharma-sim/",
-    "a.foot": "PharmaSim v3.0.0 · <a href=\"index.html\">Abrir el simulador</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>"
+    "a.cite": "<b>Para citar:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (versión <span id=\"cite-ver\">3.1.0</span>) [Software]. https://kathuman.github.io/pharma-sim/",
+    "a.foot": "PharmaSim v3.1.0 · <a href=\"index.html\">Abrir el simulador</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>"
   };
 
   // ---- mensajes de validación del modelo

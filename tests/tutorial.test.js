@@ -2,7 +2,7 @@
 // Every question's claim holds in the model for the scenario its step sets up, every step points at something that
 // exists, quotes only known numbers and has a Spanish version with the same shape.
 const fs = require("fs"), path = require("path");
-const M = require("../src/model.js"), S = require("../src/specs.js"), C = require("../tour-content.js"), ES = require("../tour-content-es.js");
+const M = require("../src/model.js"), A = require("../src/analysis.js"), S = require("../src/specs.js"), C = require("../tour-content.js"), ES = require("../tour-content-es.js");
 let pass = 0, fail = 0;
 function check(name, cond, detail) { if (cond) pass++; else fail++; if (!cond || process.env.VERBOSE) console.log((cond ? "ok   " : "FAIL ") + name + (detail !== undefined ? "  → " + detail : "")); }
 const run = (preset, v) => M.run(Object.assign({}, M.PRESETS[preset].values, v || {})).kpi;
@@ -19,6 +19,7 @@ const CLAIMS = {
   "step-cover-six-full-service": () => run("step", { coverage: 6 }).shortWeeks === 0 && run("step", { coverage: 6 }).fillRate > 0.999,
   "shortlife-campaign-waste": () => run("shortLife", { campaignWeeks: 4 }).wasteUnits > run("shortLife").wasteUnits,
   "api-buffer-cheaper": () => { const a = run("apiOutage", { apiCoverage: 10 }), f = run("apiOutage", { coverage: 8 }); return Math.abs(a.fillRate - f.fillRate) < 0.003 && a.profit > f.profit && a.fillRate > run("apiOutage").fillRate; },
+  "futures-overtime-wins": () => { const a = A.futures(Object.assign({}, M.PRESETS.step.values, { overtime: true }), 100), b = A.futures(M.PRESETS.step.values, 100); return A.headToHead(a, b, "profit").wins >= 95; },
   "allocation-same-total": () => { const a = run("outage"), b = run("outage", { allocation: "critical" }); return Math.abs(a.fillRate - b.fillRate) < 1e-12 && b.criticalFill > a.criticalFill; }
 };
 // the statements the step texts make about the scenarios they show
@@ -37,6 +38,7 @@ const STATEMENTS = [
   ["the API outage causes a shortage", () => run("apiOutage").shortWeeks > 0 && run("apiOutage").lost > 0],
   ["API orders are amplified on the step, and counting the supply line cuts them", () => run("step", { apiTier: true }).apiBullwhip > 3 && run("step", { apiTier: true, supplyLineWeight: 1 }).apiBullwhip < run("step", { apiTier: true }).apiBullwhip],
   ["critical first: critical patients get more, others less", () => { const a = run("outage"), b = run("outage", { allocation: "critical" }); return b.criticalFill > a.criticalFill && b.otherFill < a.otherFill; }],
+  ["the optimiser's best policies for the step use overtime and count the supply line", () => { const o = A.optimise(M.merge(M.PRESETS.step.values), { futures: 10, minFill: 0.995 }); return o.best.length >= 5 && o.best.slice(0, 5).every((b) => b.policy.overtime && b.policy.supplyLineWeight > 0); }],
   ["every preset value is within its slider range", () => Object.values(M.PRESETS).every((pr) => Object.entries(pr.values).every(([k, v]) => { const c = S.BY_KEY[k]; return !c || c.min == null || (v >= c.min && v <= c.max); }))]
 ];
 const ids = new Set();
@@ -50,6 +52,7 @@ const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const exists = (sel) => {
   if (/^#c_/.test(sel)) return !!S.BY_KEY[sel.slice(3)];
   if (sel === "#notes") return html.includes('id="notes"');
+  if (/^#pane-/.test(sel)) return html.includes('id="' + sel.slice(1) + '"');
   if (/^#g_/.test(sel)) return S.GROUPS.some((g) => g.id === sel.slice(3));
   return html.includes('id="' + sel.slice(1) + '"');
 };
@@ -65,6 +68,7 @@ C.LEVELS.forEach((l) => {
     check(s.id + ": d-numbers only with a baseline", toks.every((t) => t[0] !== "d" || st.baseline === "save"));
     if (s.quiz) check(s.id + ": the answer is one of the options", s.quiz.answer >= 0 && s.quiz.answer < s.quiz.options.length);
     if (st.open) check(s.id + ": opens an element that exists", exists(st.open));
+    if (st.tab) check(s.id + ": opens a lab tab that exists", html.includes('data-tab="' + st.tab + '"'));
     if (st.values) check(s.id + ": the scenario runs", M.run(Object.assign({}, M.PRESETS[st.preset].values, st.values)).ok);
   });
 });

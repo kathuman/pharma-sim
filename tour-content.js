@@ -119,6 +119,12 @@
           explain: "Six weeks of stock is enough to ride out the weeks it takes to hire. It costs holding, but here that costs less than the sales it saves. Next we set it." } },
       { id: "a-design", title: "Your turn", target: "#g_policy", setup: { preset: "step", baseline: "save", values: { coverage: 6 } },
         body: "With six weeks of cover the fill rate is <b>{{fill}}</b> and profit changes by {{dProfit}}. Now try your own design: a faster time to hire, a slower correction, the supply-line weight, or overtime, and compare each with the baseline." },
+      { id: "a-fut-q", title: "One future can mislead", target: "#pane-fut", setup: { preset: "step", baseline: "save", values: { overtime: true }, tab: "fut" },
+        body: "Everything so far used one random demand future. The <b>Many futures</b> tab of the decision lab runs the scenario in 100 futures, and the baseline in the very same ones. The band shows the middle 80% of futures.",
+        quiz: { q: "After the demand step, in how many of the 100 futures does overtime make more profit than no overtime?", options: ["Almost all of them", "About half", "Only a few"], answer: 0, claim: "futures-overtime-wins",
+          explain: "The sentence above the charts counts it: overtime wins in nearly every future, so its value is not the luck of one future. A lever that wins in only half of them is a gamble." } },
+      { id: "a-opt", title: "Let the optimiser search", target: "#pane-opt", setup: { preset: "step", baseline: "clear", tab: "opt" },
+        body: "The <b>Optimiser</b> tab tries every combination of target cover, time to correct stock, supply-line weight, forecast smoothing, overtime and expedited QA over the same futures, and ranks those that keep the fill rate above your target by profit. Press <b>Search policies</b>: for this step the best policies use overtime and count the supply line, the two lessons of this tutorial. Click any point to try that policy." },
       { id: "a-done", title: "Advanced complete", target: "#tourBtn", setup: { preset: "step", baseline: "save", values: { coverage: 6 } },
         body: "You have seen where amplification starts, how each remedy works, and that a lever's value depends on the economics of the medicine. Try the case presets next: a biologic, a generic antibiotic and a pandemic vaccine. Every number here comes from the equations below the diagram, and the model is tested so that each claim in this tutorial holds." }
     ] }

@@ -49,6 +49,7 @@
     var s = st.setup || {};
     APP.set(s.values || {}, { preset: s.preset, baseline: s.baseline, baselineValues: s.baselineValues });
     if (s.open) { var d = document.querySelector(s.open); if (d && d.tagName === "DETAILS") d.open = true; }
+    if (s.tab) { var tb = document.querySelector("[data-tab='" + s.tab + "']"); if (tb) tb.click(); }
     show(st);
   }
   // the live numbers a step's text quotes

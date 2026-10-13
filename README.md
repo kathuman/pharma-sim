@@ -43,6 +43,19 @@ against a saved baseline. A three-level tutorial (beginner, intermediate, advanc
 
 The page shows every equation with its value in any week, and a live stock-and-flow diagram.
 
+## Decision lab
+
+The same random futures are used for every option, so a difference is never luck.
+
+- **Scenarios**: save scenarios and compare them side by side, with the best value in each row highlighted, and
+  download the table.
+- **Many futures**: run the scenario in 50–200 demand futures. Bands show the middle 80%, alongside percentiles of
+  every result, the chance of a shortage, and the number of futures in which it beats the baseline.
+- **Sensitivity**: a tornado of which inputs move a result most (each ±20%), and a sweep of one input across its range.
+- **Optimiser**: searches 540 planning policies (cover, correction time, supply-line weight, forecast smoothing,
+  overtime, expedited QA) over the same futures. It ranks those that meet a fill-rate target by profit and plots the
+  trade-off frontier; click a point to apply that policy.
+
 ## What the tests check
 
 `node tests/model.test.js` (114 checks):
@@ -55,14 +68,18 @@ The page shows every equation with its value in any week, and a live stock-and-f
 - The model can be advanced in pieces, giving exactly the same run, and a fixed plan can replace the planning rule
   (for the coming play mode).
 
-`node tests/tutorial.test.js` (331 checks):
+`node tests/tutorial.test.js` (350 checks):
 - Every claim the tutorial's questions make holds in the model.
 - Every step points at a real element and quotes only known numbers.
 - Every step has a Spanish version with the same shape.
 
+`node tests/analysis.test.js` (26 checks): every future is a direct run, quantiles are ordered, comparisons count
+correctly, tornado ends are direct runs within the slider ranges, and the optimiser's best is feasible, on the
+frontier, at least as good as the default policy, and the same when run in slices.
+
 `node tests/i18n.test.js` checks the Spanish translation for completeness, including the validation messages.
 
-CI runs all three on every push.
+CI runs all four on every push.
 
 ## Run it
 
@@ -71,6 +88,8 @@ Plain JavaScript with no build step: serve the folder with any static server (`p
 
 ## Version history
 
+- **3.1.0**: the decision lab (scenarios side by side, many futures, sensitivity, the optimiser), and two new
+  tutorial steps.
 - **3.0.0**: pharma realism.
   - An API supplier tier, with a lead time, capacity and outages.
   - Campaign production with changeovers and cycle stock.

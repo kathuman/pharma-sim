@@ -70,6 +70,57 @@
       </div>
     </section>
 
+    <section class="panel" id="p-lab">
+      <h2 data-i18n="h.lab">Decision lab</h2>
+      <p class="panel-note" data-i18n="lab.note">Compare saved scenarios side by side, see the range of outcomes over many demand futures, find which inputs matter most, and let the optimiser search the planning policy. Every option is tried on the same random futures.</p>
+      <div class="dtabs" role="tablist" data-i18n-attr="aria-label=aria.labtabs" aria-label="Decision tools">
+        <button type="button" role="tab" class="active" aria-selected="true" data-tab="scn" data-i18n="tab.scn">Scenarios</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="fut" data-i18n="tab.fut">Many futures</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="sens" data-i18n="tab.sens">Sensitivity</button>
+        <button type="button" role="tab" aria-selected="false" data-tab="opt" data-i18n="tab.opt">Optimiser</button>
+      </div>
+      <div class="dpane" id="pane-scn">
+        <p class="panel-note" data-i18n="scn.note">Save the current scenario, change things and save again: every saved scenario is rerun here side by side, with the best value in each row highlighted. Saved scenarios stay in this browser.</p>
+        <div class="dtools">
+          <input type="text" id="scn-name" maxlength="40" data-i18n-attr="placeholder=ph.scn,aria-label=ph.scn" placeholder="Scenario name" aria-label="Scenario name" />
+          <button class="btn small primary" id="scn-save" type="button" data-i18n="scn.save">Save scenario</button>
+          <button class="btn small" id="scn-csv" type="button" data-i18n="scn.csv">Download table</button>
+          <span class="dmsg" id="scn-msg"></span>
+        </div>
+        <p class="panel-note" id="scn-empty" data-i18n="scn.empty">No saved scenarios yet: the table shows only the current one.</p>
+        <div class="table-scroll"><table class="dtable" id="scn-table"></table></div>
+      </div>
+      <div class="dpane" id="pane-fut" hidden>
+        <p class="panel-note" data-i18n="fut.note">The same scenario in many random demand futures, and the baseline in the very same futures. The shaded band holds the middle 80% of futures; the line is the median.</p>
+        <div class="dtools"><label><span data-i18n="fut.n">Futures</span> <select class="choice" id="fut-n"><option>50</option><option selected>100</option><option>200</option></select></label></div>
+        <p class="lab-sum" id="fut-sum"></p>
+        <div class="chart-grid">
+          <div><p class="chart-title" data-i18n="fut.c1">Service across futures</p><div id="fut-fill"></div></div>
+          <div><p class="chart-title" data-i18n="fut.c2">Production across futures</p><div id="fut-prod"></div></div>
+        </div>
+        <div class="table-scroll"><table class="dtable" id="fut-table"></table></div>
+      </div>
+      <div class="dpane" id="pane-sens" hidden>
+        <p class="panel-note" data-i18n="sens.note">Which inputs matter most? Each input is moved 20% down and 20% up, one at a time, and the bars show how far the chosen result moves. The sweep below runs one input across its whole range.</p>
+        <div class="dtools"><label><span data-i18n="sens.kpi">Result</span> <select class="choice" id="sens-kpi"></select></label></div>
+        <div id="sens-tornado"></div>
+        <div class="dtools sweep-tools"><label><span data-i18n="sens.input">Sweep</span> <select class="choice" id="sens-input"></select></label></div>
+        <div id="sens-sweep"></div>
+      </div>
+      <div class="dpane" id="pane-opt" hidden>
+        <p class="panel-note" data-i18n="opt.note">Searches <span id="opt-count">540</span> planning policies (target cover, time to correct stock, supply-line weight, forecast smoothing, overtime and expedited QA) over the same demand futures, and ranks those that reach the service target by average profit. Everything else stays as in the current scenario. Apply any result, or click a point, to explore it.</p>
+        <div class="dtools">
+          <label><span data-i18n="opt.target">Fill rate at least</span> <select class="choice" id="opt-target"><option value="0.98">98%</option><option value="0.99">99%</option><option value="0.995" selected>99.5%</option><option value="0.999">99.9%</option></select></label>
+          <label><span data-i18n="opt.futures">Futures</span> <select class="choice" id="opt-futures"><option>5</option><option selected>10</option><option>20</option></select></label>
+          <button class="btn small primary" id="opt-run" type="button" data-i18n="opt.run">Search policies</button>
+        </div>
+        <div class="opt-progress"><div id="opt-bar"></div></div>
+        <p class="lab-sum" id="opt-status"></p>
+        <div class="table-scroll"><table class="dtable" id="opt-table"></table></div>
+        <div id="opt-plot"></div>
+      </div>
+    </section>
+
     <section class="panel" id="p-model">
       <h2 data-i18n="h.model">The model</h2>
       <p class="panel-note" data-i18n="model.note">Boxes are stocks, valves are flows and circles are what the planners see. The numbers are for the week shown, which follows your pointer on the charts.</p>
@@ -120,7 +171,9 @@
 <script src="src/equations.js"></script>
 <script src="src/charts.js"></script>
 <script src="src/diagram.js"></script>
+<script src="src/analysis.js"></script>
 <script src="app.js"></script>
+<script src="lab.js"></script>
 <script src="tour-content.js"></script>
 <script src="tour-content-es.js"></script>
 <script src="tour.js"></script>

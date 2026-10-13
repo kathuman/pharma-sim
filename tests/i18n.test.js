@@ -12,10 +12,11 @@ const ids = (s) => [...String(s).matchAll(/id="([^"]+)"/g)].map((m) => m[1]).sor
 
 // ---- strings
 const used = new Set();
-for (const f of ["app.js", "tour.js", "src/diagram.js"]) for (const m of fs.readFileSync(R + f, "utf8").matchAll(/\bT\(\s*(["'])((?:(?!\1)[^\\]|\\.)*)\1/g)) used.add(m[1] === '"' ? JSON.parse('"' + m[2] + '"') : m[2].replace(/\\'/g, "'"));
+for (const f of ["app.js", "tour.js", "lab.js", "src/diagram.js"]) for (const m of fs.readFileSync(R + f, "utf8").matchAll(/\bT\(\s*(["'])((?:(?!\1)[^\\]|\\.)*)\1/g)) used.add(m[1] === '"' ? JSON.parse('"' + m[2] + '"') : m[2].replace(/\\'/g, "'"));
 S.GROUPS.forEach((g) => { used.add(g.title); g.controls.forEach((c) => { used.add(c.label); if (c.note) used.add(c.note); if (c.unit) used.add(c.unit); if (c.zero) used.add(c.zero); (c.options || []).forEach((o) => used.add(o[1])); }); });
 E.SECTIONS.forEach((s) => { used.add(s.title); s.items.forEach((i) => { used.add(i.name); used.add(i.eq); if (i.note) used.add(i.note); if (i.u && i.u[0] !== "$") used.add(i.u); }); });
 Object.values(M.PRESETS).forEach((p) => used.add(p.label));
+Object.values(require("../src/analysis.js").KPIS).forEach((k) => used.add(k.label));
 const missing = [...used].filter((s) => ES.T[s] == null);
 check("every string has a Spanish version (" + used.size + " strings)", missing.length === 0, missing.map((s) => JSON.stringify(s)).join(" | "));
 const bad = [...used].filter((s) => ES.T[s] != null && (ph(s) !== ph(ES.T[s]) || tags(s) !== tags(ES.T[s])));
