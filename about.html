@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title.about">About PharmaSim</title>
+  <meta data-i18n-attr="content=meta.about" name="description" content="PharmaSim is a system-dynamics model of a pharmaceutical supply chain: demand shocks, QA release, shelf life, workforce and a distributor, with levers measured on profit, service, amplification and waste. Designed and built by Daniel Alberto Sepulveda Estay, PhD." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .about{max-width:980px; margin:0 auto; padding:34px 22px 10px;}
+    .about .eyebrow{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent);}
+    .about h1{font-family:var(--head); font-weight:700; font-size:40px; letter-spacing:.02em; margin:8px 0 12px; color:var(--ink);}
+    .about .lede{font-size:18px; line-height:1.6; color:var(--ink-dim); max-width:760px; margin:0 0 22px;}
+    .about h2{font-family:var(--head); font-weight:700; font-size:20px; letter-spacing:.05em; text-transform:uppercase; margin:0 0 12px; color:var(--ink);}
+    .about p{line-height:1.65; color:var(--ink-dim); margin:0 0 12px;}
+    .about b{color:var(--ink);}
+    .cols{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:28px;}
+    .card{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px 22px;}
+    .card ul{list-style:none; margin:0; padding:0;}
+    .card li{padding:10px 0; border-bottom:1px dashed var(--line-soft); line-height:1.55; color:var(--ink-dim);}
+    .card li:last-child{border-bottom:none;}
+    .card li b{display:block; font-family:var(--head); font-weight:600; font-size:15px; letter-spacing:.04em; color:var(--ink); margin-bottom:2px;}
+    .open{display:inline-block; font-family:var(--head); font-weight:700; font-size:14px; letter-spacing:.06em; text-transform:uppercase; background:var(--accent); color:var(--accent-ink) !important; text-decoration:none; padding:10px 16px; border-radius:8px;}
+    .open:hover{filter:brightness(1.08);}
+    .cite{font-size:13px !important; color:var(--ink-faint) !important; margin-top:16px !important;}
+    footer.foot{max-width:980px; margin:30px auto 0; padding:22px 22px 50px;}
+    @media (max-width:760px){ .cols{grid-template-columns:1fr;} .about h1{font-size:32px;} .about .lede{font-size:16px;} }
+  </style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <a class="mark" href="index.html">PHARMA<span>SIM</span></a>
+    <div class="sub"><span class="rest" data-i18n="a.sub">ABOUT THE APP</span></div>
+  </div>
+  <div class="header-actions">
+    <button class="back-link" type="button" id="langBtn" lang="es">Español</button>
+    <a class="back-link" href="index.html" data-i18n="a.open">Open the simulator</a>
+    <a class="back-link" href="https://kathuman.github.io/claude-projects/" data-i18n="nav.projects">← Projects</a>
+  </div>
+</header>
+
+<main class="about">
+  <div class="eyebrow" data-i18n="a.eyebrow">About the app</div>
+  <h1 data-i18n="a.h1">PharmaSim</h1>
+  <p class="lede" data-i18n="a.lede">Why does a 25% rise in demand make a plant swing its output by more, run short for weeks and then overshoot? PharmaSim shows how the delays of a pharmaceutical supply chain (forecasting, hiring, QA release and shipping) turn reasonable decisions into amplification, shortages and expired stock, and what each lever really costs. In English or Spanish.</p>
+  <p data-i18n="a.openbtn"><a class="open" href="index.html">Open PharmaSim →</a></p>
+
+  <div class="cols">
+    <section class="card">
+      <h2 data-i18n="a.what.h">What it does</h2>
+      <ul data-i18n="a.what.list">
+        <li><b>Shocks the chain</b>A lasting change in demand, a seasonal surge or a plant outage, with random week-to-week variation that the baseline shares, so comparisons are fair.</li>
+        <li><b>Models what is specific to pharma</b>QA release that takes weeks and rejects some batches, shelf life tracked first-in, first-out with a minimum remaining life at delivery, and a workforce that takes time to hire and qualify.</li>
+        <li><b>Adds a distributor</b>A second tier that orders from the plant, so you can see where amplification starts and what sharing sales data changes.</li>
+        <li><b>Weighs the levers</b>Overtime, expedited QA and the planning policy (cover, forecast, correction speed and the weight on the supply line), measured on profit, fill rate, bullwhip and waste against a saved baseline.</li>
+        <li><b>Teaches</b>A tutorial in three levels, a live stock-and-flow diagram and every equation with its value in any week.</li>
+      </ul>
+    </section>
+    <section class="card">
+      <h2 data-i18n="a.how.h">How it is built</h2>
+      <p data-i18n="a.how.p">The model is a set of stocks and flows integrated week by week in small time steps, in plain JavaScript that runs entirely in your browser. Automated tests check that it starts in exact balance, that every pack is accounted for, that a smaller time step gives the same answers, that the forecast matches its exact solution, and that each lever produces the trade-off the tutorial claims. Every claim the tutorial's questions make is checked against the model too.</p>
+      <h2 style="margin-top:22px" data-i18n="a.author.h">Author</h2>
+      <p data-i18n="a.author.p">PharmaSim was designed and built by <b>Daniel Alberto Sepulveda Estay, PhD</b>, founder of <a href="https://kathuman.github.io/estay-dynamics/" target="_blank" rel="noopener">Estay Dynamics</a>. He works on system dynamics, simulation and network optimisation for supply chains and operations, including pharmaceutical manufacturing. He holds a PhD from the Technical University of Denmark (DTU) and a master's degree from the Massachusetts Institute of Technology (MIT), and is a council member of the System Dynamics Society.</p>
+      <p data-i18n="a.author.links"><a href="https://kathuman.github.io/estay-dynamics/about.html" target="_blank" rel="noopener">More about Daniel →</a> · <a href="https://kathuman.github.io/estay-dynamics/contact.html" target="_blank" rel="noopener">Get in touch</a></p>
+      <p class="cite" data-i18n="a.cite"><b>To cite:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (version <span id="cite-ver">2.0.0</span>) [Software]. https://kathuman.github.io/pharma-sim/</p>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <span class="consult" data-i18n="a.foot">PharmaSim v2.0.0 · <a href="index.html">Open the simulator</a> · Available for consulting — <a href="https://github.com/kathuman" target="_blank" rel="noopener">get in touch</a></span>
+  <span data-i18n="foot.note">A system-dynamics model of a pharmaceutical supply chain: tested equations, a fair baseline and the trade-offs of each lever. Built with <a href="https://claude.com" target="_blank" rel="noopener">Claude</a>.</span>
+</footer>
+<script src="i18n-es.js"></script>
+<script src="i18n.js"></script>
+</body>
+</html>

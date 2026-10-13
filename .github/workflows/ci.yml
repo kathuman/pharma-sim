@@ -1,0 +1,20 @@
+name: PharmaSim tests
+
+# The model (balance, conservation, time-step convergence, noise, levers), the tutorial's claims and the Spanish
+# translation. No build step: the app is plain JavaScript served as it is.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: for f in tests/*.test.js; do echo "== $f"; node "$f" || exit 1; done
+        shell: bash

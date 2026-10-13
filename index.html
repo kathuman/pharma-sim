@@ -1,571 +1,127 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pharma Supply Chain Simulator - Executive Edition</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <script type="importmap">
-        {
-            "imports": {
-                "react": "https://esm.sh/react@18.2.0",
-                "react-dom": "https://esm.sh/react-dom@18.2.0",
-                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-                "recharts": "https://esm.sh/recharts@2.12.2?external=react,react-dom",
-                "lucide-react": "https://esm.sh/lucide-react@0.344.0?external=react"
-            }
-        }
-    </script>
-
-    <style>
-        body { font-family: system-ui, -apple-system, sans-serif; }
-        .chart-container { background: white; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 1.5rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title.index">PharmaSim — Pharmaceutical Supply Chain Dynamics</title>
+  <meta data-i18n-attr="content=meta.index" name="description" content="A system-dynamics simulator of a pharmaceutical supply chain: demand shocks, QA release, shelf life, workforce and a distributor tier, with overtime, expedited QA and planning policies measured on profit, service, amplification and waste." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="bg-slate-50 text-slate-900 overflow-y-scroll">
-    <div id="root"></div>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <a class="mark" href="index.html">PHARMA<span>SIM</span></a>
+    <span class="ver" id="ver" data-i18n-attr="title=attr.ver" title="App version"></span>
+    <div class="sub"><span class="rest" data-i18n="brand.sub">SYSTEM DYNAMICS · PHARMACEUTICAL SUPPLY CHAIN</span></div>
+  </div>
+  <div class="header-actions">
+    <button class="back-link tour" type="button" id="tourBtn" data-i18n="nav.tour">Tutorial</button>
+    <button class="back-link" type="button" id="langBtn" lang="es">Español</button>
+    <a class="back-link" href="about.html" data-i18n="nav.about">About</a>
+    <a class="back-link" href="https://kathuman.github.io/claude-projects/" data-i18n="nav.projects">← Projects</a>
+  </div>
+</header>
 
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useMemo } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import {
-            LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-            ResponsiveContainer, AreaChart, Area, ReferenceLine, ComposedChart
-        } from 'recharts';
-        import {
-            Settings, RefreshCw, Activity, Package, AlertOctagon, TrendingUp, 
-            DollarSign, Percent, ShieldAlert, GitMerge, BookmarkPlus, Info, Calculator, LayoutDashboard
-        } from 'lucide-react';
+<div class="layout">
+  <aside class="rail" id="rail" data-i18n-attr="aria-label=aria.rail" aria-label="Scenario inputs">
+    <div class="rail-header">
+      <h1 class="rail-h1" data-i18n="rail.h1">Scenario</h1>
+      <button class="btn small" id="btn-reset" type="button" data-i18n="rail.reset">Reset all</button>
+    </div>
+    <div class="ctrl">
+      <label class="name" for="preset" data-i18n="rail.preset">Start from a ready-made scenario</label>
+      <select class="choice" id="preset"></select>
+    </div>
+    <p class="rail-note" data-i18n="rail.note">Every change reruns the model at once. A dot marks inputs you have changed from the starting scenario.</p>
+    <div id="controls"></div>
+  </aside>
 
-        // --- Simulation Engine ---
+  <main class="main">
+    <div class="errors" id="errors" hidden></div>
+    <p class="headline" id="headline"></p>
+    <div class="kpi-grid" id="kpis"></div>
 
-        const runSimulation = (params) => {
-            const {
-                initialDemand, shockWeek, shockMagnitude, noiseLevel,
-                productivity, shelfLife, qaDelayTime, targetCoverage, 
-                timeToCorrectInv, timeToAdjustWf, avgEmploymentTime, timeToAvgShipments,
-                price, cost, holdingCost, stockPenalty, wasteCost,
-                useOvertime, expediteQA, multiEchelon
-            } = params;
+    <div class="compare" id="compare">
+      <span class="msg" id="cmp-msg"></span>
+      <span class="acts">
+        <button class="btn small primary" id="btn-base" type="button" data-i18n="cmp.save">Save as baseline</button>
+        <button class="btn small" id="btn-base-clear" type="button" data-i18n="cmp.clear" hidden>Clear baseline</button>
+        <button class="btn small" id="btn-seed" type="button" data-i18n="cmp.seed">New demand future</button>
+        <button class="btn small" id="btn-link" type="button" data-i18n="cmp.link">Copy link</button>
+        <button class="btn small" id="btn-csv" type="button" data-i18n="cmp.csv">Download CSV</button>
+      </span>
+    </div>
 
-            const dt = 0.20; 
-            const weeks = 52;
-            const steps = Math.floor(weeks / dt);
-            const data = [];
+    <section class="panel" id="p-flow">
+      <h2 data-i18n="h.charts">What happens week by week</h2>
+      <p class="panel-note" data-i18n="charts.note">Point at any chart to read the values for that week; the model diagram below follows the same week. Dashed grey lines are the saved baseline.</p>
+      <div class="chart-grid">
+        <div class="wide"><p class="chart-title" data-i18n="c.prod">Demand and production</p><p class="chart-sub" data-i18n="c.prod.sub">Packs per week. The bullwhip is production swinging wider than the demand that drives it.</p><div id="ch-prod"></div></div>
+        <div><p class="chart-title" data-i18n="c.stock">Stock</p><p class="chart-sub" data-i18n="c.stock.sub">Packs on hand that can still be sold.</p><div id="ch-stock"></div></div>
+        <div><p class="chart-title" data-i18n="c.service">Service</p><p class="chart-sub" data-i18n="c.service.sub">Share of each week's demand that reached patients.</p><div id="ch-service"></div></div>
+        <div><p class="chart-title" data-i18n="c.profit">Cumulative profit</p><p class="chart-sub" data-i18n="c.profit.sub">The plant's revenue minus every cost, from week 0.</p><div id="ch-profit"></div></div>
+        <div><p class="chart-title" data-i18n="c.people">Workforce</p><p class="chart-sub" data-i18n="c.people.sub">People on the payroll; capacity follows them.</p><div id="ch-people"></div></div>
+        <div class="wide"><p class="chart-title" data-i18n="c.waste">Waste</p><p class="chart-sub" data-i18n="c.waste.sub">Packs lost so far: batches rejected in QA, and stock written off because too little shelf life remained.</p><div id="ch-waste"></div></div>
+      </div>
+    </section>
 
-            // Equilibrium Initialization
-            const eqDemand = initialDemand;
-            const eqInventory = eqDemand * targetCoverage;
-            const eqExpiration = eqInventory / shelfLife;
-            const eqProduction = eqDemand + eqExpiration;
-            const eqQuarantine = eqProduction * qaDelayTime;
-            const eqWorkforce = eqProduction / productivity;
+    <section class="panel" id="p-model">
+      <h2 data-i18n="h.model">The model</h2>
+      <p class="panel-note" data-i18n="model.note">Boxes are stocks, valves are flows and circles are what the planners see. The numbers are for the week shown, which follows your pointer on the charts.</p>
+      <p class="eq-week" id="eq-week"></p>
+      <div class="sfd-wrap" id="diagram"></div>
+      <details class="rules" id="eqs-box">
+        <summary data-i18n="eq.sum">Every equation, with its value in that week</summary>
+        <div id="equations"></div>
+      </details>
+    </section>
 
-            let inventory = eqInventory;
-            let quarantine = eqQuarantine;
-            let workforce = eqWorkforce;
-            let avgShipmentRate = eqDemand;
-            
-            let retailInventory = eqInventory;
-            let retailAvgDemand = eqDemand;
+    <div class="explain">
+      <details class="rules" id="why">
+        <summary data-i18n="why.sum">How to read it: what the results mean</summary>
+        <div data-i18n="why.body">
+          <p><b>Fill rate</b> is the share of market demand that reached patients. In pharma the target is usually 98–99.5%, so a fraction of a point is a real shortage. Service slips before the stock runs out, because stock is spread over many presentations and markets.</p>
+          <p><b>Bullwhip</b> is how much more production varies than demand (standard deviation of production ÷ standard deviation of demand). Above 1, the plant amplifies what the market does: it is chasing its own stock gap, not just demand. With a distributor, the same ratio for its orders shows where the amplification starts.</p>
+          <p><b>Waste</b> is batches rejected in QA plus stock written off because too little shelf life remained for customers to accept it. With a long shelf life it is almost all rejections; with a short one, an overshoot after a surge becomes expired stock.</p>
+          <p><b>Profit</b> is the plant's view: revenue minus materials, the workforce (paid whether busy or not), hiring, overtime, holding, disposal, expediting and a penalty for each pack not supplied. The figures are illustrative, chosen for a mid-priced branded medicine.</p>
+          <p><b>The baseline</b> is a saved run for comparison. It uses the same random demand as the current run, so every difference is due to what you changed, not to luck. <b>New demand future</b> draws another random future for both.</p>
+        </div>
+      </details>
+      <details class="rules" id="limits">
+        <summary data-i18n="lim.sum">What the model leaves out</summary>
+        <div data-i18n="lim.body">
+          <ul>
+            <li>One product family, one plant and at most one distributor. Suppliers of the active ingredient, several markets and allocation between them are not modelled.</li>
+            <li>Production is continuous: campaigns, batch sizes and changeovers are averaged out.</li>
+            <li>The distributor's stock is not aged; shelf life is tracked at the plant only.</li>
+            <li>Nobody is laid off: the workforce shrinks only as people leave.</li>
+            <li>Costs and prices are illustrative, not a quotation.</li>
+          </ul>
+        </div>
+      </details>
+    </div>
 
-            let cumulativeWaste = 0;
-            let cumulativeProfit = 0;
-            let totalMarketDemand = 0;
-            let totalMarketShipments = 0;
+    <footer class="foot">
+      <span class="consult" data-i18n="foot.consult">PharmaSim <span id="ver-foot"></span> · <a href="about.html">About</a> · Available for consulting — <a href="https://github.com/kathuman" target="_blank" rel="noopener">get in touch</a></span>
+      <span data-i18n="foot.note">A system-dynamics model of a pharmaceutical supply chain: tested equations, a fair baseline and the trade-offs of each lever. Built with <a href="https://claude.com" target="_blank" rel="noopener">Claude</a>.</span>
+    </footer>
+  </main>
+</div>
 
-            for (let t = 0; t < steps; t++) {
-                const time = t * dt;
-
-                const baseDemand = time >= shockWeek ? initialDemand * shockMagnitude : initialDemand;
-                const randomNoise = (Math.random() * 2 - 1) * noiseLevel;
-                const actualMarketDemand = Math.max(0, baseDemand * (1 + randomNoise));
-
-                let manufacturerDemand = actualMarketDemand;
-                let marketShipment = 0;
-
-                if (multiEchelon) {
-                    marketShipment = Math.min(actualMarketDemand, retailInventory / dt);
-                    const changeInAvg = (marketShipment - retailAvgDemand) / timeToAvgShipments;
-                    retailAvgDemand += changeInAvg * dt;
-                    
-                    const retailDesiredInv = retailAvgDemand * targetCoverage;
-                    const retailInvGap = retailDesiredInv - retailInventory;
-                    let retailOrder = retailAvgDemand + (retailInvGap / timeToCorrectInv);
-                    
-                    manufacturerDemand = Math.max(0, retailOrder); 
-                }
-
-                const maxShipment = inventory / dt;
-                const actualShipment = Math.min(manufacturerDemand, maxShipment);
-                const missedSales = Math.max(0, manufacturerDemand - maxShipment);
-                
-                if (!multiEchelon) {
-                    marketShipment = actualShipment; 
-                } else {
-                    retailInventory += (actualShipment - marketShipment) * dt; 
-                }
-
-                totalMarketDemand += actualMarketDemand * dt;
-                totalMarketShipments += marketShipment * dt;
-
-                const changeInMfgAvg = (actualShipment - avgShipmentRate) / timeToAvgShipments;
-                avgShipmentRate += changeInMfgAvg * dt;
-
-                let currentProdMultiplier = 1.0;
-                let currentCostMultiplier = 1.0;
-                let currentQADelay = qaDelayTime;
-                let currentWasteMultiplier = 1.0;
-
-                const desiredInventory = avgShipmentRate * targetCoverage;
-                
-                // Intervention: Overtime
-                if (useOvertime && inventory < desiredInventory * 0.8) {
-                    currentProdMultiplier = 1.20; 
-                    currentCostMultiplier = 1.50; 
-                }
-
-                // Intervention: Expedite QA
-                if (expediteQA) {
-                    currentQADelay = Math.max(0.1, qaDelayTime * 0.5); 
-                    currentWasteMultiplier = 1.25; 
-                }
-
-                const invGap = desiredInventory - inventory;
-                const invCorrection = invGap / timeToCorrectInv;
-                const currentExpiration = (inventory / shelfLife) * currentWasteMultiplier;
-                
-                const targetProduction = avgShipmentRate + invCorrection + currentExpiration;
-                const desiredProduction = Math.max(0, targetProduction);
-
-                const effectiveProductivity = productivity * currentProdMultiplier;
-                const desiredWorkforce = desiredProduction / effectiveProductivity;
-                const wfGap = desiredWorkforce - workforce;
-                const departures = workforce / avgEmploymentTime;
-                const hiring = (wfGap / timeToAdjustWf) + departures;
-                const hiringRate = Math.max(0, hiring);
-                
-                workforce += (hiringRate - departures) * dt;
-
-                const actualProduction = workforce * effectiveProductivity;
-                const qaApproval = quarantine / currentQADelay;
-                
-                quarantine += (actualProduction - qaApproval) * dt;
-                inventory += (qaApproval - actualShipment - currentExpiration) * dt;
-                
-                cumulativeWaste += currentExpiration * dt;
-
-                const rev = actualShipment * price;
-                const pCost = actualProduction * cost * currentCostMultiplier;
-                const hCost = inventory * holdingCost;
-                const mCost = missedSales * stockPenalty;
-                const wCost = currentExpiration * wasteCost;
-
-                const stepProfit = (rev - pCost - hCost - mCost - wCost) * dt;
-                cumulativeProfit += stepProfit;
-
-                data.push({
-                    time: parseFloat(time.toFixed(1)),
-                    marketDemand: Math.round(actualMarketDemand),
-                    manufacturerDemand: Math.round(manufacturerDemand),
-                    productionRate: Math.round(actualProduction),
-                    inventory: Math.round(inventory),
-                    retailInventory: multiEchelon ? Math.round(retailInventory) : 0,
-                    quarantine: Math.round(quarantine),
-                    cumulativeProfit: Math.round(cumulativeProfit),
-                    cumulativeWaste: Math.round(cumulativeWaste),
-                    fillRate: totalMarketDemand > 0 ? (totalMarketShipments / totalMarketDemand) * 100 : 100
-                });
-            }
-            return data;
-        };
-
-        // --- UI Components ---
-
-        const Slider = ({ label, value, min, max, step, onChange, unit }) => (
-            <div className="mb-4">
-                <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium text-slate-700">{label}</span>
-                    <span className="text-slate-500 font-mono">{value} {unit}</span>
-                </div>
-                <input type="range" min={min} max={max} step={step} value={value}
-                    onChange={(e) => onChange(parseFloat(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                />
-            </div>
-        );
-
-        // Re-written Toggle using pure Tailwind CSS classes for reliability
-        const Toggle = ({ label, checked, onChange, description }) => (
-            <div className="mb-5 flex items-start justify-between">
-                <div className="pr-4">
-                    <span className="font-medium text-sm text-slate-800">{label}</span>
-                    {description && <p className="text-xs text-slate-500 mt-1">{description}</p>}
-                </div>
-                <button
-                    type="button"
-                    className={`${checked ? 'bg-blue-600' : 'bg-slate-300'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 mt-1`}
-                    onClick={() => onChange(!checked)}
-                    role="switch"
-                    aria-checked={checked}
-                >
-                    <span className={`${checked ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}></span>
-                </button>
-            </div>
-        );
-
-        const MetricCard = ({ title, value, subtext, icon: Icon, color, isCurrency = false }) => (
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start space-x-3">
-                <div className={`p-2 rounded-lg ${color} text-white`}><Icon size={20} /></div>
-                <div>
-                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">{title}</div>
-                    <div className={`text-2xl font-bold mt-0.5 ${isCurrency && value < 0 ? 'text-red-600' : 'text-slate-800'}`}>
-                        {isCurrency ? (value < 0 ? `-$${Math.abs(value).toLocaleString()}` : `$${value.toLocaleString()}`) : value}
-                    </div>
-                    <div className="text-xs text-slate-400 mt-1">{subtext}</div>
-                </div>
-            </div>
-        );
-
-        // --- Tabs Content Components ---
-
-        const ExplanationTab = () => (
-            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-                <div className="border-b border-slate-100 pb-4">
-                    <h2 className="text-2xl font-bold text-slate-800 flex items-center">
-                        <Info className="mr-3 text-blue-600" /> Understanding the Simulation
-                    </h2>
-                </div>
-                
-                <div className="space-y-6 text-slate-600 leading-relaxed">
-                    <section>
-                        <h3 className="text-lg font-bold text-slate-800 mb-2">What is this tool?</h3>
-                        <p>This simulator uses <strong>System Dynamics</strong> to model a pharmaceutical supply chain. Unlike static spreadsheets, this model runs step-by-step through time (Euler integration), allowing you to see how delays, feedback loops, and human decisions interact dynamically.</p>
-                    </section>
-
-                    <section>
-                        <h3 className="text-lg font-bold text-slate-800 mb-2">The Bullwhip Effect</h3>
-                        <p>The core phenomenon demonstrated here is the Bullwhip Effect. When customer demand spikes (the shock), the supply chain doesn't just match the spike—it amplifies it. This happens because:</p>
-                        <ul className="list-disc pl-6 mt-2 space-y-1">
-                            <li><strong>Forecasting Lag:</strong> It takes time to realize a shock isn't just a fluke.</li>
-                            <li><strong>Inventory Depletion:</strong> While you figure out the forecast, your safety stock drains.</li>
-                            <li><strong>Over-Ordering:</strong> You must place a massive order to both satisfy the *new* high demand AND refill the empty safety stock simultaneously.</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h3 className="text-lg font-bold text-slate-800 mb-2">The Impact of Multi-Echelon (Multi-Tier)</h3>
-                        <p>If you enable the <strong>Retail Tier</strong>, you add a distributor/retailer between the market and the factory. The retailer experiences the market shock, drains their inventory, and places a massive panic order to the manufacturer. The manufacturer sees an incredibly distorted, violent spike in demand that is much larger than what the actual end-consumers are buying.</p>
-                    </section>
-
-                    <section>
-                        <h3 className="text-lg font-bold text-slate-800 mb-2">Policy Interventions</h3>
-                        <p>You have tools to fight back:</p>
-                        <ul className="list-disc pl-6 mt-2 space-y-2">
-                            <li><strong>Emergency Overtime:</strong> When inventory drops below 80% of target, workers boost output by 20%. <em>Tradeoff: Labor costs increase by 50% during this time.</em></li>
-                            <li><strong>Expedite QA:</strong> Halves the time products spend in quarantine to get them to market faster. <em>Tradeoff: Rushing quality assurance increases product expiration/defects by 25%.</em></li>
-                        </ul>
-                    </section>
-                </div>
-            </div>
-        );
-
-        const EquationsTab = () => (
-            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-                <div className="border-b border-slate-100 pb-4">
-                    <h2 className="text-2xl font-bold text-slate-800 flex items-center">
-                        <Calculator className="mr-3 text-emerald-600" /> Mathematical Model
-                    </h2>
-                </div>
-                
-                <div className="space-y-8 text-slate-600">
-                    <p>The simulation runs continuously in steps of <code>dt = 0.20</code> weeks. Below are the core equations governing the system.</p>
-
-                    <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
-                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">1. Demand Forecasting (Exponential Smoothing)</h3>
-                        <p className="mb-2 text-sm">We don't react instantly to noise; we smooth it over time:</p>
-                        <code className="block bg-white p-3 rounded border border-slate-200 text-blue-700 font-mono text-sm shadow-sm">
-                            Forecast(t) = Forecast(t-dt) + [ (ActualDemand - Forecast(t-dt)) / TimeToAverage ] * dt
-                        </code>
-                    </div>
-
-                    <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
-                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">2. Production Target & Bullwhip Generator</h3>
-                        <p className="mb-2 text-sm">Production aims to cover the forecast, replace expired goods, and close the gap in safety stock. The "Gap" division is what causes the Bullwhip overshoot:</p>
-                        <code className="block bg-white p-3 rounded border border-slate-200 text-purple-700 font-mono text-sm shadow-sm mb-2">
-                            TargetInv = Forecast * TargetCoverage<br/>
-                            InvGap = TargetInv - CurrentInv
-                        </code>
-                        <code className="block bg-white p-3 rounded border border-slate-200 text-purple-700 font-mono text-sm shadow-sm">
-                            TargetProduction = Forecast + (InvGap / TimeToCorrectInv) + ExpectedExpiration
-                        </code>
-                    </div>
-
-                    <div className="bg-slate-50 p-5 rounded-lg border border-slate-200">
-                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2">3. Financial Accounting</h3>
-                        <p className="mb-2 text-sm">Profit is the sum of revenue minus operational friction costs:</p>
-                        <code className="block bg-white p-3 rounded border border-slate-200 text-emerald-700 font-mono text-sm shadow-sm">
-                            Revenue = Shipments * UnitPrice<br/><br/>
-                            Costs = (Production * UnitCost * OvertimeMultiplier) <br/>
-                                    + (Inventory * HoldingCost) <br/>
-                                    + (MissedSales * StockoutPenalty) <br/>
-                                    + (ExpiredUnits * WasteCost)<br/><br/>
-                            Profit(t) = Profit(t-dt) + (Revenue - Costs) * dt
-                        </code>
-                    </div>
-                </div>
-            </div>
-        );
-
-        // --- Main Application ---
-
-        const App = () => {
-            const defaults = {
-                initialDemand: 1000, shockWeek: 10, shockMagnitude: 1.20, noiseLevel: 0.05,
-                productivity: 5, shelfLife: 50, qaDelayTime: 3, targetCoverage: 4, 
-                timeToCorrectInv: 8, timeToAdjustWf: 8, avgEmploymentTime: 50, timeToAvgShipments: 8,
-                price: 100, cost: 40, holdingCost: 0.5, stockPenalty: 150, wasteCost: 60,
-                useOvertime: false, expediteQA: false, multiEchelon: false
-            };
-
-            const [params, setParams] = useState(defaults);
-            const [baselineData, setBaselineData] = useState(null);
-            const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'explanation', 'equations'
-
-            const data = useMemo(() => runSimulation(params), [params]);
-
-            const chartData = useMemo(() => {
-                return data.map((d, index) => ({
-                    ...d,
-                    baseProfit: baselineData ? baselineData[index].cumulativeProfit : null,
-                    baseInv: baselineData ? baselineData[index].inventory : null
-                }));
-            }, [data, baselineData]);
-
-            const finalProfit = data[data.length - 1].cumulativeProfit;
-            const finalFillRate = data[data.length - 1].fillRate.toFixed(1);
-            const totalWaste = data[data.length - 1].cumulativeWaste;
-            
-            const peakDemand = Math.max(...data.map(d => d.marketDemand));
-            const peakProd = Math.max(...data.map(d => d.productionRate));
-            
-            const dIncrease = peakDemand - params.initialDemand;
-            const pIncrease = peakProd - params.initialDemand;
-            const bullwhip = dIncrease > 0 ? (pIncrease / dIncrease).toFixed(2) : "1.00";
-
-            const saveBaseline = () => setBaselineData(data);
-            const clearBaseline = () => setBaselineData(null);
-
-            return (
-                <div className="min-h-screen pb-12 flex flex-col">
-                    
-                    {/* Top Navigation */}
-                    <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
-                        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                                <Activity className="text-blue-600" />
-                                <span className="font-bold text-slate-900 text-lg">PharmaSim <span className="font-normal text-slate-500">Executive - kathuman 2026</span></span>
-                            </div>
-                            <div className="flex space-x-3">
-                                <button onClick={() => setParams(defaults)} className="flex items-center px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-red-600 transition-colors">
-                                    <RefreshCw size={16} className="mr-2" /> Reset
-                                </button>
-                            </div>
-                        </div>
-                    </nav>
-
-                    {/* Tab Navigation */}
-                    <div className="bg-slate-100 border-b border-slate-200">
-                        <div className="max-w-7xl mx-auto px-4 flex space-x-6">
-                            <button onClick={() => setActiveTab('dashboard')} className={`flex items-center py-3 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'dashboard' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-                                <LayoutDashboard size={16} className="mr-2" /> Dashboard
-                            </button>
-                            <button onClick={() => setActiveTab('explanation')} className={`flex items-center py-3 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'explanation' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-                                <Info size={16} className="mr-2" /> Explanation
-                            </button>
-                            <button onClick={() => setActiveTab('equations')} className={`flex items-center py-3 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'equations' ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500 hover:text-slate-800'}`}>
-                                <Calculator size={16} className="mr-2" /> Equations
-                            </button>
-                        </div>
-                    </div>
-
-                    <main className="max-w-7xl mx-auto px-4 py-8 w-full flex-grow">
-                        
-                        {/* --- EXPLANATION TAB --- */}
-                        {activeTab === 'explanation' && <ExplanationTab />}
-
-                        {/* --- EQUATIONS TAB --- */}
-                        {activeTab === 'equations' && <EquationsTab />}
-
-                        {/* --- DASHBOARD TAB --- */}
-                        {activeTab === 'dashboard' && (
-                            <div className="animate-in fade-in duration-500">
-                                {/* Executive KPI Dash */}
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                                    <MetricCard 
-                                        title="Annual Profit" value={finalProfit} isCurrency={true}
-                                        subtext="Revenue minus all operating costs" icon={DollarSign} color="bg-emerald-600" 
-                                    />
-                                    <MetricCard 
-                                        title="Order Fill Rate" value={`${finalFillRate}%`} 
-                                        subtext="Customer demand successfully met" icon={Percent} 
-                                        color={finalFillRate < 90 ? "bg-red-500" : "bg-blue-500"} 
-                                    />
-                                    <MetricCard 
-                                        title="Bullwhip Effect" value={`${bullwhip}x`} 
-                                        subtext="Supply fluctuation vs Market fluctuation" icon={TrendingUp} 
-                                        color={parseFloat(bullwhip) > 1.5 ? "bg-orange-500" : "bg-slate-500"} 
-                                    />
-                                    <MetricCard 
-                                        title="Total Waste Cost" value={totalWaste * params.wasteCost} isCurrency={true}
-                                        subtext="Value of expired goods" icon={AlertOctagon} color="bg-rose-500" 
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                                    
-                                    {/* Controls Left Column */}
-                                    <div className="lg:col-span-4 space-y-6">
-                                        
-                                        {/* Market & Environment */}
-                                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                            <h3 className="font-bold text-slate-800 flex items-center mb-5 pb-3 border-b border-slate-100">
-                                                <Activity size={18} className="mr-2 text-blue-500" /> Market Environment
-                                            </h3>
-                                            <Slider label="Shock Magnitude" value={Math.round((params.shockMagnitude - 1) * 100)} min={0} max={50} step={5} unit="%" 
-                                                onChange={(v) => setParams(p => ({...p, shockMagnitude: 1 + v/100}))} />
-                                            <Slider label="Demand Volatility (Noise)" value={params.noiseLevel * 100} min={0} max={20} step={1} unit="%" 
-                                                onChange={(v) => setParams(p => ({...p, noiseLevel: v/100}))} />
-                                        </div>
-
-                                        {/* Network Config */}
-                                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                            <h3 className="font-bold text-slate-800 flex items-center mb-5 pb-3 border-b border-slate-100">
-                                                <GitMerge size={18} className="mr-2 text-indigo-500" /> Network Architecture
-                                            </h3>
-                                            <Toggle 
-                                                label="Enable Retail Tier (Multi-Echelon)" 
-                                                description="Adds a distributor between market and factory. Watch the bullwhip explode."
-                                                checked={params.multiEchelon} 
-                                                onChange={(v) => setParams(p => ({...p, multiEchelon: v}))} 
-                                            />
-                                            <Slider label="QA Delay" value={params.qaDelayTime} min={1} max={8} step={1} unit="wks" 
-                                                onChange={(v) => setParams(p => ({...p, qaDelayTime: v}))} />
-                                        </div>
-
-                                        {/* Executive Policy Interventions */}
-                                        <div className="bg-white p-6 rounded-xl border border-blue-300 shadow-md relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
-                                            <h3 className="font-bold text-slate-800 flex items-center mb-5 pb-3 border-b border-slate-100">
-                                                <ShieldAlert size={18} className="mr-2 text-blue-500" /> Policy Interventions
-                                            </h3>
-                                            <Toggle 
-                                                label="Emergency Overtime" 
-                                                description="Boosts production by 20% when stock drops, but increases labor cost by 50%."
-                                                checked={params.useOvertime} 
-                                                onChange={(v) => setParams(p => ({...p, useOvertime: v}))} 
-                                            />
-                                            <Toggle 
-                                                label="Expedite QA Process" 
-                                                description="Halves QA delay to rush stock to market, but increases defect/waste rate by 25%."
-                                                checked={params.expediteQA} 
-                                                onChange={(v) => setParams(p => ({...p, expediteQA: v}))} 
-                                            />
-                                        </div>
-
-                                    </div>
-
-                                    {/* Charts Right Column */}
-                                    <div className="lg:col-span-8 space-y-6">
-                                        
-                                        {/* Compare Header */}
-                                        <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                                            <div className="text-sm text-slate-600">
-                                                {baselineData ? 
-                                                    <span className="flex items-center text-emerald-600 font-medium"><BookmarkPlus size={16} className="mr-2"/> Baseline Saved. Toggle policies on the left to compare.</span> : 
-                                                    "Save a baseline, then toggle Policies (Overtime/QA) to see financial impact."}
-                                            </div>
-                                            <div className="space-x-2">
-                                                <button onClick={saveBaseline} className="px-4 py-2 bg-slate-800 text-white font-medium text-sm rounded-lg hover:bg-slate-700 transition shadow-sm">Save Baseline</button>
-                                                {baselineData && <button onClick={clearBaseline} className="px-4 py-2 bg-slate-200 text-slate-700 font-medium text-sm rounded-lg hover:bg-slate-300 transition">Clear</button>}
-                                            </div>
-                                        </div>
-
-                                        {/* Chart 1: The Bullwhip */}
-                                        <div className="chart-container">
-                                            <div className="mb-4">
-                                                <h3 className="text-lg font-bold text-slate-800">Demand Amplification (The Bullwhip)</h3>
-                                                <p className="text-sm text-slate-500">Watch the actual market demand compared to production. Turn on Multi-Echelon to see order amplification.</p>
-                                            </div>
-                                            <div className="h-72">
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <ComposedChart data={chartData}>
-                                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                                        <XAxis dataKey="time" tick={{fill: '#94a3b8'}} tickLine={false} />
-                                                        <YAxis tick={{fill: '#94a3b8'}} tickLine={false} />
-                                                        <Tooltip contentStyle={{ borderRadius: '8px' }} />
-                                                        <Legend />
-                                                        <ReferenceLine x={params.shockWeek} stroke="#cbd5e1" strokeDasharray="3 3" />
-                                                        <Line type="monotone" dataKey="marketDemand" name="Actual Market Demand" stroke="#64748b" strokeWidth={2} dot={false} />
-                                                        {params.multiEchelon && <Line type="step" dataKey="manufacturerDemand" name="Retail Orders to Mfg" stroke="#f59e0b" strokeWidth={2} dot={false} strokeDasharray="4 4" />}
-                                                        <Line type="monotone" dataKey="productionRate" name="Mfg Production Rate" stroke="#3b82f6" strokeWidth={3} dot={false} />
-                                                    </ComposedChart>
-                                                </ResponsiveContainer>
-                                            </div>
-                                        </div>
-
-                                        {/* Dual Charts: Finances & Inventory */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="chart-container">
-                                                <h4 className="font-bold text-slate-800 mb-2">Cumulative Profit ($)</h4>
-                                                <div className="h-48">
-                                                    <ResponsiveContainer width="100%" height="100%">
-                                                        <ComposedChart data={chartData}>
-                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                            <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
-                                                            <YAxis tick={{fontSize: 10}} tickLine={false} tickFormatter={(val) => `$${val/1000}k`} />
-                                                            <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
-                                                            {baselineData && <Line type="monotone" dataKey="baseProfit" name="Baseline Profit" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />}
-                                                            <Line type="monotone" dataKey="cumulativeProfit" name="Current Profit" stroke="#10b981" strokeWidth={3} dot={false} />
-                                                        </ComposedChart>
-                                                    </ResponsiveContainer>
-                                                </div>
-                                            </div>
-
-                                            <div className="chart-container">
-                                                <h4 className="font-bold text-slate-800 mb-2">Available Inventory (Mfg)</h4>
-                                                <div className="h-48">
-                                                    <ResponsiveContainer width="100%" height="100%">
-                                                        <ComposedChart data={chartData}>
-                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                                            <XAxis dataKey="time" tick={{fontSize: 10}} tickLine={false} />
-                                                            <YAxis tick={{fontSize: 10}} tickLine={false} />
-                                                            <Tooltip />
-                                                            {baselineData && <Line type="monotone" dataKey="baseInv" name="Baseline Inv" stroke="#94a3b8" strokeWidth={2} strokeDasharray="4 4" dot={false} />}
-                                                            <Area type="monotone" dataKey="inventory" name="Current Inv" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} />
-                                                        </ComposedChart>
-                                                    </ResponsiveContainer>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </main>
-                </div>
-            );
-        };
-
-        const root = createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+<script src="i18n-es.js"></script>
+<script src="i18n.js"></script>
+<script src="src/model.js"></script>
+<script src="src/specs.js"></script>
+<script src="src/equations.js"></script>
+<script src="src/charts.js"></script>
+<script src="src/diagram.js"></script>
+<script src="app.js"></script>
+<script src="tour-content.js"></script>
+<script src="tour-content-es.js"></script>
+<script src="tour.js"></script>
 </body>
 </html>
-
-
-

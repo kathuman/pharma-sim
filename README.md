@@ -1,35 +1,75 @@
-# PharmaSim — Pharma Supply Chain Simulator (Executive Edition)
+# PharmaSim — Pharmaceutical Supply Chain Dynamics
 
-**Live: [kathuman.github.io/pharma-sim](https://kathuman.github.io/pharma-sim/)**
+[![PharmaSim tests](https://github.com/kathuman/pharma-sim/actions/workflows/ci.yml/badge.svg)](https://github.com/kathuman/pharma-sim/actions/workflows/ci.yml)
 
-A system-dynamics simulator of a pharmaceutical supply chain for strategy discussions: shock the market,
-change the network, apply a policy, and see the effect on profit, service, the bullwhip effect and waste —
-against a saved baseline.
+**Live: [kathuman.github.io/pharma-sim](https://kathuman.github.io/pharma-sim/)** · [About](https://kathuman.github.io/pharma-sim/about.html) · English and Latin American Spanish
 
-![The dashboard: profit, fill rate, bullwhip and waste, and demand against production](docs/screenshot.jpg)
+A system-dynamics simulator of a pharmaceutical supply chain. Shock the market or the plant, add a distributor,
+pull a lever or change the planning policy, and see the effect on profit, service, the bullwhip effect and waste
+against a saved baseline. A three-level tutorial (beginner, intermediate, advanced) walks through it.
 
-## What it shows
+![Demand step with overtime against the baseline: results, and demand against production](docs/screenshot.jpg)
 
-- **The bullwhip effect** — a step change in market demand, smoothed into a forecast (exponential
-  smoothing), drives production that overshoots and oscillates; the dashboard measures the amplification
-  (supply fluctuation over market fluctuation).
-- **Multi-echelon amplification** — add a retail/distributor tier between the market and the factory and
-  watch the factory's view of demand distort further.
-- **Pharma-specific stocks and delays** — QA quarantine before release, a workforce that sets production,
-  and expiry of inventory past its shelf life.
-- **Policy levers and their trade-offs** — emergency overtime (faster recovery, higher labour cost) and
-  expedited QA (shorter quarantine, more defects and waste).
-- **KPIs** — annual profit, order fill rate, bullwhip ratio and the cost of expired goods, with a saved
-  baseline to compare against.
+## What is in the model
 
-The **Explanation** and **Equations** tabs document the causal structure and the stock-and-flow
-equations (integrated by Euler's method).
+- **Market demand**: steady, a lasting step, a surge, or seasonal, with pink week-to-week noise from a seeded
+  generator. The baseline sees the same random future, so a difference is never luck.
+- **Plant**: production is the workforce times productivity, capped by the equipment. The workforce follows the
+  plan with a hiring delay, and people leave over time. Overtime can add capacity, with a premium paid only on the
+  extra packs.
+- **QA release**: a three-stage delay with a rejection rate. QA can be expedited when stock is low, which is faster
+  but costs money per pack and brings more deviations.
+- **Shelf life**: finished goods are kept by age and shipped oldest first. A pack older than its shelf life minus
+  the remaining life customers require at delivery is written off.
+- **Service**: everything ships while the plant holds at least two weeks of stock. Below that, service falls
+  smoothly, because stock is spread over many presentations and markets.
+- **Distributor tier** (optional): its own stock, forecast and ordering rule, a backlog at the plant, transit in
+  between, and the option to share sales data with the plant.
+- **Planning**: the forecast, plus a correction for the stock gap, plus a weight on the supply line (stock in QA,
+  and what the distributor has on order).
+- **Money**: the plant's profit. Revenue, minus materials, wages, hiring, overtime, holding, disposal, expediting,
+  and a penalty for each pack not supplied.
+- **Results**: fill rate, weeks short, bullwhip (standard deviation of production ÷ standard deviation of demand,
+  plus the same ratio for the distributor's orders), waste, average stock and workforce.
+
+The page shows every equation with its value in any week, and a live stock-and-flow diagram.
+
+## What the tests check
+
+`node tests/model.test.js` (62 checks):
+- Every structure starts in exact balance, and every pack is accounted for in every scenario.
+- Halving and quartering the time step gives the same answers, and the noise has the chosen size at any step.
+- The forecast matches its exact solution.
+- Each lever produces its trade-off. For example, overtime ends the shortage after a demand step, but for a
+  short-life product it makes more stock expire.
+
+`node tests/tutorial.test.js` (250 checks):
+- Every claim the tutorial's questions make holds in the model.
+- Every step points at a real element and quotes only known numbers.
+- Every step has a Spanish version with the same shape.
+
+`node tests/i18n.test.js` checks the Spanish translation for completeness, including the validation messages.
+
+CI runs all three on every push.
 
 ## Run it
 
-A single static page — open `index.html`, or serve the folder with any static server
-(`python -m http.server`).
+Plain JavaScript with no build step: serve the folder with any static server (`python -m http.server`) and open
+`index.html`.
+
+## Version history
+
+- **2.0.0**: a complete rebuild.
+  - A tested model fixes v1's problems: the bullwhip measure counted expiry replacement as amplification, and
+    noise was redrawn on every change, so comparisons weren't fair.
+  - Fill rate barely moved and the levers rarely paid off. Shelf life, a distributor backlog and the supply-line
+    weight are now modelled, and the levers make real trade-offs.
+  - New: a tutorial in three levels, the full app in Spanish, an About page, and the blueprint theme shared with
+    the Warehouse Model.
+  - The page no longer compiles itself in the browser: no React, Babel or Tailwind CDN.
+- **1.x**: the original React dashboard.
 
 ---
 
-Daniel Sepulveda Estay · [Estay Dynamics](https://kathuman.github.io/estay-dynamics/) — system dynamics and supply chain network design.
+Daniel Alberto Sepulveda Estay, PhD · [Estay Dynamics](https://kathuman.github.io/estay-dynamics/): system
+dynamics and supply chain network design.

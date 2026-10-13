@@ -1,0 +1,180 @@
+// PharmaSim — español (Latinoamérica). T: textos de los scripts, por su texto en inglés ({nombres} conservados);
+// H: textos de las páginas por su clave data-i18n; P: patrones para los mensajes de validación del modelo.
+(function (root) {
+  "use strict";
+  var T = {
+    // ---- interruptores, unidades
+    "on": "sí", "off": "no", "%": "%", "wk": "sem", "pts": "pts", "% of target": "% de la meta", "$/pack": "$/unidad", "$/wk": "$/sem", "$/person": "$/persona", "$/pack/wk": "$/unidad/sem",
+    "packs/wk": "unidades/sem", "packs": "unidades", "people": "personas", "week": "semana", "/wk": "/sem",
+    // ---- titular
+    "Over {w} weeks the plant served <b>{fill}</b> of demand": "En {w} semanas la planta atendió el <b>{fill}</b> de la demanda",
+    " ({lost} packs short, in {n} weeks)": " (faltaron {lost} unidades, en {n} semanas)",
+    "Demand stayed level, so there was nothing to amplify": "La demanda se mantuvo estable, así que no hubo nada que amplificar",
+    "Production swung <b>{bw}×</b> as much as demand": "La producción osciló <b>{bw}×</b> lo que osciló la demanda",
+    ", and the distributor's orders {obw}×": ", y los pedidos del distribuidor {obw}×",
+    "; <b>{waste}</b> packs were wasted and profit was <b>{profit}</b>.": "; se perdieron <b>{waste}</b> unidades y la utilidad fue de <b>{profit}</b>.",
+    "Against the baseline: profit {dp}, fill rate {df} points, waste {dw} packs, bullwhip {db}.": "Frente a la línea base: utilidad {dp}, tasa de cumplimiento {df} puntos, pérdidas {dw} unidades, efecto látigo {db}.",
+    // ---- resultados
+    "vs baseline {d}": "vs. línea base {d}", "Profit": "Utilidad", "revenue minus every cost, {w} weeks": "ingresos menos todos los costos, {w} semanas",
+    "Fill rate": "Tasa de cumplimiento", "{n} packs not supplied": "{n} unidades sin entregar", "Weeks short": "Semanas con faltantes", "weeks with under 99% of demand served": "semanas con menos del 99% de la demanda atendida",
+    "Bullwhip": "Efecto látigo", "demand did not vary": "la demanda no varió", "production varies {x}× as much as demand": "la producción varía {x}× lo que varía la demanda",
+    "Distributor's orders": "Pedidos del distribuidor", "its orders vary this much more than demand": "cuánto más varían sus pedidos que la demanda", "Peak production": "Producción máxima",
+    "packs/wk · {x} of the starting output": "unidades/sem · {x} de la producción inicial", "Waste": "Pérdidas", "{e} written off · {r} rejected · {v}": "{e} dadas de baja · {r} rechazadas · {v}",
+    "Average stock": "Inventario promedio", "{n} packs on hand on average": "{n} unidades en existencia en promedio", "Workforce": "Dotación", "at the peak · {h} hired": "en el máximo · {h} contratadas",
+    "Comparing with the baseline <b>{name}</b>. Change anything and the differences appear beside every result.": "Comparando con la línea base <b>{name}</b>. Cambie cualquier cosa y las diferencias aparecen junto a cada resultado.",
+    "Save this run as a baseline, change a lever or the policy, and see the difference on every result.": "Guarde esta corrida como línea base, cambie una palanca o la política, y vea la diferencia en cada resultado.",
+    "Replace baseline": "Reemplazar línea base", "Save as baseline": "Guardar como línea base", "Your scenario": "Su escenario",
+    // ---- gráficos
+    "Plant outage": "Detención de planta", "Expediting QA": "QA acelerado", "Week {w}": "Semana {w}", "Market demand": "Demanda del mercado", "Production": "Producción", "Capacity": "Capacidad",
+    "Baseline production": "Producción base", "Plant stock": "Inventario de la planta", "Target stock": "Inventario meta", "Distributor stock": "Inventario del distribuidor",
+    "Baseline plant stock": "Inventario base de la planta", "Baseline profit": "Utilidad base", "Baseline workforce": "Dotación base", "Rejected in QA": "Rechazadas en QA",
+    "Written off (short-dated)": "Dadas de baja (vida remanente corta)", "Baseline total waste": "Pérdidas totales base", "Chart": "Gráfico", "Demand served": "Demanda atendida", "Baseline": "Línea base",
+    "Values in week {w}": "Valores en la semana {w}", "Values at the end of week {w} — point at a chart to see another week": "Valores al final de la semana {w}: apunte a un gráfico para ver otra semana",
+    "Link copied ✓": "Enlace copiado ✓", "Copy this link:": "Copie este enlace:",
+    // ---- tutorial
+    "Tutorial levels": "Niveles del tutorial", "Tutorial": "Tutorial", "done ✓": "completado ✓", "step {k} of {n}": "paso {k} de {n}", "{n} steps · {m} min": "{n} pasos · {m} min",
+    "Leave the tutorial": "Salir del tutorial", "Back": "Atrás", "Finish": "Terminar", "Next": "Siguiente", "Right.": "Correcto.", "Not quite.": "No exactamente.", "{level} complete": "{level} completo",
+    "Close": "Cerrar", "Well done": "Bien hecho", "You finished the {level} level.": "Terminó el nivel {level}.", "Ready for <b>{next}</b>?": "¿Listo para el nivel <b>{next}</b>?",
+    "That is the whole tutorial.": "Ese es todo el tutorial.", "Start {next}": "Comenzar {next}",
+    // ---- diagrama
+    "Stock-and-flow diagram of the supply chain": "Diagrama de stocks y flujos de la cadena de suministro", "Hiring": "Contratación", "Leaving": "Salidas", "QA quarantine": "Cuarentena de QA",
+    "Released": "Liberadas", "Rejected": "Rechazadas", "Written off": "Dadas de baja", "Shipped to patients": "Despachadas a pacientes", "Shipped": "Despachadas", "In transit": "En tránsito",
+    "Served": "Atendidas", "Forecast": "Pronóstico", "Desired production": "Producción deseada", "Orders to the plant": "Pedidos a la planta",
+    // ---- controles
+    "Market": "Mercado", "Demand pattern": "Patrón de demanda", "Steady": "Estable", "Step (a lasting change)": "Escalón (un cambio duradero)", "Surge (then back)": "Alza (y luego vuelve)", "Seasonal": "Estacional",
+    "Size of the change": "Tamaño del cambio", "Week it starts": "Semana de inicio", "Surge length": "Duración del alza", "Seasonal swing": "Oscilación estacional", "Week-to-week noise": "Ruido semana a semana",
+    "Random variation around the pattern, correlated over two weeks. The same random future is used for the baseline, so comparisons are fair.": "Variación aleatoria en torno al patrón, correlacionada en dos semanas. La línea base usa el mismo futuro aleatorio, así que las comparaciones son justas.",
+    "Supply disruption": "Interrupción del suministro",
+    "The plant stops (or slows) for some weeks: a contamination, an equipment failure or a regulatory hold.": "La planta se detiene (o se frena) algunas semanas: una contaminación, una falla de equipos o una retención regulatoria.",
+    "Outage starts": "Inicio de la detención", "Outage length": "Duración de la detención", "Output during the outage": "Producción durante la detención", "Network": "Red", "Distributor tier": "Eslabón distribuidor",
+    "A distributor between the market and the plant. It serves patients from its own stock and orders from the plant.": "Un distribuidor entre el mercado y la planta. Atiende a los pacientes desde su propio inventario y pide a la planta.",
+    "Transit to the distributor": "Tránsito al distribuidor", "Distributor's target cover": "Cobertura meta del distribuidor", "Share sales data with the plant": "Compartir datos de venta con la planta",
+    "The plant forecasts from what patients take, not from the distributor's orders.": "La planta pronostica a partir de lo que toman los pacientes, no de los pedidos del distribuidor.",
+    "Plant and quality": "Planta y calidad", "Plant capacity": "Capacidad de la planta",
+    "What the equipment can make, as a share of the starting output. Hiring cannot go beyond it.": "Lo que pueden fabricar los equipos, como proporción de la producción inicial. Contratar no permite superarla.",
+    "QA release time": "Tiempo de liberación de QA", "Testing and batch-record review before a batch can be sold.": "Análisis y revisión del registro de lote antes de poder vender un lote.",
+    "Batches rejected in QA": "Lotes rechazados en QA", "Shelf life": "Vida útil", "Remaining life required at delivery": "Vida remanente exigida en la entrega",
+    "Customers and tenders refuse short-dated stock: older than shelf life minus this, a pack is written off.": "Los clientes y las licitaciones rechazan inventario con vencimiento próximo: si una unidad es más antigua que la vida útil menos esto, se da de baja.",
+    "Stock needed for full service": "Inventario necesario para servicio completo",
+    "Stock is spread over many presentations and markets, so some orders go unfilled before the total runs out.": "El inventario está repartido entre muchas presentaciones y mercados, así que algunos pedidos quedan sin atender antes de que se agote el total.",
+    "Planning policy": "Política de planificación", "Target stock cover": "Cobertura meta de inventario", "Forecast smoothing": "Suavizamiento del pronóstico",
+    "How many weeks of orders the forecast averages: longer is calmer but slower to notice a real change.": "Cuántas semanas de pedidos promedia el pronóstico: más largo es más tranquilo, pero tarda más en notar un cambio real.",
+    "Time to correct stock": "Tiempo para corregir el inventario", "How fast the plan closes a gap between stock and its target.": "Qué tan rápido cierra el plan una brecha entre el inventario y su meta.",
+    "Time to hire": "Tiempo para contratar", "How long it takes to bring the workforce to what the plan needs (recruiting, qualifying, training).": "Cuánto toma llevar la dotación a lo que necesita el plan (reclutar, calificar, capacitar).",
+    "Weight on the supply line": "Peso de la línea de suministro",
+    "How much of the stock already in QA (and on order, for the distributor) the planners count. 0 = ignored, 1 = fully counted.": "Cuánto del inventario que ya está en QA (y pedido, para el distribuidor) cuentan los planificadores. 0 = se ignora, 1 = se cuenta completo.",
+    "Levers": "Palancas", "Overtime": "Horas extra",
+    "The plant can make more than its regular output when the plan asks for it, at a premium on the extra packs.": "La planta puede fabricar más que su producción normal cuando el plan lo pide, con un recargo sobre las unidades adicionales.",
+    "Most overtime": "Máximo de horas extra", "Expedite QA when stock is low": "Acelerar QA cuando el inventario está bajo",
+    "Extra lab shifts and parallel testing release batches sooner, at a cost per pack and with more deviations.": "Turnos extra de laboratorio y análisis en paralelo liberan los lotes antes, con un costo por unidad y más desviaciones.",
+    "Expedite below": "Acelerar bajo", "QA time saved": "Tiempo de QA ahorrado", "Extra rejections while expediting": "Rechazos extra al acelerar", "Economics": "Economía", "Price": "Precio",
+    "Materials": "Materiales", "Cost of a worker": "Costo de un trabajador", "Cost to hire and qualify": "Costo de contratar y calificar", "Overtime premium": "Recargo por horas extra",
+    "Cost of expediting": "Costo de acelerar", "Holding cost": "Costo de almacenaje", "Penalty per pack not supplied": "Multa por unidad no entregada",
+    "Contract penalties and the cost to patients and reputation, on top of the lost sale.": "Penalidades contractuales y el costo para los pacientes y la reputación, además de la venta perdida.",
+    "Disposal": "Destrucción", "Run": "Corrida", "Horizon": "Horizonte", "Starting demand": "Demanda inicial",
+    // ---- ecuaciones
+    "Starting demand × pattern(t) × (1 + noise(t))": "Demanda inicial × patrón(t) × (1 + ruido(t))",
+    "Noise is pink: white noise smoothed over two weeks and scaled so its size does not depend on the time step.": "El ruido es rosa: ruido blanco suavizado en dos semanas y escalado para que su tamaño no dependa del paso de tiempo.",
+    "Distributor (when the tier is on)": "Distribuidor (cuando el eslabón está activo)", "Patients served by the distributor": "Pacientes atendidos por el distribuidor",
+    "Demand × g(Distributor stock ÷ (Demand × Stock needed for full service))": "Demanda × g(Inventario del distribuidor ÷ (Demanda × Inventario necesario para servicio completo))",
+    "Distributor's forecast": "Pronóstico del distribuidor", "SMOOTH(Demand, Forecast smoothing)": "SUAVIZAR(Demanda, Suavizamiento del pronóstico)",
+    "max(0, Forecast + (Forecast × Target cover − Stock) ÷ Time to correct stock + Weight × (Desired supply line − Supply line) ÷ Time to correct stock)": "máx(0, Pronóstico + (Pronóstico × Cobertura meta − Inventario) ÷ Tiempo para corregir el inventario + Peso × (Línea de suministro deseada − Línea de suministro) ÷ Tiempo para corregir el inventario)",
+    "Supply line = orders waiting at the plant + packs in transit. Desired supply line = Forecast × (Transit time + 1 week of order processing).": "Línea de suministro = pedidos en espera en la planta + unidades en tránsito. Línea de suministro deseada = Pronóstico × (Tiempo de tránsito + 1 semana de procesamiento de pedidos).",
+    "DELAY3(Plant shipments, Transit time)": "DEMORA3(Despachos de la planta, Tiempo de tránsito)", "∫ (Arrivals − Patients served) dt": "∫ (Llegadas − Pacientes atendidos) dt",
+    "Plant backlog": "Pedidos pendientes de la planta", "∫ (Orders to the plant − Plant shipments) dt": "∫ (Pedidos a la planta − Despachos de la planta) dt",
+    "Plant: shipping and planning": "Planta: despacho y planificación", "Plant shipments": "Despachos de la planta",
+    "Wanted × g(Plant stock ÷ (Wanted × Stock needed for full service)); Wanted = Demand, or Backlog ÷ 1 week with a distributor": "Pedido × g(Inventario de la planta ÷ (Pedido × Inventario necesario para servicio completo)); Pedido = Demanda, o Pendientes ÷ 1 semana con un distribuidor",
+    "g(y) = 2y − y² below full cover (y < 1), and 1 above: service starts to slip before the stock runs out.": "g(y) = 2y − y² bajo la cobertura completa (y < 1), y 1 por encima: el servicio empieza a caer antes de que se agote el inventario.",
+    "SMOOTH(Orders received, Forecast smoothing)": "SUAVIZAR(Pedidos recibidos, Suavizamiento del pronóstico)",
+    "Orders received = market demand, the distributor's orders, or (with sales data shared) market demand again.": "Pedidos recibidos = la demanda del mercado, los pedidos del distribuidor o (si se comparten los datos de venta) otra vez la demanda del mercado.",
+    "Forecast × Target stock cover": "Pronóstico × Cobertura meta de inventario",
+    "max(0, (Forecast + (Target stock − Plant stock) ÷ Time to correct stock + Backlog correction) ÷ (1 − Rejection rate) + Weight × (Desired QA pipeline − QA pipeline) ÷ Time to correct stock)": "máx(0, (Pronóstico + (Inventario meta − Inventario de la planta) ÷ Tiempo para corregir el inventario + Corrección de pendientes) ÷ (1 − Tasa de rechazo) + Peso × (Cuarentena de QA deseada − Cuarentena de QA) ÷ Tiempo para corregir el inventario)",
+    "Desired QA pipeline = Forecast ÷ (1 − Rejection rate) × QA release time. Backlog correction = (Backlog − Forecast × 1 week) ÷ Time to correct stock.": "Cuarentena de QA deseada = Pronóstico ÷ (1 − Tasa de rechazo) × Tiempo de liberación de QA. Corrección de pendientes = (Pendientes − Pronóstico × 1 semana) ÷ Tiempo para corregir el inventario.",
+    "Plant: capacity and people": "Planta: capacidad y personas",
+    "min(Plant capacity, Workforce × Productivity × (1 + Most overtime)) × Output during an outage": "mín(Capacidad de la planta, Dotación × Productividad × (1 + Máximo de horas extra)) × Producción durante una detención",
+    "min(Desired production, Capacity)": "mín(Producción deseada, Capacidad)", "Overtime packs": "Unidades en horas extra", "max(0, Production − Workforce × Productivity)": "máx(0, Producción − Dotación × Productividad)",
+    "∫ (Hiring − Leaving) dt; Hiring = max(0, Leaving + (Desired workforce − Workforce) ÷ Time to hire)": "∫ (Contratación − Salidas) dt; Contratación = máx(0, Salidas + (Dotación deseada − Dotación) ÷ Tiempo para contratar)",
+    "Desired workforce = min(Desired production, Plant capacity) ÷ Productivity (200 packs per person-week). Leaving = Workforce ÷ 100 weeks. Nobody is laid off: the workforce shrinks by people leaving.": "Dotación deseada = mín(Producción deseada, Capacidad de la planta) ÷ Productividad (200 unidades por persona-semana). Salidas = Dotación ÷ 100 semanas. No se despide a nadie: la dotación se reduce por las salidas.",
+    "Quality release and shelf life": "Liberación de calidad y vida útil", "QA pipeline": "Cuarentena de QA", "DELAY3(Production, QA release time): three stages in series": "DEMORA3(Producción, Tiempo de liberación de QA): tres etapas en serie",
+    "Released by QA": "Liberadas por QA", "Approved = Release × (1 − Rejection rate); Rejected = Release × Rejection rate": "Aprobadas = Liberación × (1 − Tasa de rechazo); Rechazadas = Liberación × Tasa de rechazo",
+    "Rejected batches": "Lotes rechazados", "Release × Rejection rate": "Liberación × Tasa de rechazo",
+    "While expediting (stock below the trigger), the QA time is cut and the rejection rate rises by the extra points.": "Mientras se acelera (inventario bajo el umbral), el tiempo de QA se reduce y la tasa de rechazo sube en los puntos extra.",
+    "∫ (Approved − Plant shipments − Written off) dt, kept by age and shipped oldest first": "∫ (Aprobadas − Despachos de la planta − Dadas de baja) dt, llevado por antigüedad y despachando primero lo más antiguo",
+    "Packs whose age reaches Shelf life − Remaining life required at delivery": "Unidades cuya antigüedad llega a Vida útil − Vida remanente exigida en la entrega",
+    "A released pack has already spent the QA time of its shelf life.": "Una unidad liberada ya gastó el tiempo de QA de su vida útil.",
+    "Money (the plant's view)": "Dinero (la visión de la planta)", "Profit rate": "Utilidad por semana",
+    "Price × Shipments − Materials × Production − Worker cost × Workforce − Hiring cost × Hiring − Overtime premium × Labour per pack × Overtime packs − Holding × Plant stock − Penalty × Not supplied − Disposal × (Rejected + Written off) − Expediting cost × Release": "Precio × Despachos − Materiales × Producción − Costo del trabajador × Dotación − Costo de contratar × Contratación − Recargo por horas extra × Mano de obra por unidad × Unidades en horas extra − Almacenaje × Inventario de la planta − Multa × No entregadas − Destrucción × (Rechazadas + Dadas de baja) − Costo de acelerar × Liberación",
+    "∫ Profit rate dt": "∫ Utilidad por semana dt", "Results": "Resultados", "Σ Patients served ÷ Σ Market demand": "Σ Pacientes atendidos ÷ Σ Demanda del mercado", "Bullwhip (production)": "Efecto látigo (producción)",
+    "Standard deviation of Production ÷ Standard deviation of Market demand": "Desviación estándar de la Producción ÷ Desviación estándar de la Demanda del mercado",
+    "1 means production varies exactly as much as demand. With a distributor, the same ratio for its orders shows where the amplification starts.": "1 significa que la producción varía exactamente lo que varía la demanda. Con un distribuidor, la misma razón para sus pedidos muestra dónde empieza la amplificación.",
+    // ---- escenarios
+    "Demand step (+25%)": "Escalón de demanda (+25%)", "Flu season (16-week surge)": "Temporada de influenza (alza de 16 semanas)", "Short-life product (6-month shelf life)": "Producto de vida corta (vida útil de 6 meses)",
+    "Plant outage (4 weeks)": "Detención de planta (4 semanas)", "Two-tier chain (distributor)": "Cadena de dos eslabones (distribuidor)", "Calm market (noise only)": "Mercado tranquilo (solo ruido)"
+  };
+
+  var H = {
+    "title.index": "PharmaSim — Dinámica de la cadena de suministro farmacéutica", "title.about": "Acerca de PharmaSim",
+    "meta.index": "Un simulador de dinámica de sistemas de una cadena de suministro farmacéutica: shocks de demanda, liberación de QA, vida útil, dotación y un eslabón distribuidor, con horas extra, QA acelerado y políticas de planificación medidas en utilidad, servicio, amplificación y pérdidas.",
+    "meta.about": "PharmaSim es un modelo de dinámica de sistemas de una cadena de suministro farmacéutica: shocks de demanda, liberación de QA, vida útil, dotación y un distribuidor, con palancas medidas en utilidad, servicio, amplificación y pérdidas. Diseñado y construido por Daniel Alberto Sepulveda Estay, PhD.",
+    "attr.ver": "Versión de la aplicación", "brand.sub": "DINÁMICA DE SISTEMAS · CADENA DE SUMINISTRO FARMACÉUTICA", "nav.tour": "Tutorial", "nav.about": "Acerca de", "nav.projects": "← Proyectos",
+    "aria.rail": "Datos del escenario", "rail.h1": "Escenario", "rail.reset": "Restablecer todo", "rail.preset": "Partir de un escenario predefinido",
+    "rail.note": "Cada cambio vuelve a correr el modelo de inmediato. Un punto marca los datos que usted cambió respecto del escenario inicial.",
+    "cmp.save": "Guardar como línea base", "cmp.clear": "Quitar línea base", "cmp.seed": "Otro futuro de demanda", "cmp.link": "Copiar enlace", "cmp.csv": "Descargar CSV",
+    "h.charts": "Qué pasa semana a semana",
+    "charts.note": "Apunte a cualquier gráfico para leer los valores de esa semana; el diagrama del modelo, más abajo, sigue la misma semana. Las líneas grises punteadas son la línea base guardada.",
+    "c.prod": "Demanda y producción", "c.prod.sub": "Unidades por semana. El efecto látigo es la producción oscilando más que la demanda que la impulsa.",
+    "c.stock": "Inventario", "c.stock.sub": "Unidades en existencia que todavía se pueden vender.", "c.service": "Servicio", "c.service.sub": "Parte de la demanda de cada semana que llegó a los pacientes.",
+    "c.profit": "Utilidad acumulada", "c.profit.sub": "Los ingresos de la planta menos todos los costos, desde la semana 0.", "c.people": "Dotación", "c.people.sub": "Personas en planilla; la capacidad las sigue.",
+    "c.waste": "Pérdidas", "c.waste.sub": "Unidades perdidas hasta ahora: lotes rechazados en QA e inventario dado de baja porque le quedaba muy poca vida útil.",
+    "h.model": "El modelo", "model.note": "Las cajas son stocks, las válvulas son flujos y los círculos son lo que ven los planificadores. Los números son de la semana indicada, que sigue a su puntero en los gráficos.",
+    "eq.sum": "Todas las ecuaciones, con su valor en esa semana",
+    "why.sum": "Cómo leerlo: qué significan los resultados",
+    "why.body": "<p><b>La tasa de cumplimiento</b> es la parte de la demanda del mercado que llegó a los pacientes. En la industria farmacéutica la meta suele ser 98–99.5%, así que una fracción de punto es un desabastecimiento real. El servicio cae antes de que se agote el inventario, porque está repartido entre muchas presentaciones y mercados.</p>" +
+      "<p><b>El efecto látigo</b> es cuánto más varía la producción que la demanda (desviación estándar de la producción ÷ desviación estándar de la demanda). Sobre 1, la planta amplifica lo que hace el mercado: está persiguiendo su propia brecha de inventario, no solo la demanda. Con un distribuidor, la misma razón para sus pedidos muestra dónde empieza la amplificación.</p>" +
+      "<p><b>Las pérdidas</b> son los lotes rechazados en QA más el inventario dado de baja porque le quedaba muy poca vida útil para que los clientes lo aceptaran. Con una vida útil larga son casi solo rechazos; con una corta, un exceso después de un alza se convierte en inventario vencido.</p>" +
+      "<p><b>La utilidad</b> es la visión de la planta: ingresos menos materiales, la dotación (pagada esté ocupada o no), contratación, horas extra, almacenaje, destrucción, aceleración y una multa por cada unidad no entregada. Las cifras son ilustrativas, elegidas para un medicamento de marca de precio medio.</p>" +
+      "<p><b>La línea base</b> es una corrida guardada para comparar. Usa la misma demanda aleatoria que la corrida actual, así que cada diferencia se debe a lo que usted cambió, no a la suerte. <b>Otro futuro de demanda</b> sortea otro futuro aleatorio para ambas.</p>",
+    "lim.sum": "Lo que el modelo deja fuera",
+    "lim.body": "<ul><li>Una familia de productos, una planta y a lo más un distribuidor. No se modelan los proveedores del principio activo, varios mercados ni la asignación entre ellos.</li>" +
+      "<li>La producción es continua: las campañas, los tamaños de lote y los cambios de formato se promedian.</li>" +
+      "<li>El inventario del distribuidor no se lleva por antigüedad; la vida útil se sigue solo en la planta.</li>" +
+      "<li>No se despide a nadie: la dotación se reduce solo por las salidas.</li>" +
+      "<li>Los costos y precios son ilustrativos, no una cotización.</li></ul>",
+    "foot.consult": "PharmaSim <span id=\"ver-foot\"></span> · <a href=\"about.html\">Acerca de</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>",
+    "foot.note": "Un modelo de dinámica de sistemas de una cadena de suministro farmacéutica: ecuaciones probadas, una línea base justa y los compromisos de cada palanca. Construido con <a href=\"https://claude.com\" target=\"_blank\" rel=\"noopener\">Claude</a>.",
+    // about
+    "a.sub": "ACERCA DE LA APLICACIÓN", "a.open": "Abrir el simulador", "a.eyebrow": "Acerca de la aplicación", "a.h1": "PharmaSim",
+    "a.lede": "¿Por qué un alza de 25% en la demanda hace que una planta oscile más que eso, quede corta durante semanas y luego se exceda? PharmaSim muestra cómo las demoras de una cadena de suministro farmacéutica (pronosticar, contratar, liberar en QA y despachar) convierten decisiones razonables en amplificación, desabastecimiento e inventario vencido, y lo que realmente cuesta cada palanca. En inglés o en español.",
+    "a.openbtn": "<a class=\"open\" href=\"index.html\">Abrir PharmaSim →</a>", "a.what.h": "Qué hace",
+    "a.what.list": "<li><b>Golpea la cadena</b>Un cambio duradero de la demanda, un alza estacional o una detención de planta, con variación aleatoria semana a semana que comparte la línea base, para que las comparaciones sean justas.</li>" +
+      "<li><b>Modela lo propio de la industria farmacéutica</b>Una liberación de QA que toma semanas y rechaza algunos lotes, una vida útil llevada primero en entrar, primero en salir con una vida remanente mínima en la entrega, y una dotación que toma tiempo contratar y calificar.</li>" +
+      "<li><b>Agrega un distribuidor</b>Un segundo eslabón que pide a la planta, para ver dónde empieza la amplificación y qué cambia al compartir los datos de venta.</li>" +
+      "<li><b>Pondera las palancas</b>Horas extra, QA acelerado y la política de planificación (cobertura, pronóstico, velocidad de corrección y peso de la línea de suministro), medidas en utilidad, tasa de cumplimiento, efecto látigo y pérdidas frente a una línea base guardada.</li>" +
+      "<li><b>Enseña</b>Un tutorial en tres niveles, un diagrama de stocks y flujos en vivo y todas las ecuaciones con su valor en cualquier semana.</li>",
+    "a.how.h": "Cómo está construido",
+    "a.how.p": "El modelo es un conjunto de stocks y flujos integrado semana a semana en pasos de tiempo pequeños, en JavaScript simple que corre por completo en su navegador. Las pruebas automáticas verifican que parte en equilibrio exacto, que cada unidad queda contabilizada, que un paso de tiempo menor da las mismas respuestas, que el pronóstico coincide con su solución exacta y que cada palanca produce el compromiso que afirma el tutorial. También se verifica contra el modelo cada afirmación que hacen las preguntas del tutorial.",
+    "a.author.h": "Autor",
+    "a.author.p": "PharmaSim fue diseñado y construido por <b>Daniel Alberto Sepulveda Estay, PhD</b>, fundador de <a href=\"https://kathuman.github.io/estay-dynamics/\" target=\"_blank\" rel=\"noopener\">Estay Dynamics</a>. Trabaja en dinámica de sistemas, simulación y optimización de redes para cadenas de suministro y operaciones, incluida la manufactura farmacéutica. Es doctor de la Universidad Técnica de Dinamarca (DTU) y magíster del Instituto Tecnológico de Massachusetts (MIT), y es miembro del consejo de la System Dynamics Society.",
+    "a.author.links": "<a href=\"https://kathuman.github.io/estay-dynamics/about.html\" target=\"_blank\" rel=\"noopener\">Más sobre Daniel →</a> · <a href=\"https://kathuman.github.io/estay-dynamics/contact.html\" target=\"_blank\" rel=\"noopener\">Contáctenos</a>",
+    "a.cite": "<b>Para citar:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (versión <span id=\"cite-ver\">2.0.0</span>) [Software]. https://kathuman.github.io/pharma-sim/",
+    "a.foot": "PharmaSim v2.0.0 · <a href=\"index.html\">Abrir el simulador</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>"
+  };
+
+  // ---- mensajes de validación del modelo
+  var P = [
+    ["^The time step must be between 0 and 0\\.5 weeks\\.$", "El paso de tiempo debe estar entre 0 y 0.5 semanas."],
+    ["^The horizon must be between 8 and 520 weeks\\.$", "El horizonte debe estar entre 8 y 520 semanas."],
+    ["^Demand must be positive\\.$", "La demanda debe ser positiva."],
+    ["^Unknown demand pattern: (.*)\\.$", "Patrón de demanda desconocido: $1."],
+    ["^(\\w+) must be positive\\.$", "$1 debe ser positivo."],
+    ["^The distributor needs a positive transit time and cover\\.$", "El distribuidor necesita un tiempo de tránsito y una cobertura positivos."],
+    ["^The QA rejection rate must stay below 100%\\.$", "La tasa de rechazo de QA debe quedar bajo el 100%."],
+    ["^Shelf life minus the minimum remaining life must exceed the QA time by more than a week, or nothing could be sold\\.$", "La vida útil menos la vida remanente mínima debe superar el tiempo de QA en más de una semana; si no, no se podría vender nada."],
+    ["^The supply-line weight must be between 0 and 1\\.$", "El peso de la línea de suministro debe estar entre 0 y 1."],
+    ["^The target cover must be at least the cover needed for full service, or the plant could never serve all demand\\.$", "La cobertura meta debe ser al menos la necesaria para servicio completo; si no, la planta nunca podría atender toda la demanda."],
+    ["^The plant ceiling must be at least 100% of the starting output\\.$", "La capacidad de la planta debe ser al menos el 100% de la producción inicial."]
+  ];
+
+  root.PS_ES = { T: T, H: H, P: P };
+  if (typeof module === "object" && module.exports) module.exports = root.PS_ES;
+})(typeof self !== "undefined" ? self : this);

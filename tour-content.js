@@ -1,0 +1,101 @@
+// PharmaSim — the tutorial: three levels of guided steps. Each step names the element it points at, the scenario it
+// sets up (a preset, then optionally saving it as the baseline, then changed inputs), and optionally a question.
+// Every question's claim about the model is checked by tests/tutorial.test.js. {{tokens}} are filled in from the live
+// results (see TOKENS); d-tokens are the difference from the baseline.
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory();
+  else root.PSTourContent = factory();
+})(typeof self !== "undefined" ? self : this, function () {
+  "use strict";
+  var TOKENS = ["fill", "bw", "obw", "waste", "expired", "profit", "short", "lost", "dProfit", "dFill", "dWaste", "dBw", "dObw", "dShort"];
+
+  var LEVELS = [
+    { id: "beginner", title: "Beginner", minutes: 8, blurb: "The bullwhip in one plant: why a lasting rise in demand causes a shortage and then an overshoot, and what overtime does about it.", steps: [
+      { id: "b-welcome", title: "What this simulator shows", target: "#headline", setup: { preset: "step", baseline: "clear" },
+        body: "A plant makes a medicine and ships it to patients. At week 12 demand rises by 25% and stays there. The sentence at the top sums up what happens over two years. Use <b>Next</b> to move on, or leave at any time with ×." },
+      { id: "b-chart", title: "Demand and production", target: "#ch-prod", setup: { preset: "step", baseline: "clear" },
+        body: "The white line is market demand: a 25% step at week 12, plus some random week-to-week noise. The blue line is production. It does not follow the step at once: the plan has to notice the change, and new people have to be hired and qualified. Point at the chart to read any week." },
+      { id: "b-why", title: "Why the overshoot?", target: "#ch-prod", setup: { preset: "step", baseline: "clear" },
+        body: "Look at weeks 30 to 50: production rises above the new level of demand before it settles.",
+        quiz: { q: "Why does production go above the new demand?", options: ["The plant must also refill the stock that drained while it was catching up", "Demand keeps rising after week 12", "The forecast is wrong"], answer: 0, claim: "step-overshoot",
+          explain: "While production lagged, the stock drained. Once the plant catches up it must make the new demand <em>and</em> rebuild the stock, so for a while it makes more than patients take. That overshoot is the bullwhip." } },
+      { id: "b-stock", title: "The stock drains, and service slips", target: "#ch-service", setup: { preset: "step", baseline: "clear" },
+        body: "The stock chart shows the drain after the step. The service chart shows what it costs patients: in <b>{{short}}</b> weeks less than 99% of demand was served. Service slips before the stock is empty, because stock is spread over many presentations and markets." },
+      { id: "b-kpis", title: "The results in one row", target: "#kpis", setup: { preset: "step", baseline: "clear" },
+        body: "Fill rate <b>{{fill}}</b>: the share of demand that reached patients. Bullwhip <b>{{bw}}</b>: how much more production varied than demand. Waste <b>{{waste}}</b> packs: here almost all batches rejected in QA. Profit <b>{{profit}}</b> over the two years." },
+      { id: "b-baseline", title: "Save a baseline", target: "#compare", setup: { preset: "step", baseline: "save" },
+        body: "We have saved this run as the <b>baseline</b>. From now on every result shows its difference from it, and the charts show the baseline as a dashed grey line. The baseline sees the same random demand, so a difference is never luck." },
+      { id: "b-ot-q", title: "A lever: overtime", target: "#c_overtime", setup: { preset: "step", baseline: "save" },
+        body: "Overtime lets the plant make up to 20% more than its regular output when the plan asks for it, at a 50% premium on the extra packs.",
+        quiz: { q: "Turn overtime on. What happens to the shortage?", options: ["It shrinks or disappears", "It gets worse", "Nothing changes"], answer: 0, claim: "step-overtime-fill",
+          explain: "Overtime closes the gap while people are still being hired, so the stock does not drain as far. Next we switch it on." } },
+      { id: "b-ot", title: "Overtime pays here", target: "#kpis", setup: { preset: "step", baseline: "save", values: { overtime: true } },
+        body: "With overtime the fill rate is <b>{{fill}}</b> ({{dFill}} points against the baseline) and profit changes by <b>{{dProfit}}</b>: for a medicine with a healthy margin, the extra packs are worth far more than the premium. Look at the dashed line on the production chart to compare." },
+      { id: "b-done", title: "You know the basics", target: "#tourBtn", setup: { preset: "step", baseline: "save", values: { overtime: true } },
+        body: "You can read the charts and results, compare with a baseline, and test a lever. The <b>intermediate</b> level adds what is special about medicines: QA release, shelf life, and the supply line planners often forget to count." }
+    ] },
+    { id: "intermediate", title: "Intermediate", minutes: 12, blurb: "What is special about pharma: QA release delays, shelf life and expiry, and why counting the supply line matters.", steps: [
+      { id: "i-qa", title: "The QA pipeline", target: "#diagram", setup: { preset: "step", baseline: "clear" },
+        body: "Every batch waits in <b>QA quarantine</b> for testing and batch-record review before it can be sold: three weeks here, and 2% of batches are rejected. In the diagram, the box between production and the plant stock holds those packs. Point at a chart and the diagram's numbers follow that week." },
+      { id: "i-qa-q", title: "A longer QA release", target: "#c_qaTime", setup: { preset: "step", baseline: "save" },
+        body: "Suppose release took six weeks instead of three, for example because of a new test.",
+        quiz: { q: "With a six-week QA release, does the bullwhip get bigger or smaller?", options: ["Bigger", "Smaller", "The same"], answer: 0, claim: "qa-longer-bigger-bw",
+          explain: "A longer delay means the plan sees the effect of its decisions later, so it keeps correcting for longer and overshoots more. Next we set six weeks." } },
+      { id: "i-qa-show", title: "Delay amplifies", target: "#kpis", setup: { preset: "step", baseline: "save", values: { qaTime: 6 } },
+        body: "With six weeks of QA the bullwhip is <b>{{bw}}</b> ({{dBw}} against three weeks) and the fill rate changes by {{dFill}} points. The packs in QA are already made, but the planners, looking only at the stock they can sell, keep asking for more." },
+      { id: "i-sl", title: "Count the supply line", target: "#c_supplyLineWeight", setup: { preset: "step", baseline: "save", values: { qaTime: 6, supplyLineWeight: 1 } },
+        body: "The <b>weight on the supply line</b> says how much of the stock already in QA the planners count. At 1 they count all of it: the bullwhip drops to <b>{{bw}}</b> ({{dBw}} against the baseline). Ignoring what is already in the pipeline is one of the most common causes of amplification." },
+      { id: "i-eq", title: "It is all in the equations", target: "#eqs-box", setup: { preset: "step", baseline: "save", values: { qaTime: 6, supplyLineWeight: 1 }, open: "#eqs-box" },
+        body: "Under the diagram, every equation is written out with its value in the week you point at. Find <b>Desired production</b>: the forecast, plus a correction for the stock gap, plus the weight times the gap in the QA pipeline. Nothing is hidden." },
+      { id: "i-short", title: "A short-life product", target: "#ch-waste", setup: { preset: "shortLife", baseline: "clear" },
+        body: "This product has a six-month shelf life, and customers refuse packs with less than 18 weeks left, so a pack must be sold within eight weeks of being made. Demand surges by 40% for 16 weeks, then falls back. Stock is shipped oldest first, yet <b>{{expired}}</b> packs are written off: the plant was still catching up when the surge ended." },
+      { id: "i-short-q", title: "Overtime and shelf life", target: "#c_overtime", setup: { preset: "shortLife", baseline: "save" },
+        body: "Overtime helped with the lasting step.",
+        quiz: { q: "For this short-life product, does overtime reduce waste?", options: ["Yes, less waste", "No, more waste", "It makes no difference"], answer: 1, claim: "shortlife-overtime-waste",
+          explain: "Overtime fills the shortage faster, but it also builds stock that is still on the shelf when the surge ends. With an eight-week sales window, part of it expires. Next we switch it on." } },
+      { id: "i-short-ot", title: "A real trade-off", target: "#kpis", setup: { preset: "shortLife", baseline: "save", values: { overtime: true } },
+        body: "With overtime the fill rate changes by {{dFill}} points and profit by {{dProfit}}, but waste changes by <b>{{dWaste}}</b> packs. Whether that is acceptable depends on the medicine: a shortage of a critical drug weighs more than expired stock." },
+      { id: "i-short-sl", title: "Counting the pipeline cuts waste", target: "#ch-waste", setup: { preset: "shortLife", baseline: "save", values: { supplyLineWeight: 1 } },
+        body: "Back without overtime, counting the QA pipeline (weight 1) changes waste by <b>{{dWaste}}</b> packs: the plan stops asking for more once enough is already in QA, so less is left over when the surge ends." },
+      { id: "i-fair", title: "Fair comparisons", target: "#btn-seed", setup: { preset: "shortLife", baseline: "save", values: { supplyLineWeight: 1 } },
+        body: "The random noise in demand is the same for the run and its baseline. <b>New demand future</b> draws another random future for both, so you can check that a lever's effect is not a coincidence of one future." },
+      { id: "i-done", title: "Intermediate complete", target: "#tourBtn", setup: { preset: "shortLife", baseline: "save", values: { supplyLineWeight: 1 } },
+        body: "Delays amplify, the supply line matters, and with short shelf lives an overshoot turns into waste. The <b>advanced</b> level adds a distributor, a plant outage and the economics of each lever." }
+    ] },
+    { id: "advanced", title: "Advanced", minutes: 15, blurb: "Two tiers and where amplification starts, a plant outage, the economics of expediting QA, and designing a policy.", steps: [
+      { id: "a-tier", title: "Add a distributor", target: "#kpis", setup: { preset: "twoTier", baseline: "clear" },
+        body: "A distributor now serves patients from its own stock and orders from the plant, two weeks' transit away. Its orders vary <b>{{obw}}</b> as much as demand, and the plant's production <b>{{bw}}</b>: amplification grows at each tier." },
+      { id: "a-tier-q", title: "Two remedies", target: "#c_shareDemand", setup: { preset: "twoTier", baseline: "save" },
+        body: "Two classic remedies: the distributor shares its sales data with the plant, or the distributor counts what it already has on order (its supply line).",
+        quiz: { q: "Which cuts the amplification of the distributor's orders more?", options: ["Sharing sales data with the plant", "Counting what is already on order", "Both the same"], answer: 1, claim: "tier-supply-line-beats-sharing",
+          explain: "The distributor's orders come from the distributor's own decisions. Sharing data changes what the plant sees, not how the distributor orders; counting the supply line changes the distributor's rule itself." } },
+      { id: "a-tier-sl", title: "Counting the supply line", target: "#kpis", setup: { preset: "twoTier", baseline: "save", values: { supplyLineWeight: 1 } },
+        body: "With the supply line counted, the distributor's orders vary <b>{{obw}}</b> as much as demand ({{dObw}}), and production follows ({{dBw}})." },
+      { id: "a-tier-share", title: "Sharing sales data", target: "#kpis", setup: { preset: "twoTier", baseline: "save", values: { shareDemand: true } },
+        body: "Sharing sales data instead leaves the distributor's orders almost as they were ({{dObw}}), but the plant, now forecasting from what patients take, swings less: production bullwhip {{dBw}}. Each remedy acts where its information is used." },
+      { id: "a-outage", title: "A plant outage", target: "#ch-service", setup: { preset: "outage", baseline: "clear" },
+        body: "Demand is steady now, but the plant stops for four weeks from week 20 (shaded red): contamination, a failed inspection or an equipment breakdown. The QA pipeline keeps releasing for a while, then the stock runs low: <b>{{short}}</b> weeks of shortage and <b>{{lost}}</b> packs not supplied." },
+      { id: "a-exp-q", title: "Expedite QA?", target: "#c_expediteQA", setup: { preset: "outage", baseline: "save" },
+        body: "When stock falls below 75% of its target, QA can be expedited: extra lab shifts and parallel testing cut release time by half, at $1.50 per pack and with three more points of rejections.",
+        quiz: { q: "What does expediting QA do in this outage?", options: ["Fewer shortages, but more rejected batches and an expediting cost", "No shortages at no cost", "More shortages"], answer: 0, claim: "outage-expedite-tradeoff",
+          explain: "The packs already in quarantine reach patients sooner, so service recovers faster. The price is more deviations and the cost of the extra shifts." } },
+      { id: "a-exp", title: "The expediting trade-off", target: "#kpis", setup: { preset: "outage", baseline: "save", values: { expediteQA: true } },
+        body: "Expediting changes the fill rate by {{dFill}} points and waste by <b>{{dWaste}}</b> packs, and profit by <b>{{dProfit}}</b>. Expediting appears as yellow shading on the charts." },
+      { id: "a-pen-q", title: "Who pays for a shortage?", target: "#c_shortagePenalty", setup: { preset: "outage", baseline: "save", values: { expediteQA: true } },
+        body: "Profit includes a penalty of $20 for every pack not supplied: contract penalties and the cost to patients and reputation.",
+        quiz: { q: "If shortages carried no penalty, would expediting still raise profit?", options: ["Yes", "No, it would lower profit", "It would make no difference"], answer: 1, claim: "outage-expedite-needs-penalty",
+          explain: "Without the penalty, the gain is only the margin on the packs that would otherwise be lost, and it does not cover the extra rejections and lab cost. Whether a lever pays depends on what a shortage really costs." } },
+      { id: "a-pen", title: "Without the penalty", target: "#kpis", setup: { preset: "outage", baseline: "save", values: { shortagePenalty: 0 }, baselineValues: { shortagePenalty: 0 } },
+        body: "Here the baseline has no penalty either. Now switch <b>Expedite QA</b> on yourself and watch the profit difference: service still improves, but profit falls. Set the penalty back to $20 to see it flip." },
+      { id: "a-design-q", title: "Design a policy", target: "#g_policy", setup: { preset: "step", baseline: "save" },
+        body: "Back to the lasting 25% step, without overtime. Two policies could avoid the shortage: hold more stock, or hire faster.",
+        quiz: { q: "Can a target cover of six weeks (instead of four) avoid the shortage on its own?", options: ["Yes", "No, only overtime can"], answer: 0, claim: "step-cover-six-full-service",
+          explain: "Six weeks of stock is enough to ride out the weeks it takes to hire. It costs holding, but here that costs less than the sales it saves. Next we set it." } },
+      { id: "a-design", title: "Your turn", target: "#g_policy", setup: { preset: "step", baseline: "save", values: { coverage: 6 } },
+        body: "With six weeks of cover the fill rate is <b>{{fill}}</b> and profit changes by {{dProfit}}. Now try your own design: a faster time to hire, a slower correction, the supply-line weight, or overtime, and compare each with the baseline." },
+      { id: "a-done", title: "Advanced complete", target: "#tourBtn", setup: { preset: "step", baseline: "save", values: { coverage: 6 } },
+        body: "You have seen where amplification starts, how each remedy works, and that a lever's value depends on the economics of the medicine. Every number here comes from the equations below the diagram, and the model is tested so that each claim in this tutorial holds." }
+    ] }
+  ];
+  return { TOKENS: TOKENS, LEVELS: LEVELS };
+});
