@@ -60,11 +60,13 @@
     var sg = function (v, d) { var s = Math.abs(v).toFixed(d); return (+s === 0 ? "±" : v > 0 ? "+" : "−") + s; };
     var V = {
       fill: (k.fillRate * 100).toFixed(2) + "%", bw: k.bullwhip == null ? "—" : k.bullwhip.toFixed(2) + "×", obw: k.orderBullwhip == null ? "—" : k.orderBullwhip.toFixed(2) + "×",
+      abw: k.apiBullwhip == null ? "—" : k.apiBullwhip.toFixed(2) + "×", crit: k.criticalFill == null ? "—" : (k.criticalFill * 100).toFixed(2) + "%", other: k.otherFill == null ? "—" : (k.otherFill * 100).toFixed(2) + "%",
       waste: num(k.wasteUnits), expired: num(k.expiredUnits), profit: money(k.profit), short: String(k.shortWeeks), lost: num(k.lost)
     };
     if (bk) {
       V.dProfit = money(k.profit - bk.profit, true); V.dFill = sg((k.fillRate - bk.fillRate) * 100, 2); V.dWaste = sg(k.wasteUnits - bk.wasteUnits, 0).replace(/(\d)(?=(\d{3})+$)/g, "$1,");
       V.dBw = k.bullwhip != null && bk.bullwhip != null ? sg(k.bullwhip - bk.bullwhip, 2) : "—"; V.dObw = k.orderBullwhip != null && bk.orderBullwhip != null ? sg(k.orderBullwhip - bk.orderBullwhip, 2) : "—"; V.dShort = sg(k.shortWeeks - bk.shortWeeks, 0);
+      V.dAbw = k.apiBullwhip != null && bk.apiBullwhip != null ? sg(k.apiBullwhip - bk.apiBullwhip, 2) : "—"; V.dCrit = k.criticalFill != null && bk.criticalFill != null ? sg((k.criticalFill - bk.criticalFill) * 100, 2) : "—";
     }
     return String(text).replace(/\{\{(\w+)\}\}/g, function (m, t) { return V[t] != null ? V[t] : m; });
   }

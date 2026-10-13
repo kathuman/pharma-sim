@@ -3,7 +3,7 @@
 // demand. window.PSApp is the interface the tutorial uses.
 (function () {
   "use strict";
-  var APP_VERSION = "2.0.0";
+  var APP_VERSION = "3.0.0";
   var M = window.PSModel, S = window.PSSpecs, EQ = window.PSEquations, I18 = window.PSi18n, T = I18.T, tw = I18.tw;
   var $ = function (id) { return document.getElementById(id); };
   var state = { p: M.merge(M.PRESETS.step.values), preset: "step", base: null, baseParams: null, res: null, hoverT: null, diagram: null, diagramMulti: null, charts: {} };
@@ -20,6 +20,7 @@
   function unit(u) { return u ? T(u) : ""; }
   function showVal(c, v) {
     if (c.type === "toggle") return v ? T("on") : T("off");
+    if (c.zero && v === 0) return T(c.zero);
     var d = c.step < 0.1 ? 2 : c.step < 1 ? 1 : 0;
     var s = num(v, d);
     return c.unit === "%" ? s + "%" : c.unit ? s + " " + unit(c.unit) : s;
@@ -78,6 +79,7 @@
     if (!res.ok) { err.hidden = false; err.innerHTML = res.errors.map(function (e) { return "● " + tw(e); }).join("<br>"); return; }
     err.hidden = true;
     state.res = res;
+    var notes = $("notes"); notes.hidden = !res.warnings.length; notes.innerHTML = res.warnings.map(function (e) { return "● " + tw(e); }).join("<br>");
     headline(); kpis(); compareBar(); charts(); model(); saveHash();
   }
   function headline() {
@@ -106,16 +108,17 @@
     var avgDemand = r.totals.demand / p.weeks, waste = k.wasteUnits / Math.max(1, r.totals.demand);
     var html = [
       tile(T("Profit"), money(k.profit), T("revenue minus every cost, {w} weeks", { w: p.weeks }), delta(k.profit, B(function (x) { return x.profit; }), 1, function (d) { return money(d, true); })),
-      tile(T("Fill rate"), pct(k.fillRate, 2), T("{n} packs not supplied", { n: num(k.lost) }), delta(k.fillRate * 100, B(function (x) { return x.fillRate * 100; }), 1, function (d) { return signed(d, 2, " " + T("pts")); }), k.fillRate < 0.98 ? "critical" : k.fillRate < 0.995 ? "warning" : null),
+      tile(T("Fill rate"), pct(k.fillRate, 2), T("{n} packs not supplied", { n: num(k.lost) }) + (k.criticalFill != null && p.criticalShare < 100 ? " · " + T("critical patients {c}", { c: pct(k.criticalFill, 2) }) : ""), delta(k.fillRate * 100, B(function (x) { return x.fillRate * 100; }), 1, function (d) { return signed(d, 2, " " + T("pts")); }), k.fillRate < 0.98 ? "critical" : k.fillRate < 0.995 ? "warning" : null),
       tile(T("Weeks short"), num(k.shortWeeks), T("weeks with under 99% of demand served"), delta(k.shortWeeks, B(function (x) { return x.shortWeeks; }), -1, function (d) { return signed(d, 0); }), k.shortWeeks > 8 ? "warning" : null),
       tile(T("Bullwhip"), k.bullwhip == null ? "—" : k.bullwhip.toFixed(2) + "×", k.bullwhip == null ? T("demand did not vary") : T("production varies {x}× as much as demand", { x: k.bullwhip.toFixed(2) }), delta(k.bullwhip, B(function (x) { return x.bullwhip; }), -1, function (d) { return signed(d, 2); }), k.bullwhip > 1.5 ? "warning" : null),
       r.multi ? tile(T("Distributor's orders"), k.orderBullwhip == null ? "—" : k.orderBullwhip.toFixed(2) + "×", T("its orders vary this much more than demand"), delta(k.orderBullwhip, B(function (x) { return x.orderBullwhip; }), -1, function (d) { return signed(d, 2); }), k.orderBullwhip > 1.5 ? "warning" : null)
-        : tile(T("Peak production"), num(k.peakProduction), T("packs/wk · {x} of the starting output", { x: pct(k.peakProduction / (p.demand / (1 - p.rejectRate / 100)), 0) }), delta(k.peakProduction, B(function (x) { return x.peakProduction; }), 0, function (d) { return signed(d, 0); })),
+        : tile(T("Peak production"), num(k.peakProduction), T("packs/wk · {x} of the starting output", { x: pct(k.peakProduction / (p.demand / (1 - p.rejectRate / 100)), 0) }) + (k.labWeeks > 0 ? " · " + T("the QA lab at its limit for {w} weeks", { w: num(k.labWeeks, 0) }) : ""), delta(k.peakProduction, B(function (x) { return x.peakProduction; }), 0, function (d) { return signed(d, 0); }), k.labWeeks > 0 ? "warning" : null),
+      r.api ? tile(T("API supplier orders"), k.apiBullwhip == null ? "—" : k.apiBullwhip.toFixed(2) + "×", T("vary this much more than demand") + (k.apiShortUnits > 0.5 ? " · " + T("{n} packs not made for lack of API", { n: num(k.apiShortUnits) }) : ""), delta(k.apiBullwhip, B(function (x) { return x.apiBullwhip; }), -1, function (d) { return signed(d, 2); }), k.apiShortUnits > 0.5 ? "critical" : k.apiBullwhip > 3 ? "warning" : null) : null,
       tile(T("Waste"), num(k.wasteUnits) + " " + T("packs"), T("{e} written off · {r} rejected · {v}", { e: num(k.expiredUnits), r: num(k.rejectedUnits), v: money(k.wasteCost) }), delta(k.wasteUnits, B(function (x) { return x.wasteUnits; }), -1, function (d) { return signed(d, 0); }), waste > 0.04 ? "warning" : null),
       tile(T("Average stock"), num(k.avgInventory / avgDemand, 1) + " " + T("wk"), T("{n} packs on hand on average", { n: num(k.avgInventory) }), delta(k.avgInventory, B(function (x) { return x.avgInventory; }), 0, function (d) { return signed(d, 0); })),
       tile(T("Workforce"), num(k.peakWorkforce, 0) + " " + T("people"), T("at the peak · {h} hired", { h: num(k.hires) }), delta(k.peakWorkforce, B(function (x) { return x.peakWorkforce; }), -1, function (d) { return signed(d, 1); }))
     ];
-    $("kpis").innerHTML = html.join("");
+    $("kpis").innerHTML = html.filter(Boolean).join("");
   }
   function compareBar() {
     var has = !!state.base;
@@ -127,7 +130,11 @@
   // ---- charts
   function weekly(res) {
     var per = Math.round(1 / res.params.dt), out = [];
-    for (var k = 0; k + per <= res.rows.length; k += per) { var d = 0, s = 0; for (var j = k; j < k + per; j++) { d += res.rows[j].demand; s += res.rows[j].served; } out.push({ t: res.rows[k].t, fill: d > 0 ? 100 * s / d : 100 }); }
+    for (var k = 0; k + per <= res.rows.length; k += per) {
+      var d = 0, s = 0, dc = 0, sc = 0;
+      for (var j = k; j < k + per; j++) { var r = res.rows[j]; d += r.demand; s += r.served; dc += r.critDemand; sc += r.critServed; }
+      out.push({ t: res.rows[k].t, fill: d > 0 ? 100 * s / d : 100, crit: dc > 0 ? 100 * sc / dc : null, other: d - dc > 0 ? 100 * (s - sc) / (d - dc) : null });
+    }
     return out;
   }
   function withWaste(res) {
@@ -137,20 +144,22 @@
   function bands(res) {
     var out = [], p = res.params;
     if (p.outage) out.push({ from: p.outageWeek, to: Math.min(p.weeks, p.outageWeek + p.outageWeeks), cls: "outage", label: T("Plant outage") });
+    if (p.apiTier && p.apiOutage) out.push({ from: p.apiOutageWeek, to: Math.min(p.weeks, p.apiOutageWeek + p.apiOutageWeeks), cls: "apioutage", label: T("API supplier outage") });
+    var lab = null; res.rows.forEach(function (r, i) { if (r.labBound && lab == null) lab = r.t; if ((!r.labBound || i === res.rows.length - 1) && lab != null) { out.push({ from: lab, to: r.t, cls: "lab", label: T("QA lab at its limit") }); lab = null; } });
     var on = null; res.rows.forEach(function (r, i) { if (r.expediting && on == null) on = r.t; if ((!r.expediting || i === res.rows.length - 1) && on != null) { out.push({ from: on, to: r.t, cls: "expedite", label: T("Expediting QA") }); on = null; } });
     return out;
   }
   function charts() {
-    var res = state.res, base = state.base, multi = res.multi;
+    var res = state.res, base = state.base, multi = res.multi, api = res.api, crit = res.params.criticalShare > 0 && res.params.allocation === "critical";
     var bw = base ? withWaste(base) : null, rw = withWaste(res), wk = weekly(res), bwk = base ? weekly(base) : null;
     var same = base && base.rows.length === res.rows.length && base.params.dt === res.params.dt;
     var rows = res.rows.map(function (r, i) {
       var o = { t: r.t, demand: r.demand, orders: multi ? r.ordersToMfg : null, production: r.production, capacity: r.capacity, inventory: r.inventory, target: r.target,
-        dist: multi ? r.distInventory : null, profit: r.profit / 1e6, workforce: r.workforce, cumRej: rw[i].cumRej, cumExp: rw[i].cumExp };
+        dist: multi ? r.distInventory : null, api: api ? r.apiStock : null, apiOrders: api ? r.apiOrders : null, profit: r.profit / 1e6, workforce: r.workforce, cumRej: rw[i].cumRej, cumExp: rw[i].cumExp };
       if (same) { var b = base.rows[i]; o.bProduction = b.production; o.bInventory = b.inventory; o.bProfit = b.profit / 1e6; o.bWorkforce = b.workforce; o.bWaste = bw[i].cumWaste; }
       return o;
     });
-    var wrows = wk.map(function (r, i) { return { t: r.t, fill: r.fill, bFill: bwk && bwk[i] && same ? bwk[i].fill : null }; });
+    var wrows = wk.map(function (r, i) { return { t: r.t, fill: r.fill, crit: crit ? r.crit : null, other: crit ? r.other : null, bFill: bwk && bwk[i] && same ? bwk[i].fill : null }; });
     var C = { d: css("--s-demand"), s1: css("--s1"), s2: css("--s2"), s3: css("--s3"), s4: css("--s4"), b: css("--s-base") };
     var bd = bands(res), wkLabel = T("week"), tipT = function (r) { return T("Week {w}", { w: num(r.t, r.t % 1 ? 2 : 0) }); };
     var hover = function (t) { state.hoverT = t; modelValues(); };
@@ -158,6 +167,7 @@
       "ch-prod": { height: 250, auto: true, yFmt: function (v) { return num(v); }, series: [
         { key: "demand", label: T("Market demand"), color: C.d, width: 1.5 },
         multi ? { key: "orders", label: T("Distributor's orders"), color: C.s2 } : null,
+        api ? { key: "apiOrders", label: T("API orders"), color: C.s3, width: 1.5 } : null,
         { key: "production", label: T("Production"), color: C.s1, width: 2.5 },
         { key: "capacity", label: T("Capacity"), color: C.s4, width: 1.5, dash: "2 4" },
         same ? { key: "bProduction", label: T("Baseline production"), color: C.b, dash: "5 4" } : null ] },
@@ -165,6 +175,7 @@
         { key: "inventory", label: T("Plant stock"), color: C.s1, area: true },
         { key: "target", label: T("Target stock"), color: C.d, width: 1.2, dash: "4 4" },
         multi ? { key: "dist", label: T("Distributor stock"), color: C.s3 } : null,
+        api ? { key: "api", label: T("API stock"), color: C.s4 } : null,
         same ? { key: "bInventory", label: T("Baseline plant stock"), color: C.b, dash: "5 4" } : null ] },
       "ch-profit": { yFmt: function (v) { return money(v * 1e6); }, series: [
         { key: "profit", label: T("Profit"), color: C.s1, width: 2.5 },
@@ -182,17 +193,23 @@
       var opts = { rows: rows, series: d.series.filter(Boolean), bands: bd, yFmt: d.yFmt, tipFmt: d.tipFmt, yMin: d.auto ? null : 0, height: d.height || 200, xLabel: wkLabel, tipTitle: tipT, onHover: hover, ariaLabel: T("Chart") };
       if (state.charts[id]) state.charts[id].update(opts); else state.charts[id] = window.PSCharts.line($(id), opts);
     });
-    var sopts = { rows: wrows, series: [{ key: "fill", label: T("Demand served"), color: C.s1, width: 2 }].concat(same && bwk ? [{ key: "bFill", label: T("Baseline"), color: C.b, dash: "5 4" }] : []), bands: bd,
-      yFmt: function (v) { return v.toFixed(0) + "%"; }, tipFmt: function (v) { return v.toFixed(1) + "%"; }, yMax: 100, yMin: Math.min(90, Math.floor(Math.min.apply(null, wrows.map(function (r) { return r.fill; }).concat(bwk ? bwk.map(function (r) { return r.fill; }) : [])) / 5) * 5), height: 200, xLabel: wkLabel, tipTitle: tipT, onHover: hover, ariaLabel: T("Chart") };
+    var lows = [];
+    wrows.forEach(function (r) { [r.fill, r.crit, r.other, r.bFill].forEach(function (v) { if (v != null) lows.push(v); }); });
+    var sopts = { rows: wrows, series: [{ key: "fill", label: T("Demand served"), color: C.s1, width: 2 }]
+        .concat(crit ? [{ key: "crit", label: T("Critical patients"), color: C.s3, width: 1.5 }, { key: "other", label: T("Other patients"), color: C.s2, width: 1.5 }] : [])
+        .concat(same && bwk ? [{ key: "bFill", label: T("Baseline"), color: C.b, dash: "5 4" }] : []), bands: bd,
+      yFmt: function (v) { return v.toFixed(0) + "%"; }, tipFmt: function (v) { return v.toFixed(1) + "%"; }, yMax: 100, yMin: Math.min(90, Math.floor(Math.min.apply(null, lows) / 5) * 5), height: 200, xLabel: wkLabel, tipTitle: tipT, onHover: hover, ariaLabel: T("Chart") };
     if (state.charts["ch-service"]) state.charts["ch-service"].update(sopts); else state.charts["ch-service"] = window.PSCharts.line($("ch-service"), sopts);
   }
 
   // ---- the model panel: diagram and equations, at the week the reader points at
   function model() {
-    if (state.diagramMulti !== state.res.multi) { state.diagram = window.PSDiagram.render($("diagram"), state.res.multi); state.diagramMulti = state.res.multi; }
+    var shape = (state.res.multi ? "m" : "") + (state.res.api ? "a" : "");
+    if (state.diagramMulti !== shape) { state.diagram = window.PSDiagram.render($("diagram"), state.res.multi, state.res.api); state.diagramMulti = shape; }
     var html = "";
     EQ.SECTIONS.forEach(function (sec, si) {
       if (sec.tier && !state.res.multi) return;
+      if (sec.api && !state.res.api) return;
       html += "<div class='eq-sec'><h3>" + T(sec.title) + "</h3>" + sec.items.map(function (it, ii) {
         return "<div class='eq-row'><span class='n'>" + T(it.name) + "</span><span class='e'>" + T(it.eq) + (it.note ? "<small>" + T(it.note) + "</small>" : "") + "</span><span class='v' data-eq='" + si + "." + ii + "'></span></div>";
       }).join("") + "</div>";

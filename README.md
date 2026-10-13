@@ -17,12 +17,21 @@ against a saved baseline. A three-level tutorial (beginner, intermediate, advanc
 - **Plant**: production is the workforce times productivity, capped by the equipment. The workforce follows the
   plan with a hiring delay, and people leave over time. Overtime can add capacity, with a premium paid only on the
   extra packs.
-- **QA release**: a three-stage delay with a rejection rate. QA can be expedited when stock is low, which is faster
-  but costs money per pack and brings more deviations.
+- **Campaigns** (optional): the line is shared with other products. Each campaign starts with a changeover, which
+  costs capacity. A change of plan reaches the line half a campaign later, on average, and half a campaign of cycle
+  stock is added to the target.
+- **API supplier** (optional): the plant needs the active ingredient for every pack. It orders from a supplier with a
+  long lead time and limited capacity, which can stop shipping for weeks. Production slows once less than a week of
+  API is on hand.
+- **QA release**: a three-stage delay with a rejection rate, limited by what the lab can test each week, so in a
+  surge the lab can become the bottleneck. QA can be expedited when stock is low: faster, with extra lab shifts, but
+  it costs money per pack and brings more deviations.
 - **Shelf life**: finished goods are kept by age and shipped oldest first. A pack older than its shelf life minus
   the remaining life customers require at delivery is written off.
 - **Service**: everything ships while the plant holds at least two weeks of stock. Below that, service falls
   smoothly, because stock is spread over many presentations and markets.
+- **Patients**: a share of demand is critical (hospitals, no substitute). When stock is short, an allocation rule
+  shares it in proportion or serves critical patients first, and a critical shortage can carry a higher penalty.
 - **Distributor tier** (optional): its own stock, forecast and ordering rule, a backlog at the plant, transit in
   between, and the option to share sales data with the plant.
 - **Planning**: the forecast, plus a correction for the stock gap, plus a weight on the supply line (stock in QA,
@@ -36,14 +45,17 @@ The page shows every equation with its value in any week, and a live stock-and-f
 
 ## What the tests check
 
-`node tests/model.test.js` (62 checks):
+`node tests/model.test.js` (114 checks):
 - Every structure starts in exact balance, and every pack is accounted for in every scenario.
 - Halving and quartering the time step gives the same answers, and the noise has the chosen size at any step.
 - The forecast matches its exact solution.
 - Each lever produces its trade-off. For example, overtime ends the shortage after a demand step, but for a
   short-life product it makes more stock expire.
+- Every unit of API is accounted for, and the QA lab never releases more than it can test.
+- The model can be advanced in pieces, giving exactly the same run, and a fixed plan can replace the planning rule
+  (for the coming play mode).
 
-`node tests/tutorial.test.js` (250 checks):
+`node tests/tutorial.test.js` (331 checks):
 - Every claim the tutorial's questions make holds in the model.
 - Every step points at a real element and quotes only known numbers.
 - Every step has a Spanish version with the same shape.
@@ -59,6 +71,15 @@ Plain JavaScript with no build step: serve the folder with any static server (`p
 
 ## Version history
 
+- **3.0.0**: pharma realism.
+  - An API supplier tier, with a lead time, capacity and outages.
+  - Campaign production with changeovers and cycle stock.
+  - QA lab capacity.
+  - Critical patients, with an allocation rule.
+  - Warnings for settings that will keep stock expiring.
+  - Four new case presets: an API supplier outage, a biologic, a generic antibiotic and a pandemic vaccine.
+  - Seven new tutorial steps, in English and Spanish.
+  - With the new features off, every v2 result is reproduced exactly.
 - **2.0.0**: a complete rebuild.
   - A tested model fixes v1's problems: the bullwhip measure counted expiry replacement as amplification, and
     noise was redrawn on every change, so comparisons weren't fair.

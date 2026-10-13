@@ -103,8 +103,65 @@ for (const dt of [0.25, 0.0625]) {
   check("…and released = approved + rejected", r.rows.every((x) => Math.abs(x.released - x.approved - x.rejected) < 1e-6) && z.released > 0);
 }
 
+// ================================================================ v3: API supplier, campaigns, QA lab, allocation
+// ---- balance with every new structure
+[{ campaignWeeks: 4 }, { apiTier: true }, { apiTier: true, retailTier: true, supplyLineWeight: 1 }, { qaCapacity: 110 }, { allocation: "critical", criticalPenalty: 5 },
+  Object.assign({}, M.PRESETS.biologic.values), Object.assign({}, M.PRESETS.generic.values), Object.assign({}, M.PRESETS.vaccine.values), { campaignWeeks: 6, apiTier: true, dt: 0.1 }].forEach((s) => {
+  const r = M.run(Object.assign({}, s, calm)), p = r.params, P0 = p.demand / (1 - p.rejectRate / 100), C = p.campaignWeeks;
+  const ok = r.ok && r.rows.every((x) => near(x.production, P0, 1e-9) && near(x.served, p.demand, 1e-9) && near(x.inventory, p.demand * (p.coverage + (C > 0 ? C / 2 : 0)), 1e-9) && (!r.api || near(x.apiStock, P0 * p.apiCoverage, 1e-9)));
+  check("v3 in balance with no shock: " + JSON.stringify(s).slice(0, 80), ok && r.kpi.apiShortUnits < 1e-6 && r.kpi.labWeeks === 0 && r.warnings.length === 0, r.ok ? JSON.stringify({ P: last(r).production, inv: last(r).inventory, api: last(r).apiStock }) : r.errors);
+});
+// ---- conservation, now with API and patients
+[M.PRESETS.apiOutage.values, M.PRESETS.vaccine.values, M.PRESETS.generic.values, M.PRESETS.biologic.values, { apiTier: true, retailTier: true, noise: 20, seed: 4, campaignWeeks: 3, qaCapacity: 115, allocation: "critical" }].forEach((s) => {
+  const r = M.run(s), a = r.totals, st = r.start, en = r.end;
+  const qa = a.produced - (a.approved + a.rejected) - (en.qa - st.qa), fg = a.approved - a.shippedMfg - a.expired - (en.inv - st.inv);
+  const apiT = a.apiShipped - a.apiArrived - (en.apiTransit - st.apiTransit), apiS = a.apiArrived - a.apiUsed - (en.api - st.api), apiB = a.apiOrdered - a.apiShipped - (en.apiBacklog - st.apiBacklog);
+  check("v3: every pack and every unit of API accounted for: " + JSON.stringify(s).slice(0, 60), [qa, fg, apiT, apiS, apiB].every((x) => Math.abs(x) < 1e-6 * a.demand), [qa, fg, apiT, apiS, apiB].map((x) => x.toExponential(1)).join(" "));
+  check("v3: critical patients are a share of everyone, and never get more than they need", r.rows.every((x) => x.critServed <= x.critDemand + 1e-9 && x.critServed <= x.served + 1e-9 && x.served - x.critServed <= x.demand - x.critDemand + 1e-9) && r.rows.every((x) => x.apiStock >= -1e-9 && x.apiBacklog >= -1e-9));
+  check("v3: the QA lab never releases more than it can test", r.rows.every((x) => x.released <= x.labCapacity * (1 + 1e-9)));
+});
+// ---- convergence
+[M.PRESETS.apiOutage.values, M.PRESETS.vaccine.values, M.PRESETS.biologic.values, Object.assign({ campaignWeeks: 6 }, M.PRESETS.step.values)].forEach((s) => {
+  const ra = M.run(Object.assign({}, s, { noise: 0, dt: 0.25 })), a = ra.kpi, b = M.run(Object.assign({}, s, { noise: 0, dt: 0.0625 })).kpi;
+  // profit compared as a share of revenue: a scenario that barely breaks even would make any relative test meaningless
+  check("v3: dt 0.25 and 0.0625 agree: " + JSON.stringify(s).slice(0, 60), Math.abs(a.profit - b.profit) < 0.01 * ra.totals.revenue && Math.abs(a.fillRate - b.fillRate) < 0.003, [a.profit, b.profit, a.fillRate, b.fillRate].map((x) => x.toFixed(4)).join(" "));
+});
+// ---- the model can be advanced in pieces (the play mode) and a plan can replace the rule
+{
+  const whole = M.run({ apiTier: true, retailTier: true, seed: 5 }), parts = M.start({ apiTier: true, retailTier: true, seed: 5 }).advance(10).advance(33.5).advance().result();
+  check("advancing in pieces gives exactly the same run", parts.rows.length === whole.rows.length && parts.kpi.profit === whole.kpi.profit);
+  const ruled = M.start({ seed: 2 }).advance(null, () => null).result();
+  check("a plan that defers to the rule gives the rule's run", ruled.kpi.profit === M.run({ seed: 2 }).kpi.profit);
+  const flat = M.start({ noise: 0 }).advance(null, () => 10000 / 0.98).result();
+  check("a fixed plan is followed: production stays at it while capacity allows", flat.rows.every((x) => near(x.production, 10000 / 0.98, 1e-9)) && flat.kpi.fillRate < M.run({ noise: 0 }).kpi.fillRate);
+  check("a step the plan does not follow makes a fixed plan run short for good", flat.kpi.shortWeeks > 60, flat.kpi.shortWeeks);
+}
+// ---- the new trade-offs
+{
+  const step = (v) => M.run(Object.assign({ noise: 0 }, v)).kpi;
+  check("campaigns: very short campaigns lose so much capacity to changeovers that the plant cannot catch up", step({ campaignWeeks: 2 }).fillRate < 0.98 && step({ campaignWeeks: 4 }).fillRate > 0.995);
+  check("…longer campaigns hold more stock (cycle stock)", step({ campaignWeeks: 8 }).avgInventory > step({ campaignWeeks: 4 }).avgInventory * 1.5);
+  const sl = Object.assign({ noise: 0 }, M.PRESETS.shortLife.values);
+  check("…and for a short-life product, campaigns turn that stock into waste (and a warning)", M.run(Object.assign({}, sl, { campaignWeeks: 4 })).kpi.expiredUnits > M.run(sl).kpi.expiredUnits * 3 && M.run(Object.assign({}, sl, { campaignWeeks: 4 })).warnings.length === 1);
+  check("API supplier: its orders swing far more than demand when the supply line is ignored", step({ apiTier: true }).apiBullwhip > 5, step({ apiTier: true }).apiBullwhip);
+  check("…and counting what is on order cuts that by more than half", step({ apiTier: true, supplyLineWeight: 1 }).apiBullwhip < step({ apiTier: true }).apiBullwhip / 2);
+  const ao = M.PRESETS.apiOutage.values, k0 = M.run(ao).kpi, kApi = M.run(Object.assign({}, ao, { apiCoverage: 10 })).kpi, kFg = M.run(Object.assign({}, ao, { coverage: 8 })).kpi;
+  check("API outage: production runs short of API and patients go short", k0.apiShortUnits > 1000 && k0.fillRate < 0.97, k0.fillRate);
+  check("…four more weeks of API protect patients as well as four more weeks of finished stock, for more profit", Math.abs(kApi.fillRate - kFg.fillRate) < 0.003 && kApi.profit > kFg.profit && kApi.fillRate > k0.fillRate + 0.02, [kApi.fillRate, kFg.fillRate, kApi.profit, kFg.profit].join(" "));
+  check("…stock already on its way is a buffer: the same outage barely bites with a 12-week lead time", M.run(Object.assign({}, ao, { apiLeadTime: 12, apiCoverage: 8, apiOutageWeeks: 12 })).kpi.fillRate > 0.999);
+  const flu = Object.assign({ noise: 0 }, M.PRESETS.flu.values), lab0 = M.run(flu).kpi, lab1 = M.run(Object.assign({}, flu, { qaCapacity: 115 })).kpi;
+  check("QA lab: a lab that can test only 15% more than normal becomes the bottleneck in a surge", lab1.labWeeks > 5 && lab0.labWeeks === 0 && lab1.fillRate < lab0.fillRate && lab1.peakQA > lab0.peakQA, [lab1.labWeeks, lab1.fillRate, lab0.fillRate].join(" "));
+  check("…and expediting (extra lab shifts) relieves it", M.run(Object.assign({}, flu, { qaCapacity: 115, expediteQA: true })).kpi.fillRate > lab1.fillRate);
+  const out = Object.assign({ noise: 0 }, M.PRESETS.outage.values), pr = M.run(out).kpi, cr = M.run(Object.assign({}, out, { allocation: "critical" })).kpi;
+  check("allocation: serving critical patients first leaves the total unchanged", Math.abs(pr.fillRate - cr.fillRate) < 1e-12 && pr.lost > 0);
+  check("…and protects them fully while others carry the shortage", cr.criticalFill > 0.9999 && cr.otherFill < pr.otherFill && Math.abs(pr.criticalFill - pr.fillRate) < 1e-9);
+  check("…which pays when a critical shortage costs more", M.run(Object.assign({}, out, { allocation: "critical", criticalPenalty: 5 })).kpi.profit > M.run(Object.assign({}, out, { criticalPenalty: 5 })).kpi.profit);
+  const h = M.run({ pattern: "history", history: [1, 1, 1.2, 1.4, 1.1, 0.9], noise: 0, weeks: 26 });
+  check("a demand history drives demand week by week, then holds its last value", h.ok && near(h.rows[Math.round(3 / 0.25)].demand, 14000, 1e-9) && near(last(h).demand, 9000, 1e-9));
+}
+
 // ---- inputs that cannot work are refused with a reason
-[{ dt: 1 }, { pattern: "x" }, { shelfLife: 10, minRemaining: 8 }, { supplyLineWeight: 2 }, { ceiling: 90 }, { coverage: 1 }, { demand: 0 }].forEach((b) => {
+[{ dt: 1 }, { pattern: "x" }, { shelfLife: 10, minRemaining: 8 }, { supplyLineWeight: 2 }, { ceiling: 90 }, { coverage: 1 }, { demand: 0 }, { qaCapacity: 90 }, { campaignWeeks: 1, changeoverDays: 3 }, { apiTier: true, apiCoverage: 0.5 }, { allocation: "x" }, { pattern: "history", history: [1] }, { criticalShare: 120 }].forEach((b) => {
   const r = M.run(b); check("refused: " + JSON.stringify(b), !r.ok && r.errors.length > 0, r.errors && r.errors[0]);
 });
 

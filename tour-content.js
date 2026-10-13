@@ -7,7 +7,7 @@
   else root.PSTourContent = factory();
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
-  var TOKENS = ["fill", "bw", "obw", "waste", "expired", "profit", "short", "lost", "dProfit", "dFill", "dWaste", "dBw", "dObw", "dShort"];
+  var TOKENS = ["fill", "bw", "obw", "abw", "waste", "expired", "profit", "short", "lost", "crit", "other", "dProfit", "dFill", "dWaste", "dBw", "dObw", "dAbw", "dShort", "dCrit"];
 
   var LEVELS = [
     { id: "beginner", title: "Beginner", minutes: 8, blurb: "The bullwhip in one plant: why a lasting rise in demand causes a shortage and then an overshoot, and what overtime does about it.", steps: [
@@ -57,6 +57,14 @@
         body: "With overtime the fill rate changes by {{dFill}} points and profit by {{dProfit}}, but waste changes by <b>{{dWaste}}</b> packs. Whether that is acceptable depends on the medicine: a shortage of a critical drug weighs more than expired stock." },
       { id: "i-short-sl", title: "Counting the pipeline cuts waste", target: "#ch-waste", setup: { preset: "shortLife", baseline: "save", values: { supplyLineWeight: 1 } },
         body: "Back without overtime, counting the QA pipeline (weight 1) changes waste by <b>{{dWaste}}</b> packs: the plan stops asking for more once enough is already in QA, so less is left over when the surge ends." },
+      { id: "i-camp", title: "Campaigns on a shared line", target: "#c_campaignWeeks", setup: { preset: "step", baseline: "save", values: { campaignWeeks: 2 } },
+        body: "Most lines make several products in turn, in <b>campaigns</b>, with a changeover between them. With two-week campaigns, two days of every fourteen go to cleaning and set-up, so the plant loses a seventh of its capacity: after the 25% step it can no longer catch up. Fill rate <b>{{fill}}</b> ({{dFill}} points against a dedicated line)." },
+      { id: "i-camp-q", title: "Longer campaigns", target: "#c_campaignWeeks", setup: { preset: "shortLife", baseline: "save" },
+        body: "Longer campaigns waste less time on changeovers, but each campaign must make enough to last until the next one: half a campaign of extra stock, on average.",
+        quiz: { q: "For the short-life product, would four-week campaigns (instead of a dedicated line) raise or lower waste?", options: ["Raise it", "Lower it", "No change"], answer: 0, claim: "shortlife-campaign-waste",
+          explain: "The extra cycle stock waits longer on the shelf. With an eight-week sales window, the oldest packs no longer sell in time. Next we set four-week campaigns." } },
+      { id: "i-camp-show", title: "Cycle stock expires", target: "#notes", setup: { preset: "shortLife", baseline: "save", values: { campaignWeeks: 4 } },
+        body: "Waste changes by <b>{{dWaste}}</b> packs. The note above the results explains why: QA, the target cover and half a campaign add up to more than the eight weeks a pack can be sold. For short-life products, campaign length is a shelf-life decision, not only a capacity one." },
       { id: "i-fair", title: "Fair comparisons", target: "#btn-seed", setup: { preset: "shortLife", baseline: "save", values: { supplyLineWeight: 1 } },
         body: "The random noise in demand is the same for the run and its baseline. <b>New demand future</b> draws another random future for both, so you can check that a lever's effect is not a coincidence of one future." },
       { id: "i-done", title: "Intermediate complete", target: "#tourBtn", setup: { preset: "shortLife", baseline: "save", values: { supplyLineWeight: 1 } },
@@ -87,6 +95,24 @@
           explain: "Without the penalty, the gain is only the margin on the packs that would otherwise be lost, and it does not cover the extra rejections and lab cost. Whether a lever pays depends on what a shortage really costs." } },
       { id: "a-pen", title: "Without the penalty", target: "#kpis", setup: { preset: "outage", baseline: "save", values: { shortagePenalty: 0 }, baselineValues: { shortagePenalty: 0 } },
         body: "Here the baseline has no penalty either. Now switch <b>Expedite QA</b> on yourself and watch the profit difference: service still improves, but profit falls. Set the penalty back to $20 to see it flip." },
+      { id: "a-api", title: "An API supplier far away", target: "#ch-stock", setup: { preset: "apiOutage", baseline: "clear" },
+        body: "Now the plant needs the active ingredient (API) for every pack, from a supplier eight weeks away, and holds six weeks of it. At week 20 the supplier stops for 16 weeks (shaded). What is already on its way still arrives, then the API runs out and production stops: <b>{{short}}</b> weeks of shortage, <b>{{lost}}</b> packs not supplied." },
+      { id: "a-api-q", title: "Where to hold the buffer", target: "#c_apiCoverage", setup: { preset: "apiOutage", baseline: "save" },
+        body: "Four more weeks of stock would help. It can be held as API, before production, or as finished packs, after QA.",
+        quiz: { q: "Which protects patients as well for less money?", options: ["Four more weeks of API", "Four more weeks of finished packs", "They are the same"], answer: 0, claim: "api-buffer-cheaper",
+          explain: "Either buffer covers the gap. API costs less to hold, and it has not started using up its shelf life. Next we add four weeks of API." } },
+      { id: "a-api-show", title: "A cheaper buffer", target: "#kpis", setup: { preset: "apiOutage", baseline: "save", values: { apiCoverage: 10 } },
+        body: "With ten weeks of API the fill rate is <b>{{fill}}</b> ({{dFill}} points) and profit changes by {{dProfit}}. Try four more weeks of finished stock instead (target stock cover 8) and compare: the same service, less profit." },
+      { id: "a-api-amp", title: "Amplification travels upstream", target: "#kpis", setup: { preset: "step", baseline: "save", values: { apiTier: true } },
+        body: "Back to the 25% step, with the API supplier on. The plant's API orders vary <b>{{abw}}</b> as much as demand: each tier adds its own correction on top of the one below, and the long lead time makes it worse." },
+      { id: "a-api-sl", title: "Counting what is on order", target: "#c_supplyLineWeight", setup: { preset: "step", baseline: "save", values: { apiTier: true, supplyLineWeight: 1 }, baselineValues: { apiTier: true } },
+        body: "With the supply line counted (weight 1), API orders vary <b>{{abw}}</b> as much as demand ({{dAbw}}). With a long lead time, most of the API is on its way at any moment: forgetting it means ordering it twice." },
+      { id: "a-alloc-q", title: "Who goes short?", target: "#c_criticalShare", setup: { preset: "outage", baseline: "save" },
+        body: "In the plant outage, 30% of demand comes from critical patients, for example in hospitals, who have no substitute. So far everyone gets the same share of what there is.",
+        quiz: { q: "If critical patients are served first, what happens to the total fill rate?", options: ["It stays the same", "It rises", "It falls"], answer: 0, claim: "allocation-same-total",
+          explain: "Allocation decides who goes short, not how much is short: the same packs are shared differently. Next we serve critical patients first." } },
+      { id: "a-alloc", title: "Critical patients first", target: "#ch-service", setup: { preset: "outage", baseline: "save", values: { allocation: "critical" } },
+        body: "The total fill rate is <b>{{fill}}</b> ({{dFill}} points), but critical patients now get <b>{{crit}}</b> and the others {{other}}. Raise the penalty for a critical shortage to see why this pays as well." },
       { id: "a-design-q", title: "Design a policy", target: "#g_policy", setup: { preset: "step", baseline: "save" },
         body: "Back to the lasting 25% step, without overtime. Two policies could avoid the shortage: hold more stock, or hire faster.",
         quiz: { q: "Can a target cover of six weeks (instead of four) avoid the shortage on its own?", options: ["Yes", "No, only overtime can"], answer: 0, claim: "step-cover-six-full-service",
@@ -94,7 +120,7 @@
       { id: "a-design", title: "Your turn", target: "#g_policy", setup: { preset: "step", baseline: "save", values: { coverage: 6 } },
         body: "With six weeks of cover the fill rate is <b>{{fill}}</b> and profit changes by {{dProfit}}. Now try your own design: a faster time to hire, a slower correction, the supply-line weight, or overtime, and compare each with the baseline." },
       { id: "a-done", title: "Advanced complete", target: "#tourBtn", setup: { preset: "step", baseline: "save", values: { coverage: 6 } },
-        body: "You have seen where amplification starts, how each remedy works, and that a lever's value depends on the economics of the medicine. Every number here comes from the equations below the diagram, and the model is tested so that each claim in this tutorial holds." }
+        body: "You have seen where amplification starts, how each remedy works, and that a lever's value depends on the economics of the medicine. Try the case presets next: a biologic, a generic antibiotic and a pandemic vaccine. Every number here comes from the equations below the diagram, and the model is tested so that each claim in this tutorial holds." }
     ] }
   ];
   return { TOKENS: TOKENS, LEVELS: LEVELS };

@@ -7,9 +7,9 @@
   function el(tag, attrs, parent, text) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; }
   var fmt = function (v) { return v == null ? "—" : Math.round(v).toLocaleString("en-US"); };
 
-  function render(host, multi) {
+  function render(host, multi, api) {
     host.innerHTML = "";
-    var W = multi ? 1040 : 820, H = 330;
+    var W = multi ? 1040 : 820, H = api ? 430 : 330;
     var svg = el("svg", { viewBox: "0 0 " + W + " " + H, "class": "sfd", role: "img", "aria-label": T("Stock-and-flow diagram of the supply chain") }, host);
     var defs = el("defs", {}, svg);
     var mk = el("marker", { id: "arw", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
@@ -68,13 +68,22 @@
     link(92, 92, 92, my - 4, 0);
     if (multi) { aux("orders", 850, 290, T("Orders to the plant")); link(850, 206, 850, 282); link(842, 290, 708, 290); }
     else link(590, my + 8, 594, 282);
+    // the API supplier: what is on order and on its way, the plant's API stock, and what production uses
+    if (api) {
+      var ay = 352, amy = ay + 28;
+      cloud(20, amy); flow("apiOrdered", 29, amy, 120, amy, T("API ordered"), true); stock("apiOnOrder", 120, ay, 120, T("API on order"));
+      flow("apiDeliver", 240, amy, 300, amy, "", true); stock("apiStock", 300, ay, 120, T("API stock"));
+      flow("apiUsed", 420, amy, 550, amy, T("Used by production"), true); cloud(560, amy);
+      link(330, ay, 98, my + 12, -60);
+    }
     return { svg: svg, vals: vals };
   }
   function update(d, r) {
     if (!d || !r) return;
     var v = { workforce: r.workforce.toFixed(1), qa: fmt(r.qa), inventory: fmt(r.inventory), transit: fmt(r.transit), distInventory: fmt(r.distInventory),
       production: fmt(r.production), approved: fmt(r.approved), rejected: fmt(r.rejected), expired: fmt(r.expired), shipped: fmt(r.shipped), served: fmt(r.served),
-      forecast: fmt(r.forecast), target: fmt(r.target), desired: fmt(r.desired), orders: fmt(r.ordersToMfg), hire: "", leave: "", arrive: "" };
+      forecast: fmt(r.forecast), target: fmt(r.target), desired: fmt(r.desired), orders: fmt(r.ordersToMfg), hire: "", leave: "", arrive: "",
+      apiOrdered: fmt(r.apiOrders), apiOnOrder: fmt(r.apiBacklog + r.apiTransit), apiStock: fmt(r.apiStock), apiUsed: fmt(r.production), apiDeliver: "" };
     for (var k in d.vals) d.vals[k].textContent = v[k] != null ? v[k] : "";
   }
   window.PSDiagram = { render: render, update: update };

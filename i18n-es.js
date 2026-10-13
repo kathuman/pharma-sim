@@ -91,11 +91,10 @@
     "max(0, (Forecast + (Target stock − Plant stock) ÷ Time to correct stock + Backlog correction) ÷ (1 − Rejection rate) + Weight × (Desired QA pipeline − QA pipeline) ÷ Time to correct stock)": "máx(0, (Pronóstico + (Inventario meta − Inventario de la planta) ÷ Tiempo para corregir el inventario + Corrección de pendientes) ÷ (1 − Tasa de rechazo) + Peso × (Cuarentena de QA deseada − Cuarentena de QA) ÷ Tiempo para corregir el inventario)",
     "Desired QA pipeline = Forecast ÷ (1 − Rejection rate) × QA release time. Backlog correction = (Backlog − Forecast × 1 week) ÷ Time to correct stock.": "Cuarentena de QA deseada = Pronóstico ÷ (1 − Tasa de rechazo) × Tiempo de liberación de QA. Corrección de pendientes = (Pendientes − Pronóstico × 1 semana) ÷ Tiempo para corregir el inventario.",
     "Plant: capacity and people": "Planta: capacidad y personas",
-    "min(Plant capacity, Workforce × Productivity × (1 + Most overtime)) × Output during an outage": "mín(Capacidad de la planta, Dotación × Productividad × (1 + Máximo de horas extra)) × Producción durante una detención",
-    "min(Desired production, Capacity)": "mín(Producción deseada, Capacidad)", "Overtime packs": "Unidades en horas extra", "max(0, Production − Workforce × Productivity)": "máx(0, Producción − Dotación × Productividad)",
+"Overtime packs": "Unidades en horas extra", "max(0, Production − Workforce × Productivity)": "máx(0, Producción − Dotación × Productividad)",
     "∫ (Hiring − Leaving) dt; Hiring = max(0, Leaving + (Desired workforce − Workforce) ÷ Time to hire)": "∫ (Contratación − Salidas) dt; Contratación = máx(0, Salidas + (Dotación deseada − Dotación) ÷ Tiempo para contratar)",
     "Desired workforce = min(Desired production, Plant capacity) ÷ Productivity (200 packs per person-week). Leaving = Workforce ÷ 100 weeks. Nobody is laid off: the workforce shrinks by people leaving.": "Dotación deseada = mín(Producción deseada, Capacidad de la planta) ÷ Productividad (200 unidades por persona-semana). Salidas = Dotación ÷ 100 semanas. No se despide a nadie: la dotación se reduce por las salidas.",
-    "Quality release and shelf life": "Liberación de calidad y vida útil", "QA pipeline": "Cuarentena de QA", "DELAY3(Production, QA release time): three stages in series": "DEMORA3(Producción, Tiempo de liberación de QA): tres etapas en serie",
+    "Quality release and shelf life": "Liberación de calidad y vida útil", "QA pipeline": "Cuarentena de QA", 
     "Released by QA": "Liberadas por QA", "Approved = Release × (1 − Rejection rate); Rejected = Release × Rejection rate": "Aprobadas = Liberación × (1 − Tasa de rechazo); Rechazadas = Liberación × Tasa de rechazo",
     "Rejected batches": "Lotes rechazados", "Release × Rejection rate": "Liberación × Tasa de rechazo",
     "While expediting (stock below the trigger), the QA time is cut and the rejection rate rises by the extra points.": "Mientras se acelera (inventario bajo el umbral), el tiempo de QA se reduce y la tasa de rechazo sube en los puntos extra.",
@@ -107,6 +106,45 @@
     "∫ Profit rate dt": "∫ Utilidad por semana dt", "Results": "Resultados", "Σ Patients served ÷ Σ Market demand": "Σ Pacientes atendidos ÷ Σ Demanda del mercado", "Bullwhip (production)": "Efecto látigo (producción)",
     "Standard deviation of Production ÷ Standard deviation of Market demand": "Desviación estándar de la Producción ÷ Desviación estándar de la Demanda del mercado",
     "1 means production varies exactly as much as demand. With a distributor, the same ratio for its orders shows where the amplification starts.": "1 significa que la producción varía exactamente lo que varía la demanda. Con un distribuidor, la misma razón para sus pedidos muestra dónde empieza la amplificación.",
+
+    // ---- v3: patients, API supplier, campaigns, QA lab
+    "critical patients {c}": "pacientes críticos {c}", "the QA lab at its limit for {w} weeks": "el laboratorio de QA al límite durante {w} semanas", "API supplier orders": "Pedidos al proveedor de API",
+    "vary this much more than demand": "cuánto más varían que la demanda", "{n} packs not made for lack of API": "{n} unidades no fabricadas por falta de API", "API supplier outage": "Interrupción del proveedor de API",
+    "QA lab at its limit": "Laboratorio de QA al límite", "API orders": "Pedidos de API", "API stock": "Inventario de API", "Critical patients": "Pacientes críticos", "Other patients": "Otros pacientes",
+    "API ordered": "API pedido", "API on order": "API pedido en curso", "Used by production": "Usado en producción", "Patients": "Pacientes", "continuous": "continua",
+    "The share of demand from patients with no substitute, such as hospitals and intensive care.": "La parte de la demanda de pacientes sin sustituto, como hospitales y cuidados intensivos.",
+    "When stock is short": "Cuando falta inventario", "Everyone gets the same share": "Todos reciben la misma proporción", "Critical patients first": "Primero los pacientes críticos",
+    "Penalty for a critical shortage": "Multa por un faltante crítico", "How many times the normal penalty a pack missing for a critical patient costs.": "Cuántas veces la multa normal cuesta una unidad que le falta a un paciente crítico.", "×": "×",
+    "The supplier of the active ingredient stops shipping: a quality failure, an export ban or a disaster. What is already on its way still arrives.": "El proveedor del principio activo deja de despachar: una falla de calidad, una prohibición de exportar o un desastre. Lo que ya viene en camino igual llega.",
+    "API outage starts": "Inicio de la interrupción de API", "API outage length": "Duración de la interrupción de API", "API supplier": "Proveedor de API", "API supplier tier": "Eslabón proveedor de API",
+    "The plant needs the active ingredient (API) to make each pack and orders it from a supplier far away.": "La planta necesita el principio activo (API) para fabricar cada unidad y lo pide a un proveedor lejano.",
+    "API lead time": "Tiempo de entrega del API", "API stock target": "Meta de inventario de API", "Supplier capacity": "Capacidad del proveedor",
+    "What the supplier can ship in a week, as a share of the starting need.": "Lo que el proveedor puede despachar en una semana, como proporción de la necesidad inicial.",
+    "Campaign length": "Duración de la campaña",
+    "The line is shared with other products and makes this one in campaigns. Longer campaigns mean fewer changeovers but more cycle stock and a slower response; 0 = a dedicated line.": "La línea se comparte con otros productos y fabrica este en campañas. Campañas más largas significan menos cambios de formato, pero más inventario de ciclo y una respuesta más lenta; 0 = una línea dedicada.",
+    "Changeover": "Cambio de formato", "Cleaning and set-up at the start of each campaign, when the line makes nothing.": "Limpieza y preparación al inicio de cada campaña, cuando la línea no fabrica nada.", "days": "días",
+    "QA lab capacity": "Capacidad del laboratorio de QA",
+    "What the lab can test in a week, as a share of the starting output. In a surge the lab can become the bottleneck.": "Lo que el laboratorio puede analizar en una semana, como proporción de la producción inicial. En un alza, el laboratorio puede volverse el cuello de botella.",
+    "API holding cost": "Costo de almacenaje del API",
+    "Critical patients served": "Pacientes críticos atendidos",
+    "Proportional: Served × Critical share; critical first: min(Demand × Critical share, Served)": "Proporcional: Atendidas × Proporción crítica; primero los críticos: mín(Demanda × Proporción crítica, Atendidas)",
+    "Everyone else gets what is left. The penalty for a pack missing for a critical patient is multiplied by the critical penalty.": "Los demás reciben lo que queda. La multa por una unidad que le falta a un paciente crítico se multiplica por la multa crítica.",
+    "API supplier (when the tier is on)": "Proveedor de API (cuando el eslabón está activo)", "∫ (API arrivals − Production) dt": "∫ (Llegadas de API − Producción) dt",
+    "Measured in packs' worth of active ingredient.": "Medido en unidades equivalentes de principio activo.",
+    "max(0, API usage forecast + (API usage forecast × API stock target − API stock) ÷ Time to correct stock + Weight × (Desired API on order − API on order) ÷ Time to correct stock)": "máx(0, Pronóstico de uso de API + (Pronóstico de uso de API × Meta de inventario de API − Inventario de API) ÷ Tiempo para corregir el inventario + Peso × (API pedido deseado − API pedido en curso) ÷ Tiempo para corregir el inventario)",
+    "API usage forecast = SMOOTH(Production, Forecast smoothing). API on order = waiting at the supplier + on its way. Desired API on order = forecast × (1 week + API lead time).": "Pronóstico de uso de API = SUAVIZAR(Producción, Suavizamiento del pronóstico). API pedido en curso = en espera en el proveedor + en camino. API pedido deseado = pronóstico × (1 semana + Tiempo de entrega del API).",
+    "API on its way": "API en camino",
+    "DELAY3(Supplier shipments, API lead time); Supplier shipments = min(API backlog ÷ 1 week, Supplier capacity), 0 during an API outage": "DEMORA3(Despachos del proveedor, Tiempo de entrega del API); Despachos del proveedor = mín(Pendientes de API ÷ 1 semana, Capacidad del proveedor), 0 durante una interrupción de API",
+    "min(Plant capacity × Line efficiency, Workforce × Productivity × Line efficiency × (1 + Most overtime)) × Output during an outage": "mín(Capacidad de la planta × Eficiencia de la línea, Dotación × Productividad × Eficiencia de la línea × (1 + Máximo de horas extra)) × Producción durante una detención",
+    "Line efficiency = 1 − Changeover ÷ (7 × Campaign length) with campaigns, and 1 on a dedicated line.": "Eficiencia de la línea = 1 − Cambio de formato ÷ (7 × Duración de la campaña) con campañas, y 1 en una línea dedicada.",
+    "Scheduled production": "Producción programada",
+    "SMOOTH(Desired production, Campaign length ÷ 2) with campaigns; Desired production on a dedicated line": "SUAVIZAR(Producción deseada, Duración de la campaña ÷ 2) con campañas; Producción deseada en una línea dedicada",
+    "A change of plan reaches the line at the next campaign, on average half a campaign later. Campaigns also add half a campaign of demand to the target stock (cycle stock).": "Un cambio de plan llega a la línea en la campaña siguiente, en promedio media campaña después. Las campañas también agregan media campaña de demanda al inventario meta (inventario de ciclo).",
+    "min(Scheduled production, Capacity), times g(API stock ÷ (that × 1 week)) when the API tier is on": "mín(Producción programada, Capacidad), por g(Inventario de API ÷ (eso × 1 semana)) cuando el eslabón de API está activo",
+    "DELAY3(Production, QA release time): three stages in series, the last limited to the QA lab capacity": "DEMORA3(Producción, Tiempo de liberación de QA): tres etapas en serie, la última limitada a la capacidad del laboratorio de QA",
+    "QA lab capacity = QA lab capacity % × the starting output, raised by the QA time saved while expediting (extra shifts).": "Capacidad del laboratorio de QA = % de capacidad del laboratorio × la producción inicial, aumentada en el tiempo de QA ahorrado mientras se acelera (turnos extra).",
+    "API supplier outage (16 weeks)": "Interrupción del proveedor de API (16 semanas)", "Biologic (long QA, high value)": "Biológico (QA largo, alto valor)",
+    "Generic antibiotic (thin margin, campaigns)": "Antibiótico genérico (margen estrecho, campañas)", "Pandemic vaccine (surge, lab bottleneck)": "Vacuna pandémica (alza, cuello de botella en el laboratorio)",
     // ---- escenarios
     "Demand step (+25%)": "Escalón de demanda (+25%)", "Flu season (16-week surge)": "Temporada de influenza (alza de 16 semanas)", "Short-life product (6-month shelf life)": "Producto de vida corta (vida útil de 6 meses)",
     "Plant outage (4 weeks)": "Detención de planta (4 semanas)", "Two-tier chain (distributor)": "Cadena de dos eslabones (distribuidor)", "Calm market (noise only)": "Mercado tranquilo (solo ruido)"
@@ -148,7 +186,8 @@
     "a.openbtn": "<a class=\"open\" href=\"index.html\">Abrir PharmaSim →</a>", "a.what.h": "Qué hace",
     "a.what.list": "<li><b>Golpea la cadena</b>Un cambio duradero de la demanda, un alza estacional o una detención de planta, con variación aleatoria semana a semana que comparte la línea base, para que las comparaciones sean justas.</li>" +
       "<li><b>Modela lo propio de la industria farmacéutica</b>Una liberación de QA que toma semanas y rechaza algunos lotes, una vida útil llevada primero en entrar, primero en salir con una vida remanente mínima en la entrega, y una dotación que toma tiempo contratar y calificar.</li>" +
-      "<li><b>Agrega un distribuidor</b>Un segundo eslabón que pide a la planta, para ver dónde empieza la amplificación y qué cambia al compartir los datos de venta.</li>" +
+      "<li><b>Agrega el resto de la cadena</b>Un distribuidor que pide a la planta y un proveedor de API lejano, aguas arriba, para ver dónde empieza la amplificación, qué cambia al compartir los datos de venta y dónde es más barato el colchón.</li>" +
+      "<li><b>Opera una planta real</b>Una línea compartida en campañas con cambios de formato, un laboratorio de QA que puede volverse el cuello de botella en un alza, y pacientes críticos o no, con una regla para decidir quién queda sin medicamento.</li>" +
       "<li><b>Pondera las palancas</b>Horas extra, QA acelerado y la política de planificación (cobertura, pronóstico, velocidad de corrección y peso de la línea de suministro), medidas en utilidad, tasa de cumplimiento, efecto látigo y pérdidas frente a una línea base guardada.</li>" +
       "<li><b>Enseña</b>Un tutorial en tres niveles, un diagrama de stocks y flujos en vivo y todas las ecuaciones con su valor en cualquier semana.</li>",
     "a.how.h": "Cómo está construido",
@@ -156,8 +195,8 @@
     "a.author.h": "Autor",
     "a.author.p": "PharmaSim fue diseñado y construido por <b>Daniel Alberto Sepulveda Estay, PhD</b>, fundador de <a href=\"https://kathuman.github.io/estay-dynamics/\" target=\"_blank\" rel=\"noopener\">Estay Dynamics</a>. Trabaja en dinámica de sistemas, simulación y optimización de redes para cadenas de suministro y operaciones, incluida la manufactura farmacéutica. Es doctor de la Universidad Técnica de Dinamarca (DTU) y magíster del Instituto Tecnológico de Massachusetts (MIT), y es miembro del consejo de la System Dynamics Society.",
     "a.author.links": "<a href=\"https://kathuman.github.io/estay-dynamics/about.html\" target=\"_blank\" rel=\"noopener\">Más sobre Daniel →</a> · <a href=\"https://kathuman.github.io/estay-dynamics/contact.html\" target=\"_blank\" rel=\"noopener\">Contáctenos</a>",
-    "a.cite": "<b>Para citar:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (versión <span id=\"cite-ver\">2.0.0</span>) [Software]. https://kathuman.github.io/pharma-sim/",
-    "a.foot": "PharmaSim v2.0.0 · <a href=\"index.html\">Abrir el simulador</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>"
+    "a.cite": "<b>Para citar:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (versión <span id=\"cite-ver\">3.0.0</span>) [Software]. https://kathuman.github.io/pharma-sim/",
+    "a.foot": "PharmaSim v3.0.0 · <a href=\"index.html\">Abrir el simulador</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>"
   };
 
   // ---- mensajes de validación del modelo
@@ -172,7 +211,18 @@
     ["^Shelf life minus the minimum remaining life must exceed the QA time by more than a week, or nothing could be sold\\.$", "La vida útil menos la vida remanente mínima debe superar el tiempo de QA en más de una semana; si no, no se podría vender nada."],
     ["^The supply-line weight must be between 0 and 1\\.$", "El peso de la línea de suministro debe estar entre 0 y 1."],
     ["^The target cover must be at least the cover needed for full service, or the plant could never serve all demand\\.$", "La cobertura meta debe ser al menos la necesaria para servicio completo; si no, la planta nunca podría atender toda la demanda."],
-    ["^The plant ceiling must be at least 100% of the starting output\\.$", "La capacidad de la planta debe ser al menos el 100% de la producción inicial."]
+    ["^The plant ceiling must be at least 100% of the starting output\\.$", "La capacidad de la planta debe ser al menos el 100% de la producción inicial."],
+    ["^The demand history needs at least four weeks\\.$", "La historia de demanda necesita al menos cuatro semanas."],
+    ["^Unknown allocation rule: (.*)\\.$", "Regla de asignación desconocida: $1."],
+    ["^The share of critical patients must be between 0 and 100%\\.$", "La proporción de pacientes críticos debe estar entre 0 y 100%."],
+    ["^The API supplier needs a positive lead time, at least a week of API cover and the capacity to supply the starting output\\.$", "El proveedor de API necesita un tiempo de entrega positivo, al menos una semana de cobertura de API y la capacidad de abastecer la producción inicial."],
+    ["^The QA lab must be able to test at least the starting output\\.$", "El laboratorio de QA debe poder analizar al menos la producción inicial."],
+    ["^Campaign length and changeover time cannot be negative\\.$", "La duración de la campaña y el cambio de formato no pueden ser negativos."],
+    ["^With these campaigns the plant cannot make its starting output: lengthen the campaigns, shorten the changeovers or raise the capacity\\.$", "Con estas campañas la planta no puede fabricar su producción inicial: alargue las campañas, acorte los cambios de formato o aumente la capacidad."],
+    ["^QA time plus the target cover and half a campaign \\(([\\d.]+) weeks\\) is longer than a pack can be sold \\(([\\d.]+) weeks\\): stock will keep expiring\\.$", "El tiempo de QA más la cobertura meta y media campaña ($1 semanas) supera el tiempo en que se puede vender una unidad ($2 semanas): el inventario seguirá venciendo."],
+    ["^QA time plus the target cover \\(([\\d.]+) weeks\\) is longer than a pack can be sold \\(([\\d.]+) weeks\\): stock will keep expiring\\.$", "El tiempo de QA más la cobertura meta ($1 semanas) supera el tiempo en que se puede vender una unidad ($2 semanas): el inventario seguirá venciendo."],
+    ["^The API outage runs past the end of the horizon\\.$", "La interrupción de API se extiende más allá del horizonte."],
+    ["^The plant outage runs past the end of the horizon\\.$", "La detención de planta se extiende más allá del horizonte."]
   ];
 
   root.PS_ES = { T: T, H: H, P: P };

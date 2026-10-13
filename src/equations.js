@@ -21,6 +21,16 @@
       { name: "Distributor stock", eq: "∫ (Arrivals − Patients served) dt", u: "packs", v: function (r) { return r.distInventory; } },
       { name: "Plant backlog", eq: "∫ (Orders to the plant − Plant shipments) dt", u: "packs", v: function (r) { return r.backlog; } }
     ] },
+    { title: "Patients", items: [
+      { name: "Critical patients served", eq: "Proportional: Served × Critical share; critical first: min(Demand × Critical share, Served)", u: "packs/wk", v: function (r) { return r.critServed; },
+        note: "Everyone else gets what is left. The penalty for a pack missing for a critical patient is multiplied by the critical penalty." }
+    ] },
+    { title: "API supplier (when the tier is on)", api: true, items: [
+      { name: "API stock", eq: "∫ (API arrivals − Production) dt", u: "packs", v: function (r) { return r.apiStock; }, note: "Measured in packs' worth of active ingredient." },
+      { name: "API orders", eq: "max(0, API usage forecast + (API usage forecast × API stock target − API stock) ÷ Time to correct stock + Weight × (Desired API on order − API on order) ÷ Time to correct stock)", u: "packs/wk", v: function (r) { return r.apiOrders; },
+        note: "API usage forecast = SMOOTH(Production, Forecast smoothing). API on order = waiting at the supplier + on its way. Desired API on order = forecast × (1 week + API lead time)." },
+      { name: "API on its way", eq: "DELAY3(Supplier shipments, API lead time); Supplier shipments = min(API backlog ÷ 1 week, Supplier capacity), 0 during an API outage", u: "packs", v: function (r) { return r.apiTransit; } }
+    ] },
     { title: "Plant: shipping and planning", items: [
       { name: "Plant shipments", eq: "Wanted × g(Plant stock ÷ (Wanted × Stock needed for full service)); Wanted = Demand, or Backlog ÷ 1 week with a distributor", u: "packs/wk", v: function (r) { return r.shipped; },
         note: "g(y) = 2y − y² below full cover (y < 1), and 1 above: service starts to slip before the stock runs out." },
@@ -31,14 +41,18 @@
         note: "Desired QA pipeline = Forecast ÷ (1 − Rejection rate) × QA release time. Backlog correction = (Backlog − Forecast × 1 week) ÷ Time to correct stock." }
     ] },
     { title: "Plant: capacity and people", items: [
-      { name: "Capacity", eq: "min(Plant capacity, Workforce × Productivity × (1 + Most overtime)) × Output during an outage", u: "packs/wk", v: function (r) { return r.capacity; } },
-      { name: "Production", eq: "min(Desired production, Capacity)", u: "packs/wk", v: function (r) { return r.production; } },
+      { name: "Capacity", eq: "min(Plant capacity × Line efficiency, Workforce × Productivity × Line efficiency × (1 + Most overtime)) × Output during an outage", u: "packs/wk", v: function (r) { return r.capacity; },
+        note: "Line efficiency = 1 − Changeover ÷ (7 × Campaign length) with campaigns, and 1 on a dedicated line." },
+      { name: "Scheduled production", eq: "SMOOTH(Desired production, Campaign length ÷ 2) with campaigns; Desired production on a dedicated line", u: "packs/wk", v: function (r) { return r.scheduled; },
+        note: "A change of plan reaches the line at the next campaign, on average half a campaign later. Campaigns also add half a campaign of demand to the target stock (cycle stock)." },
+      { name: "Production", eq: "min(Scheduled production, Capacity), times g(API stock ÷ (that × 1 week)) when the API tier is on", u: "packs/wk", v: function (r) { return r.production; } },
       { name: "Overtime packs", eq: "max(0, Production − Workforce × Productivity)", u: "packs/wk", v: function (r) { return r.overtime; } },
       { name: "Workforce", eq: "∫ (Hiring − Leaving) dt; Hiring = max(0, Leaving + (Desired workforce − Workforce) ÷ Time to hire)", u: "people", v: function (r) { return r.workforce; },
         note: "Desired workforce = min(Desired production, Plant capacity) ÷ Productivity (200 packs per person-week). Leaving = Workforce ÷ 100 weeks. Nobody is laid off: the workforce shrinks by people leaving." }
     ] },
     { title: "Quality release and shelf life", items: [
-      { name: "QA pipeline", eq: "DELAY3(Production, QA release time): three stages in series", u: "packs", v: function (r) { return r.qa; } },
+      { name: "QA pipeline", eq: "DELAY3(Production, QA release time): three stages in series, the last limited to the QA lab capacity", u: "packs", v: function (r) { return r.qa; },
+        note: "QA lab capacity = QA lab capacity % × the starting output, raised by the QA time saved while expediting (extra shifts)." },
       { name: "Released by QA", eq: "Approved = Release × (1 − Rejection rate); Rejected = Release × Rejection rate", u: "packs/wk", v: function (r) { return r.approved; } },
       { name: "Rejected batches", eq: "Release × Rejection rate", u: "packs/wk", v: function (r) { return r.rejected; },
         note: "While expediting (stock below the trigger), the QA time is cut and the rejection rate rises by the extra points." },

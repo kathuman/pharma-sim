@@ -16,7 +16,10 @@ const CLAIMS = {
   "tier-supply-line-beats-sharing": () => run("twoTier", { supplyLineWeight: 1 }).orderBullwhip < run("twoTier", { shareDemand: true }).orderBullwhip,
   "outage-expedite-tradeoff": () => { const a = run("outage"), b = run("outage", { expediteQA: true }); return b.fillRate > a.fillRate && b.rejectedUnits > a.rejectedUnits && b.expedited > 0; },
   "outage-expedite-needs-penalty": () => run("outage", { expediteQA: true }).profit > run("outage").profit && run("outage", { expediteQA: true, shortagePenalty: 0 }).profit < run("outage", { shortagePenalty: 0 }).profit,
-  "step-cover-six-full-service": () => run("step", { coverage: 6 }).shortWeeks === 0 && run("step", { coverage: 6 }).fillRate > 0.999
+  "step-cover-six-full-service": () => run("step", { coverage: 6 }).shortWeeks === 0 && run("step", { coverage: 6 }).fillRate > 0.999,
+  "shortlife-campaign-waste": () => run("shortLife", { campaignWeeks: 4 }).wasteUnits > run("shortLife").wasteUnits,
+  "api-buffer-cheaper": () => { const a = run("apiOutage", { apiCoverage: 10 }), f = run("apiOutage", { coverage: 8 }); return Math.abs(a.fillRate - f.fillRate) < 0.003 && a.profit > f.profit && a.fillRate > run("apiOutage").fillRate; },
+  "allocation-same-total": () => { const a = run("outage"), b = run("outage", { allocation: "critical" }); return Math.abs(a.fillRate - b.fillRate) < 1e-12 && b.criticalFill > a.criticalFill; }
 };
 // the statements the step texts make about the scenarios they show
 const STATEMENTS = [
@@ -28,7 +31,13 @@ const STATEMENTS = [
   ["a distributor amplifies at each tier (orders > demand, production > 1)", () => { const k = run("twoTier"); return k.orderBullwhip > 1.5 && k.bullwhip > 1; }],
   ["sharing sales data calms the plant but barely the distributor", () => { const a = run("twoTier"), b = run("twoTier", { shareDemand: true }); return b.bullwhip < a.bullwhip && Math.abs(b.orderBullwhip - a.orderBullwhip) < 0.1; }],
   ["the outage causes shortage weeks", () => run("outage").shortWeeks > 0 && run("outage").lost > 0],
-  ["the step causes shortage weeks at the defaults", () => run("step").shortWeeks > 0]
+  ["the step causes shortage weeks at the defaults", () => run("step").shortWeeks > 0],
+  ["two-week campaigns cost the step its full recovery", () => run("step", { campaignWeeks: 2 }).fillRate < run("step").fillRate - 0.01],
+  ["four-week campaigns on the short-life product raise the warning the step points at", () => M.run(Object.assign({}, M.PRESETS.shortLife.values, { campaignWeeks: 4 })).warnings.length > 0],
+  ["the API outage causes a shortage", () => run("apiOutage").shortWeeks > 0 && run("apiOutage").lost > 0],
+  ["API orders are amplified on the step, and counting the supply line cuts them", () => run("step", { apiTier: true }).apiBullwhip > 3 && run("step", { apiTier: true, supplyLineWeight: 1 }).apiBullwhip < run("step", { apiTier: true }).apiBullwhip],
+  ["critical first: critical patients get more, others less", () => { const a = run("outage"), b = run("outage", { allocation: "critical" }); return b.criticalFill > a.criticalFill && b.otherFill < a.otherFill; }],
+  ["every preset value is within its slider range", () => Object.values(M.PRESETS).every((pr) => Object.entries(pr.values).every(([k, v]) => { const c = S.BY_KEY[k]; return !c || c.min == null || (v >= c.min && v <= c.max); }))]
 ];
 const ids = new Set();
 C.LEVELS.forEach((l) => l.steps.forEach((s) => { if (s.quiz) ids.add(s.quiz.claim); }));
@@ -40,6 +49,7 @@ STATEMENTS.forEach(([n, f]) => check("statement holds: " + n, f()));
 const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const exists = (sel) => {
   if (/^#c_/.test(sel)) return !!S.BY_KEY[sel.slice(3)];
+  if (sel === "#notes") return html.includes('id="notes"');
   if (/^#g_/.test(sel)) return S.GROUPS.some((g) => g.id === sel.slice(3));
   return html.includes('id="' + sel.slice(1) + '"');
 };

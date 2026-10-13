@@ -8,17 +8,25 @@
   var GROUPS = [
     { id: "market", title: "Market", controls: [
       { key: "pattern", type: "select", label: "Demand pattern", options: [["none", "Steady"], ["step", "Step (a lasting change)"], ["pulse", "Surge (then back)"], ["seasonal", "Seasonal"]] },
-      { key: "shockSize", label: "Size of the change", unit: "%", min: -40, max: 80, step: 5, show: function (p) { return p.pattern === "step" || p.pattern === "pulse"; } },
+      { key: "shockSize", label: "Size of the change", unit: "%", min: -40, max: 150, step: 5, show: function (p) { return p.pattern === "step" || p.pattern === "pulse"; } },
       { key: "shockWeek", label: "Week it starts", unit: "wk", min: 2, max: 60, step: 1, show: function (p) { return p.pattern === "step" || p.pattern === "pulse"; } },
       { key: "pulseWeeks", label: "Surge length", unit: "wk", min: 2, max: 40, step: 1, show: function (p) { return p.pattern === "pulse"; } },
       { key: "seasonAmp", label: "Seasonal swing", unit: "%", min: 5, max: 50, step: 5, show: function (p) { return p.pattern === "seasonal"; } },
       { key: "noise", label: "Week-to-week noise", unit: "%", min: 0, max: 25, step: 1, note: "Random variation around the pattern, correlated over two weeks. The same random future is used for the baseline, so comparisons are fair." }
     ] },
+    { id: "patients", title: "Patients", controls: [
+      { key: "criticalShare", label: "Critical patients", unit: "%", min: 0, max: 100, step: 5, note: "The share of demand from patients with no substitute, such as hospitals and intensive care." },
+      { key: "allocation", type: "select", label: "When stock is short", options: [["proportional", "Everyone gets the same share"], ["critical", "Critical patients first"]], show: function (p) { return p.criticalShare > 0; } },
+      { key: "criticalPenalty", label: "Penalty for a critical shortage", unit: "×", min: 1, max: 10, step: 0.5, note: "How many times the normal penalty a pack missing for a critical patient costs.", show: function (p) { return p.criticalShare > 0; } }
+    ] },
     { id: "disruption", title: "Supply disruption", controls: [
       { key: "outage", type: "toggle", label: "Plant outage", note: "The plant stops (or slows) for some weeks: a contamination, an equipment failure or a regulatory hold." },
       { key: "outageWeek", label: "Outage starts", unit: "wk", min: 2, max: 80, step: 1, show: function (p) { return p.outage; } },
       { key: "outageWeeks", label: "Outage length", unit: "wk", min: 1, max: 16, step: 1, show: function (p) { return p.outage; } },
-      { key: "outageLeft", label: "Output during the outage", unit: "%", min: 0, max: 90, step: 10, show: function (p) { return p.outage; } }
+      { key: "outageLeft", label: "Output during the outage", unit: "%", min: 0, max: 90, step: 10, show: function (p) { return p.outage; } },
+      { key: "apiOutage", type: "toggle", label: "API supplier outage", note: "The supplier of the active ingredient stops shipping: a quality failure, an export ban or a disaster. What is already on its way still arrives.", show: function (p) { return p.apiTier; } },
+      { key: "apiOutageWeek", label: "API outage starts", unit: "wk", min: 2, max: 80, step: 1, show: function (p) { return p.apiTier && p.apiOutage; } },
+      { key: "apiOutageWeeks", label: "API outage length", unit: "wk", min: 1, max: 40, step: 1, show: function (p) { return p.apiTier && p.apiOutage; } }
     ] },
     { id: "network", title: "Network", controls: [
       { key: "retailTier", type: "toggle", label: "Distributor tier", note: "A distributor between the market and the plant. It serves patients from its own stock and orders from the plant." },
@@ -26,9 +34,18 @@
       { key: "distCoverage", label: "Distributor's target cover", unit: "wk", min: 2, max: 10, step: 0.5, show: function (p) { return p.retailTier; } },
       { key: "shareDemand", type: "toggle", label: "Share sales data with the plant", note: "The plant forecasts from what patients take, not from the distributor's orders.", show: function (p) { return p.retailTier; } }
     ] },
+    { id: "api", title: "API supplier", controls: [
+      { key: "apiTier", type: "toggle", label: "API supplier tier", note: "The plant needs the active ingredient (API) to make each pack and orders it from a supplier far away." },
+      { key: "apiLeadTime", label: "API lead time", unit: "wk", min: 2, max: 30, step: 1, show: function (p) { return p.apiTier; } },
+      { key: "apiCoverage", label: "API stock target", unit: "wk", min: 1, max: 26, step: 1, show: function (p) { return p.apiTier; } },
+      { key: "apiCapacity", label: "Supplier capacity", unit: "%", min: 100, max: 300, step: 10, note: "What the supplier can ship in a week, as a share of the starting need.", show: function (p) { return p.apiTier; } }
+    ] },
     { id: "plant", title: "Plant and quality", controls: [
-      { key: "ceiling", label: "Plant capacity", unit: "%", min: 100, max: 200, step: 5, note: "What the equipment can make, as a share of the starting output. Hiring cannot go beyond it." },
+      { key: "ceiling", label: "Plant capacity", unit: "%", min: 100, max: 300, step: 5, note: "What the equipment can make, as a share of the starting output. Hiring cannot go beyond it." },
+      { key: "campaignWeeks", label: "Campaign length", unit: "wk", min: 0, max: 12, step: 1, zero: "continuous", note: "The line is shared with other products and makes this one in campaigns. Longer campaigns mean fewer changeovers but more cycle stock and a slower response; 0 = a dedicated line." },
+      { key: "changeoverDays", label: "Changeover", unit: "days", min: 0.5, max: 10, step: 0.5, note: "Cleaning and set-up at the start of each campaign, when the line makes nothing.", show: function (p) { return p.campaignWeeks > 0; } },
       { key: "qaTime", label: "QA release time", unit: "wk", min: 1, max: 8, step: 0.5, note: "Testing and batch-record review before a batch can be sold." },
+      { key: "qaCapacity", label: "QA lab capacity", unit: "%", min: 100, max: 300, step: 5, note: "What the lab can test in a week, as a share of the starting output. In a surge the lab can become the bottleneck." },
       { key: "rejectRate", label: "Batches rejected in QA", unit: "%", min: 0, max: 10, step: 0.5 },
       { key: "shelfLife", label: "Shelf life", unit: "wk", min: 12, max: 260, step: 2 },
       { key: "minRemaining", label: "Remaining life required at delivery", unit: "wk", min: 0, max: 104, step: 2, note: "Customers and tenders refuse short-dated stock: older than shelf life minus this, a pack is written off." },
@@ -50,14 +67,15 @@
       { key: "expediteReject", label: "Extra rejections while expediting", unit: "pts", min: 0, max: 10, step: 0.5, show: function (p) { return p.expediteQA; } }
     ] },
     { id: "money", title: "Economics", controls: [
-      { key: "price", label: "Price", unit: "$/pack", min: 5, max: 200, step: 1 },
-      { key: "material", label: "Materials", unit: "$/pack", min: 1, max: 100, step: 1 },
+      { key: "price", label: "Price", unit: "$/pack", min: 2, max: 400, step: 1 },
+      { key: "material", label: "Materials", unit: "$/pack", min: 0.5, max: 200, step: 0.5 },
       { key: "wage", label: "Cost of a worker", unit: "$/wk", min: 500, max: 4000, step: 100 },
       { key: "hireCost", label: "Cost to hire and qualify", unit: "$/person", min: 0, max: 30000, step: 1000 },
       { key: "otPremium", label: "Overtime premium", unit: "%", min: 0, max: 150, step: 10, show: function (p) { return p.overtime; } },
       { key: "expediteCost", label: "Cost of expediting", unit: "$/pack", min: 0, max: 10, step: 0.5, show: function (p) { return p.expediteQA; } },
-      { key: "holding", label: "Holding cost", unit: "$/pack/wk", min: 0, max: 0.5, step: 0.01 },
-      { key: "shortagePenalty", label: "Penalty per pack not supplied", unit: "$/pack", min: 0, max: 200, step: 5, note: "Contract penalties and the cost to patients and reputation, on top of the lost sale." },
+      { key: "holding", label: "Holding cost", unit: "$/pack/wk", min: 0, max: 1, step: 0.01 },
+      { key: "apiHolding", label: "API holding cost", unit: "$/pack/wk", min: 0, max: 0.5, step: 0.01, show: function (p) { return p.apiTier; } },
+      { key: "shortagePenalty", label: "Penalty per pack not supplied", unit: "$/pack", min: 0, max: 500, step: 5, note: "Contract penalties and the cost to patients and reputation, on top of the lost sale." },
       { key: "disposal", label: "Disposal", unit: "$/pack", min: 0, max: 10, step: 0.5 }
     ] },
     { id: "run", title: "Run", controls: [

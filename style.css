@@ -73,6 +73,8 @@ select.choice:focus{outline:none; border-color:var(--accent);}
 .main{padding:20px 22px 0; display:flex; flex-direction:column; gap:18px; min-width:0;}
 .errors{background:rgba(227,73,72,.1); border:1px solid rgba(227,73,72,.5); border-radius:8px; padding:10px 14px; font-family:var(--mono); font-size:12.5px; color:#ffb3b2;}
 .errors[hidden]{display:none;}
+.notes{background:rgba(237,161,0,.08); border:1px solid rgba(237,161,0,.45); border-radius:8px; padding:10px 14px; font-family:var(--mono); font-size:12.5px; color:#ffd88a;}
+.notes[hidden]{display:none;}
 .headline{font-size:17px; line-height:1.55; color:var(--ink-dim); margin:0;}
 .headline b{color:var(--ink);}
 .headline .cmp{display:block; font-size:14px; color:var(--ink-faint); margin-top:4px;}
@@ -113,6 +115,8 @@ select.choice:focus{outline:none; border-color:var(--accent);}
 .chart .band.outage{fill:rgba(227,73,72,.13);}
 .chart .band.expedite{fill:rgba(201,133,0,.16);}
 .chart .band.shock{fill:rgba(125,211,252,.07);}
+.chart .band.apioutage{fill:rgba(217,89,38,.14);}
+.chart .band.lab{fill:rgba(25,158,112,.14);}
 .chart-legend{display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:6px; font-family:var(--mono); font-size:11px; color:var(--ink-dim);}
 .legend-item{display:inline-flex; align-items:center; gap:6px; white-space:nowrap;}
 .legend-item svg{flex:0 0 auto;}
@@ -120,6 +124,7 @@ select.choice:focus{outline:none; border-color:var(--accent);}
 .rail-section[hidden]{display:none;}
 .band-key{display:inline-block; width:14px; height:10px; border-radius:2px;}
 .band-key.outage{background:rgba(227,73,72,.35);} .band-key.expedite{background:rgba(201,133,0,.4);} .band-key.shock{background:rgba(125,211,252,.2);}
+.band-key.apioutage{background:rgba(217,89,38,.4);} .band-key.lab{background:rgba(25,158,112,.4);}
 .chart-tip{position:absolute; top:6px; pointer-events:none; z-index:5; background:rgba(4,32,60,.96); border:1px solid var(--line); border-radius:6px; padding:7px 9px; font-family:var(--mono); font-size:11px; color:var(--ink); min-width:150px; box-shadow:0 6px 18px rgba(0,0,0,.35);}
 .chart-tip[hidden]{display:none;}
 .chart-tip b{display:block; font-family:var(--head); font-size:12px; letter-spacing:.04em; color:var(--ink-dim); margin-bottom:3px;}

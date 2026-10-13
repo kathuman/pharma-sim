@@ -13,7 +13,7 @@ const ids = (s) => [...String(s).matchAll(/id="([^"]+)"/g)].map((m) => m[1]).sor
 // ---- strings
 const used = new Set();
 for (const f of ["app.js", "tour.js", "src/diagram.js"]) for (const m of fs.readFileSync(R + f, "utf8").matchAll(/\bT\(\s*(["'])((?:(?!\1)[^\\]|\\.)*)\1/g)) used.add(m[1] === '"' ? JSON.parse('"' + m[2] + '"') : m[2].replace(/\\'/g, "'"));
-S.GROUPS.forEach((g) => { used.add(g.title); g.controls.forEach((c) => { used.add(c.label); if (c.note) used.add(c.note); if (c.unit) used.add(c.unit); (c.options || []).forEach((o) => used.add(o[1])); }); });
+S.GROUPS.forEach((g) => { used.add(g.title); g.controls.forEach((c) => { used.add(c.label); if (c.note) used.add(c.note); if (c.unit) used.add(c.unit); if (c.zero) used.add(c.zero); (c.options || []).forEach((o) => used.add(o[1])); }); });
 E.SECTIONS.forEach((s) => { used.add(s.title); s.items.forEach((i) => { used.add(i.name); used.add(i.eq); if (i.note) used.add(i.note); if (i.u && i.u[0] !== "$") used.add(i.u); }); });
 Object.values(M.PRESETS).forEach((p) => used.add(p.label));
 const missing = [...used].filter((s) => ES.T[s] == null);
@@ -45,10 +45,13 @@ check("the Spanish page text keeps the English markup", [...keys].every((k) => {
 // ---- the model's validation messages
 const msgs = new Set();
 [{ dt: 1 }, { weeks: 2 }, { demand: 0 }, { pattern: "x" }, { qaTime: 0 }, { retailTier: true, transitTime: 0 }, { rejectRate: 100 }, { shelfLife: 10, minRemaining: 8 }, { supplyLineWeight: 2 }, { coverage: 1 }, { ceiling: 90 }]
+  .concat([{ pattern: "history", history: [1] }, { allocation: "x" }, { criticalShare: 120 }, { apiTier: true, apiCoverage: 0.5 }, { qaCapacity: 90 }, { campaignWeeks: -1 }, { campaignWeeks: 1, changeoverDays: 3 }])
   .forEach((o) => M.validate(M.merge(o)).forEach((m) => msgs.add(m)));
+[Object.assign({}, M.PRESETS.shortLife.values, { campaignWeeks: 4 }), Object.assign({}, M.PRESETS.shortLife.values, { coverage: 7 }), { apiTier: true, apiOutage: true, apiOutageWeek: 100 }, { outage: true, outageWeek: 102 }]
+  .forEach((o) => M.warnings(M.merge(o)).forEach((m) => msgs.add(m)));
 const tw = (m) => ES.P.reduce((s, p) => s.replace(new RegExp(p[0], "g"), p[1]), m);
 const left = [...msgs].filter((m) => tw(m) === m);
-check("every validation message is translated (" + msgs.size + " messages)", msgs.size >= 11 && left.length === 0, left.join(" | "));
+check("every validation and warning message is translated (" + msgs.size + " messages)", msgs.size >= 22 && left.length === 0, left.join(" | "));
 
 console.log(pass + "/" + (pass + fail) + " checks passed");
 process.exit(fail ? 1 : 0);
