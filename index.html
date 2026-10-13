@@ -37,6 +37,15 @@
       <label class="name" for="preset" data-i18n="rail.preset">Start from a ready-made scenario</label>
       <select class="choice" id="preset"></select>
     </div>
+    <div class="ctrl import-box" id="imp">
+      <span class="name" data-i18n="imp.h">Your own demand</span>
+      <div class="imp-row">
+        <label class="btn small file-btn"><span data-i18n="imp.choose">Import a CSV</span><input type="file" id="imp-file" accept=".csv,.txt,text/csv,text/plain" /></label>
+        <button class="btn small" id="imp-sample" type="button" data-i18n="imp.sample">Try the sample</button>
+        <button class="btn small" id="imp-dl" type="button" data-i18n="imp.dl">Get the sample file</button>
+      </div>
+      <div class="note" id="imp-msg" data-i18n="imp.note">Weekly or daily demand, with or without dates, headers in English or Spanish. The model replays it instead of a pattern. The file stays in your browser.</div>
+    </div>
     <p class="rail-note" data-i18n="rail.note">Every change reruns the model at once. A dot marks inputs you have changed from the starting scenario.</p>
     <div id="controls"></div>
   </aside>
@@ -55,6 +64,7 @@
         <button class="btn small" id="btn-seed" type="button" data-i18n="cmp.seed">New demand future</button>
         <button class="btn small" id="btn-link" type="button" data-i18n="cmp.link">Copy link</button>
         <button class="btn small" id="btn-csv" type="button" data-i18n="cmp.csv">Download CSV</button>
+        <a class="btn small" id="btn-report" href="report.html" target="_blank" rel="noopener" data-i18n="cmp.report">Decision report</a>
       </span>
     </div>
 
@@ -148,8 +158,8 @@
         <summary data-i18n="lim.sum">What the model leaves out</summary>
         <div data-i18n="lim.body">
           <ul>
-            <li>One product family, one plant and at most one distributor. Suppliers of the active ingredient, several markets and allocation between them are not modelled.</li>
-            <li>Production is continuous: campaigns, batch sizes and changeovers are averaged out.</li>
+            <li>One product family, one plant, at most one distributor and one API supplier. Several markets, other products competing for the same line, and allocation between markets are not modelled.</li>
+            <li>Campaigns are averaged: their lost capacity, delay and cycle stock are modelled, but not individual batches and when each is made.</li>
             <li>The distributor's stock is not aged; shelf life is tracked at the plant only.</li>
             <li>Nobody is laid off: the workforce shrinks only as people leave.</li>
             <li>Costs and prices are illustrative, not a quotation.</li>
@@ -173,6 +183,7 @@
 <script src="src/charts.js"></script>
 <script src="src/diagram.js"></script>
 <script src="src/analysis.js"></script>
+<script src="src/data.js"></script>
 <script src="app.js"></script>
 <script src="lab.js"></script>
 <script src="tour-content.js"></script>

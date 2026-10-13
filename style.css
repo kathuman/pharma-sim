@@ -132,6 +132,12 @@ select.choice:focus{outline:none; border-color:var(--accent);}
 .chart-tip span i{width:9px; height:9px; border-radius:2px; display:inline-block;}
 .chart-tip span em{font-style:normal; margin-left:auto; padding-left:12px; color:var(--tele);}
 .chart-title{font-family:var(--head); font-weight:600; font-size:13.5px; color:var(--ink); margin:0 0 2px;}
+.chart-table-btn{background:none; border:none; padding:2px 0; margin-top:4px; font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); text-decoration:underline; cursor:pointer;}
+.chart-table-btn:hover, .chart-table-btn:focus-visible{color:var(--accent);}
+.chart-table{max-height:260px; overflow:auto; margin-top:6px; border:1px solid var(--line-soft); border-radius:6px;}
+.chart-table[hidden]{display:none;}
+.chart-table table{min-width:0;}
+.chart-table caption{text-align:left; font-family:var(--mono); font-size:10.5px; color:var(--ink-faint); padding:4px 8px;}
 .chart-sub{font-size:11.5px; color:var(--ink-faint); margin:0 0 6px;}
 
 /* ---- decision lab */
@@ -211,6 +217,14 @@ footer.foot{margin:24px 0 0; padding:22px 0 50px; border-top:1px solid var(--lin
 footer.foot a{color:var(--ink-faint);}
 footer.foot .consult{display:block; margin-bottom:6px; font-weight:600; color:var(--ink);}
 footer.foot .consult a{color:var(--accent);}
+
+/* ---- your own demand */
+.import-box{border:1px dashed var(--line); border-radius:8px; padding:10px 12px;}
+.imp-row{display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 2px;}
+.file-btn{position:relative; overflow:hidden; display:inline-block;}
+.file-btn input[type=file]{position:absolute; inset:0; opacity:0; cursor:pointer;}
+.file-btn:focus-within{box-shadow:0 0 0 2px var(--accent);}
+.import-box .bad{color:#ffb3b2;}
 
 /* ---- play mode */
 .back-link.play{color:var(--s4); border-color:rgba(201,133,0,.55);}

@@ -3,7 +3,7 @@
 // demand. window.PSApp is the interface the tutorial uses.
 (function () {
   "use strict";
-  var APP_VERSION = "3.2.0";
+  var APP_VERSION = "3.3.0";
   var M = window.PSModel, S = window.PSSpecs, EQ = window.PSEquations, I18 = window.PSi18n, T = I18.T, tw = I18.tw;
   var $ = function (id) { return document.getElementById(id); }, listeners = [];
   var state = { p: M.merge(M.PRESETS.step.values), preset: "step", base: null, baseParams: null, res: null, hoverT: null, diagram: null, diagramMulti: null, charts: {} };
@@ -80,7 +80,7 @@
     err.hidden = true;
     state.res = res;
     var notes = $("notes"); notes.hidden = !res.warnings.length; notes.innerHTML = res.warnings.map(function (e) { return "● " + tw(e); }).join("<br>");
-    headline(); kpis(); compareBar(); charts(); model(); saveHash();
+    headline(); kpis(); compareBar(); charts(); model(); saveHash(); reportLink();
     listeners.forEach(function (fn) { try { fn(res); } catch (e) { if (window.console) console.error(e); } });
   }
   function headline() {
@@ -236,7 +236,7 @@
 
   // ---- baseline, seed, link, CSV
   function saveBaseline(label) {
-    state.base = state.res; state.baseParams = Object.assign({}, state.p);
+    state.base = state.res; state.baseParams = Object.assign({}, state.p); state.basePreset = state.preset;
     state.baseLabel = label || (M.PRESETS[state.preset] ? T(M.PRESETS[state.preset].label) : T("Your scenario"));
     recompute();
   }
@@ -262,6 +262,30 @@
     var csv = ["week," + cols.slice(1).join(",")].concat(state.res.rows.map(function (r) { return cols.map(function (c) { var v = r[c]; return typeof v === "number" ? +v.toFixed(4) : v; }).join(","); })).join("\n");
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "pharmasim-run.csv"; document.body.appendChild(a); a.click(); a.remove();
   });
+  // ---- your own demand: read a CSV (src/data.js) and replay it
+  function useHistory(text) {
+    var h = window.PSData.read(text), msg = $("imp-msg");
+    if (!h.ok) { msg.innerHTML = "<span class='bad'>" + h.errors.map(tw).join(" ") + "</span>"; return; }
+    window.PSApp.set(window.PSData.toParams(h));
+    msg.innerHTML = T("Read {n} weeks: a starting level of {l} a week, a trend of {t} a year and week-to-week variation of {v}. The model now replays them.", {
+      n: h.weeks.length, l: num(h.level), t: (h.trend >= 0 ? "+" : "−") + Math.abs(h.trend * 100).toFixed(1) + "%", v: (h.variation * 100).toFixed(1) + "%" }) + (h.notes.length ? " " + h.notes.map(tw).join(" ") : "");
+  }
+  $("imp-file").addEventListener("change", function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    var rd = new FileReader(); rd.onload = function () { useHistory(String(rd.result)); }; rd.readAsText(f);
+    this.value = "";
+  });
+  $("imp-sample").addEventListener("click", function () { useHistory(window.PSData.sample()); });
+  $("imp-dl").addEventListener("click", function () {
+    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([window.PSData.sample()], { type: "text/csv" })); a.download = "pharmasim-sample-demand.csv"; document.body.appendChild(a); a.click(); a.remove();
+  });
+  // the report opens with this scenario and the baseline
+  function reportLink() {
+    var enc = function (o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))); };
+    var h = "#s=" + enc({ pr: state.preset, v: state.p }) + (state.baseParams ? "&b=" + enc({ pr: state.basePreset || state.preset, v: state.baseParams }) : "");
+    $("btn-report").setAttribute("href", I18.withLang("report.html") + h);
+  }
+
   // the scenario lives in the address (#s=…), so a link reopens it exactly
   function saveHash() {
     var d = {}, s = start(); Object.keys(state.p).forEach(function (k) { if (state.p[k] !== s[k]) d[k] = state.p[k]; });
@@ -286,7 +310,7 @@
       if (opts.baseline === "clear") { state.base = null; state.baseParams = null; }
       if (opts.baseline === "save") {
         var bp = Object.assign({}, state.p, opts.baselineValues || {}), r = M.run(bp);
-        if (r.ok) { state.base = r; state.baseParams = bp; state.baseLabel = T(M.PRESETS[state.preset].label); }
+        if (r.ok) { state.base = r; state.baseParams = bp; state.basePreset = state.preset; state.baseLabel = T(M.PRESETS[state.preset].label); }
       }
       Object.keys(values || {}).forEach(function (k) { state.p[k] = values[k]; });
       syncRail(); recompute();

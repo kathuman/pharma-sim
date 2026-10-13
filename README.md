@@ -56,6 +56,16 @@ The same random futures are used for every option, so a difference is never luck
   overtime, expedited QA) over the same futures. It ranks those that meet a fill-rate target by profit and plots the
   trade-off frontier; click a point to apply that policy.
 
+## Your own data and the decision report
+
+- **Your own demand:** import a CSV of weekly or daily demand, with or without dates, headers in English or Spanish,
+  commas or semicolons, decimal points or commas. Daily rows are added up into weeks. The model replays it, scaled to
+  the level of its first four weeks, and reports the trend and the week-to-week variation. A sample file is included.
+- **Decision report** (report.html): a printable page in a light theme. It covers the scenario and its baseline, the
+  results side by side, the range over 100 demand futures, the charts, what moves profit most, every input that
+  differs from the defaults, and what the model leaves out.
+- **Accessibility:** every chart can be shown as a table, one row a week, captioned with the chart's title.
+
 ## Play the planner
 
 [play.html](https://kathuman.github.io/pharma-sim/play.html) puts you in the planner's seat. You choose a scenario (or
@@ -88,6 +98,10 @@ frontier, at least as good as the default policy, and the same when run in slice
 `node tests/game.test.js` (18 checks): the play mode's turns, its comparison on the same demand, a plan that is
 followed exactly, and that following the rule's suggestion tracks the rule more closely the shorter the turn.
 
+`node tests/data.test.js` (17 checks): numbers and dates in both conventions, delimiters, Spanish headers, daily
+data added up into weeks, missing values, refusals with reasons, the trend and variation, and the model replaying a
+history.
+
 `node tests/i18n.test.js` checks the Spanish translation for completeness, including the validation messages.
 
 CI runs all of them on every push.
@@ -99,6 +113,7 @@ Plain JavaScript with no build step: serve the folder with any static server (`p
 
 ## Version history
 
+- **3.3.0**: your own demand data, the printable decision report, and a table view behind every chart.
 - **3.2.0**: play the planner (play.html).
 - **3.1.0**: the decision lab (scenarios side by side, many futures, sensitivity, the optimiser), and two new
   tutorial steps.

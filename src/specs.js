@@ -7,7 +7,7 @@
   "use strict";
   var GROUPS = [
     { id: "market", title: "Market", controls: [
-      { key: "pattern", type: "select", label: "Demand pattern", options: [["none", "Steady"], ["step", "Step (a lasting change)"], ["pulse", "Surge (then back)"], ["seasonal", "Seasonal"]] },
+      { key: "pattern", type: "select", label: "Demand pattern", options: [["none", "Steady"], ["step", "Step (a lasting change)"], ["pulse", "Surge (then back)"], ["seasonal", "Seasonal"], ["history", "Your demand data"]] },
       { key: "shockSize", label: "Size of the change", unit: "%", min: -40, max: 150, step: 5, show: function (p) { return p.pattern === "step" || p.pattern === "pulse"; } },
       { key: "shockWeek", label: "Week it starts", unit: "wk", min: 2, max: 60, step: 1, show: function (p) { return p.pattern === "step" || p.pattern === "pulse"; } },
       { key: "pulseWeeks", label: "Surge length", unit: "wk", min: 2, max: 40, step: 1, show: function (p) { return p.pattern === "pulse"; } },

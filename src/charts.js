@@ -2,6 +2,7 @@
 (function () {
   "use strict";
   var NS = "http://www.w3.org/2000/svg";
+  function T(t, v) { var I = window.PSi18n; return I ? I.T(t, v) : String(t).replace(/\{(\w+)\}/g, function (m, k) { return v && v[k] != null ? v[k] : m; }); }
   function el(tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
   function nice(lo, hi, n) {
     if (hi - lo < 1e-9) { hi = lo + 1; }
@@ -14,6 +15,8 @@
 
   // opts: rows, series [{key, label, color, dash, width, area}], bands [{from, to, cls, label}], yFmt, tipFmt, xLabel,
   //       yMin (default 0), yMax, height, onHover(t | null), ariaLabel
+  // the chart's own title (the nearest .chart-title before it), for its label and its table's caption
+  function titleOf(host) { for (var n = host.previousElementSibling; n; n = n.previousElementSibling) if (n.classList && n.classList.contains("chart-title")) return n.textContent.trim(); return null; }
   function line(host, opts) {
     var state = { opts: opts, hoverI: null };
     host.classList.add("chart");
@@ -21,7 +24,20 @@
     var wrap = document.createElement("div"); wrap.className = "chart-plot"; host.appendChild(wrap);
     var tip = document.createElement("div"); tip.className = "chart-tip"; tip.hidden = true; wrap.appendChild(tip);
     var legend = document.createElement("div"); legend.className = "chart-legend"; host.appendChild(legend);
+    // the same numbers as a table, one row a week, for screen readers and for reading exact values
+    var tbtn = document.createElement("button"); tbtn.type = "button"; tbtn.className = "chart-table-btn"; tbtn.setAttribute("aria-expanded", "false"); tbtn.textContent = T("Show as a table"); host.appendChild(tbtn);
+    var tbox = document.createElement("div"); tbox.className = "chart-table"; tbox.hidden = true; host.appendChild(tbox);
+    tbtn.addEventListener("click", function () { tbox.hidden = !tbox.hidden; tbtn.setAttribute("aria-expanded", tbox.hidden ? "false" : "true"); tbtn.textContent = tbox.hidden ? T("Show as a table") : T("Hide the table"); if (!tbox.hidden) table(); });
+    function table() {
+      var o = state.opts, fmt = o.tipFmt || o.yFmt || String, cols = [];
+      o.series.forEach(function (s) { if (s.band) { cols.push({ key: s.band[0], label: s.label + " (" + T("low") + ")" }); cols.push({ key: s.band[1], label: s.label + " (" + T("high") + ")" }); } else cols.push({ key: s.key, label: s.label }); });
+      // one row for each whole week (the data may have several steps a week)
+      var seen = {}, rows = o.rows.filter(function (r) { var w = Math.round(r.t); if (Math.abs(r.t - w) > 1e-9 || seen[w]) return false; seen[w] = true; return true; });
+      tbox.innerHTML = "<table class='dtable'><caption>" + (o.ariaLabel || "") + "</caption><thead><tr><th scope='col'>" + (o.xLabel || "") + "</th>" + cols.map(function (c) { return "<th scope='col'>" + c.label + "</th>"; }).join("") + "</tr></thead><tbody>" +
+        rows.map(function (r) { return "<tr><th scope='row'>" + (o.tipTitle ? o.tipTitle(r) : r.t) + "</th>" + cols.map(function (c) { var v = r[c.key]; return "<td>" + (v == null || !isFinite(v) ? "—" : fmt(v)) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table>";
+    }
     function draw() {
+      if (titleOf(host)) state.opts.ariaLabel = titleOf(host);
       var o = state.opts, rows = o.rows, W = Math.max(260, wrap.clientWidth || 600), H = o.height || 220;
       var m = { l: 56, r: 12, t: 10, b: 28 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
       var old = wrap.querySelector("svg"); if (old) old.remove();
@@ -98,7 +114,7 @@
         return "<span class='legend-item'><svg width='22' height='10' aria-hidden='true'><line x1='1' x2='21' y1='5' y2='5' stroke='" + s.color + "' stroke-width='" + (s.width || 2) + "' stroke-dasharray='" + (s.dash || "none") + "' stroke-linecap='round'/></svg>" + s.label + "</span>";
       }).join("") + (o.bands || []).filter(function (b, i, a) { return b.label && a.findIndex(function (c) { return c.cls === b.cls; }) === i; }).map(function (b) { return "<span class='legend-item'><i class='band-key " + b.cls + "'></i>" + b.label + "</span>"; }).join("");
     }
-    state.update = function (opts2) { state.opts = opts2; legendHTML(); draw(); };
+    state.update = function (opts2) { state.opts = opts2; legendHTML(); draw(); if (!tbox.hidden) table(); };
     legendHTML(); draw();
     if (typeof ResizeObserver !== "undefined") { var lastW = 0; new ResizeObserver(function () { var w = wrap.clientWidth; if (Math.abs(w - lastW) > 2) { lastW = w; draw(); } }).observe(wrap); }
     return state;

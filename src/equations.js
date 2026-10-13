@@ -10,7 +10,7 @@
   var SECTIONS = [
     { title: "Market", items: [
       { name: "Market demand", eq: "Starting demand × pattern(t) × (1 + noise(t))", u: "packs/wk", v: function (r) { return r.demand; },
-        note: "Noise is pink: white noise smoothed over two weeks and scaled so its size does not depend on the time step." }
+        note: "Noise is pink: white noise smoothed over two weeks and scaled so its size does not depend on the time step. With your own data, pattern(t) is your weekly demand divided by the level of its first four weeks." }
     ] },
     { title: "Distributor (when the tier is on)", tier: true, items: [
       { name: "Patients served by the distributor", eq: "Demand × g(Distributor stock ÷ (Demand × Stock needed for full service))", u: "packs/wk", v: function (r) { return r.served; } },

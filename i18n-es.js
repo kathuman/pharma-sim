@@ -74,7 +74,7 @@
     "Disposal": "Destrucción", "Run": "Corrida", "Horizon": "Horizonte", "Starting demand": "Demanda inicial",
     // ---- ecuaciones
     "Starting demand × pattern(t) × (1 + noise(t))": "Demanda inicial × patrón(t) × (1 + ruido(t))",
-    "Noise is pink: white noise smoothed over two weeks and scaled so its size does not depend on the time step.": "El ruido es rosa: ruido blanco suavizado en dos semanas y escalado para que su tamaño no dependa del paso de tiempo.",
+    "Noise is pink: white noise smoothed over two weeks and scaled so its size does not depend on the time step. With your own data, pattern(t) is your weekly demand divided by the level of its first four weeks.": "El ruido es rosa: ruido blanco suavizado en dos semanas y escalado para que su tamaño no dependa del paso de tiempo. Con sus propios datos, patrón(t) es su demanda semanal dividida por el nivel de sus primeras cuatro semanas.",
     "Distributor (when the tier is on)": "Distribuidor (cuando el eslabón está activo)", "Patients served by the distributor": "Pacientes atendidos por el distribuidor",
     "Demand × g(Distributor stock ÷ (Demand × Stock needed for full service))": "Demanda × g(Inventario del distribuidor ÷ (Demanda × Inventario necesario para servicio completo))",
     "Distributor's forecast": "Pronóstico del distribuidor", "SMOOTH(Demand, Forecast smoothing)": "SUAVIZAR(Demanda, Suavizamiento del pronóstico)",
@@ -170,6 +170,14 @@
     "You beat the planning rule on both profit and service.": "Le ganó a la regla de planificación en utilidad y en servicio.", "More profit than the rule, but fewer patients served.": "Más utilidad que la regla, pero menos pacientes atendidos.",
     "More patients served than the rule, at a lower profit.": "Más pacientes atendidos que la regla, con menos utilidad.",
     "The rule did better on both. Try again: watch the stock and what is already in QA, not only this week's orders.": "La regla lo hizo mejor en ambas. Vuelva a intentarlo: mire el inventario y lo que ya está en QA, no solo los pedidos de esta semana.",
+    // ---- v3.3: your own demand, the report, chart tables
+    "Read {n} weeks: a starting level of {l} a week, a trend of {t} a year and week-to-week variation of {v}. The model now replays them.": "Se leyeron {n} semanas: un nivel inicial de {l} por semana, una tendencia de {t} al año y una variación semana a semana de {v}. El modelo ahora las reproduce.",
+    "Your demand data": "Sus datos de demanda", "Show as a table": "Ver como tabla", "Hide the table": "Ocultar la tabla", "low": "bajo", "high": "alto",
+    "This scenario cannot be run": "Este escenario no se puede correr", "Generated on {d} with PharmaSim v{v}, over {w} weeks": "Generado el {d} con PharmaSim v{v}, en {w} semanas",
+    "compared with the baseline {name}": "comparado con la línea base {name}", "This scenario": "Este escenario", "Difference": "Diferencia", "Default": "Valor por defecto",
+    "Every input that differs from the model's defaults; everything else is as described in the simulator.": "Cada dato que difiere de los valores por defecto del modelo; todo lo demás es como se describe en el simulador.",
+    "Every input is at the model's defaults.": "Todos los datos están en los valores por defecto del modelo.",
+    "PharmaSim v{v} · kathuman.github.io/pharma-sim · a system-dynamics model by Daniel Alberto Sepulveda Estay, PhD (Estay Dynamics). The figures are illustrative; every equation is shown in the simulator.": "PharmaSim v{v} · kathuman.github.io/pharma-sim · un modelo de dinámica de sistemas de Daniel Alberto Sepulveda Estay, PhD (Estay Dynamics). Las cifras son ilustrativas; cada ecuación se muestra en el simulador.",
     // ---- escenarios
     "Demand step (+25%)": "Escalón de demanda (+25%)", "Flu season (16-week surge)": "Temporada de influenza (alza de 16 semanas)", "Short-life product (6-month shelf life)": "Producto de vida corta (vida útil de 6 meses)",
     "Plant outage (4 weeks)": "Detención de planta (4 semanas)", "Two-tier chain (distributor)": "Cadena de dos eslabones (distribuidor)", "Calm market (noise only)": "Mercado tranquilo (solo ruido)"
@@ -209,6 +217,12 @@
     "play.c1": "Pedidos recibidos y producción", "play.c2": "Su inventario", "play.c3": "Servicio", "play.endh": "Su resultado",
     "play.c4": "Demanda del mercado (ahora revelada), su producción y la de la regla",
     "play.again": "Jugar otra vez (otro futuro de demanda)", "play.other": "Elegir otro escenario", "play.open": "Abrir este escenario en el simulador",
+    "imp.h": "Su propia demanda", "imp.choose": "Importar un CSV", "imp.sample": "Probar el ejemplo", "imp.dl": "Descargar el archivo de ejemplo",
+    "imp.note": "Demanda semanal o diaria, con o sin fechas, encabezados en inglés o en español. El modelo la reproduce en lugar de un patrón. El archivo queda en su navegador.",
+    "cmp.report": "Informe de decisión", "title.report": "PharmaSim — Informe de decisión",
+    "meta.report": "Un informe imprimible de un escenario de PharmaSim: sus resultados frente a la línea base, el rango en muchos futuros de demanda, los gráficos, lo que más importa y cada dato cambiado.",
+    "r.sub": "INFORME DE DECISIÓN", "r.print": "Imprimir o guardar como PDF", "r.eyebrow": "Informe de decisión de PharmaSim", "r.h.results": "Resultados", "r.h.futures": "En 100 futuros de demanda",
+    "r.h.charts": "Semana a semana", "r.h.sens": "Lo que más mueve la utilidad", "r.sens.note": "Cada dato movido un 20% hacia abajo y un 20% hacia arriba, de a uno, con todo lo demás como en este escenario.", "r.h.inputs": "El escenario",
     "h.model": "El modelo", "model.note": "Las cajas son stocks, las válvulas son flujos y los círculos son lo que ven los planificadores. Los números son de la semana indicada, que sigue a su puntero en los gráficos.",
     "eq.sum": "Todas las ecuaciones, con su valor en esa semana",
     "why.sum": "Cómo leerlo: qué significan los resultados",
@@ -218,8 +232,8 @@
       "<p><b>La utilidad</b> es la visión de la planta: ingresos menos materiales, la dotación (pagada esté ocupada o no), contratación, horas extra, almacenaje, destrucción, aceleración y una multa por cada unidad no entregada. Las cifras son ilustrativas, elegidas para un medicamento de marca de precio medio.</p>" +
       "<p><b>La línea base</b> es una corrida guardada para comparar. Usa la misma demanda aleatoria que la corrida actual, así que cada diferencia se debe a lo que usted cambió, no a la suerte. <b>Otro futuro de demanda</b> sortea otro futuro aleatorio para ambas.</p>",
     "lim.sum": "Lo que el modelo deja fuera",
-    "lim.body": "<ul><li>Una familia de productos, una planta y a lo más un distribuidor. No se modelan los proveedores del principio activo, varios mercados ni la asignación entre ellos.</li>" +
-      "<li>La producción es continua: las campañas, los tamaños de lote y los cambios de formato se promedian.</li>" +
+    "lim.body": "<ul><li>Una familia de productos, una planta, a lo más un distribuidor y un proveedor de API. No se modelan varios mercados, otros productos que compitan por la misma línea ni la asignación entre mercados.</li>" +
+      "<li>Las campañas se promedian: se modelan su capacidad perdida, su demora y su inventario de ciclo, pero no cada lote ni cuándo se fabrica.</li>" +
       "<li>El inventario del distribuidor no se lleva por antigüedad; la vida útil se sigue solo en la planta.</li>" +
       "<li>No se despide a nadie: la dotación se reduce solo por las salidas.</li>" +
       "<li>Los costos y precios son ilustrativos, no una cotización.</li></ul>",
@@ -234,14 +248,15 @@
       "<li><b>Agrega el resto de la cadena</b>Un distribuidor que pide a la planta y un proveedor de API lejano, aguas arriba, para ver dónde empieza la amplificación, qué cambia al compartir los datos de venta y dónde es más barato el colchón.</li>" +
       "<li><b>Opera una planta real</b>Una línea compartida en campañas con cambios de formato, un laboratorio de QA que puede volverse el cuello de botella en un alza, y pacientes críticos o no, con una regla para decidir quién queda sin medicamento.</li>" +
       "<li><b>Pondera las palancas</b>Horas extra, QA acelerado y la política de planificación (cobertura, pronóstico, velocidad de corrección y peso de la línea de suministro), medidas en utilidad, tasa de cumplimiento, efecto látigo y pérdidas frente a una línea base guardada.</li>" +
-      "<li><b>Enseña</b>Un tutorial en tres niveles, un diagrama de stocks y flujos en vivo y todas las ecuaciones con su valor en cualquier semana.</li>",
+      "<li><b>Apoya la decisión</b>Un laboratorio de decisiones: escenarios lado a lado, 100 futuros de demanda con el rango de resultados, un tornado de lo que más importa y un optimizador que busca la política de planificación. Un informe de decisión imprimible, y sus propios datos de demanda en lugar de un patrón.</li>" +
+      "<li><b>Enseña</b>Un tutorial en tres niveles, un modo de juego en que usted es el planificador, un diagrama de stocks y flujos en vivo y todas las ecuaciones con su valor en cualquier semana.</li>",
     "a.how.h": "Cómo está construido",
     "a.how.p": "El modelo es un conjunto de stocks y flujos integrado semana a semana en pasos de tiempo pequeños, en JavaScript simple que corre por completo en su navegador. Las pruebas automáticas verifican que parte en equilibrio exacto, que cada unidad queda contabilizada, que un paso de tiempo menor da las mismas respuestas, que el pronóstico coincide con su solución exacta y que cada palanca produce el compromiso que afirma el tutorial. También se verifica contra el modelo cada afirmación que hacen las preguntas del tutorial.",
     "a.author.h": "Autor",
     "a.author.p": "PharmaSim fue diseñado y construido por <b>Daniel Alberto Sepulveda Estay, PhD</b>, fundador de <a href=\"https://kathuman.github.io/estay-dynamics/\" target=\"_blank\" rel=\"noopener\">Estay Dynamics</a>. Trabaja en dinámica de sistemas, simulación y optimización de redes para cadenas de suministro y operaciones, incluida la manufactura farmacéutica. Es doctor de la Universidad Técnica de Dinamarca (DTU) y magíster del Instituto Tecnológico de Massachusetts (MIT), y es miembro del consejo de la System Dynamics Society.",
     "a.author.links": "<a href=\"https://kathuman.github.io/estay-dynamics/about.html\" target=\"_blank\" rel=\"noopener\">Más sobre Daniel →</a> · <a href=\"https://kathuman.github.io/estay-dynamics/contact.html\" target=\"_blank\" rel=\"noopener\">Contáctenos</a>",
-    "a.cite": "<b>Para citar:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (versión <span id=\"cite-ver\">3.2.0</span>) [Software]. https://kathuman.github.io/pharma-sim/",
-    "a.foot": "PharmaSim v3.2.0 · <a href=\"index.html\">Abrir el simulador</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>"
+    "a.cite": "<b>Para citar:</b> Sepulveda Estay, D. A. (2026). <em>PharmaSim: a pharmaceutical supply chain simulator</em> (versión <span id=\"cite-ver\">3.3.0</span>) [Software]. https://kathuman.github.io/pharma-sim/",
+    "a.foot": "PharmaSim v3.3.0 · <a href=\"index.html\">Abrir el simulador</a> · Disponible para consultorías — <a href=\"https://github.com/kathuman\" target=\"_blank\" rel=\"noopener\">contáctenos</a>"
   };
 
   // ---- mensajes de validación del modelo
@@ -267,7 +282,17 @@
     ["^QA time plus the target cover and half a campaign \\(([\\d.]+) weeks\\) is longer than a pack can be sold \\(([\\d.]+) weeks\\): stock will keep expiring\\.$", "El tiempo de QA más la cobertura meta y media campaña ($1 semanas) supera el tiempo en que se puede vender una unidad ($2 semanas): el inventario seguirá venciendo."],
     ["^QA time plus the target cover \\(([\\d.]+) weeks\\) is longer than a pack can be sold \\(([\\d.]+) weeks\\): stock will keep expiring\\.$", "El tiempo de QA más la cobertura meta ($1 semanas) supera el tiempo en que se puede vender una unidad ($2 semanas): el inventario seguirá venciendo."],
     ["^The API outage runs past the end of the horizon\\.$", "La interrupción de API se extiende más allá del horizonte."],
-    ["^The plant outage runs past the end of the horizon\\.$", "La detención de planta se extiende más allá del horizonte."]
+    ["^The plant outage runs past the end of the horizon\\.$", "La detención de planta se extiende más allá del horizonte."],
+    ["^The file has no data rows\\.$", "El archivo no tiene filas de datos."],
+    ["^No column called demand, units or quantity: used \"(.*)\"\\.$", "No hay una columna llamada demanda, unidades o cantidad: se usó \"$1\"."],
+    ["^No numeric demand column found\\.$", "No se encontró una columna numérica de demanda."],
+    ["^1 row without a usable number skipped\\.$", "Se omitió 1 fila sin un número utilizable."],
+    ["^(\\d+) rows without a usable number skipped\\.$", "Se omitieron $1 filas sin un número utilizable."],
+    ["^The last, incomplete week was left out\\.$", "Se dejó fuera la última semana, incompleta."],
+    ["^Daily data added up into (\\d+) weeks\\.$", "Los datos diarios se sumaron en $1 semanas."],
+    ["^At least 8 weeks of demand are needed \\(found (\\d+)\\)\\.$", "Se necesitan al menos 8 semanas de demanda (se encontraron $1)."],
+    ["^Only the first 520 weeks are used\\.$", "Solo se usan las primeras 520 semanas."],
+    ["^The first four weeks have no demand, so there is no starting level to work from\\.$", "Las primeras cuatro semanas no tienen demanda, así que no hay un nivel inicial del cual partir."]
   ];
 
   root.PS_ES = { T: T, H: H, P: P };

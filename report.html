@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="title.report">PharmaSim — Decision report</title>
+  <meta data-i18n-attr="content=meta.report" name="description" content="A printable report of a PharmaSim scenario: its results against the baseline, the range over many demand futures, the charts, what matters most and every input changed." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* the report is a document to print: always light, whatever the app's theme */
+    :root{
+      --bg:#ffffff; --panel:#f4f7fa; --panel-2:#ffffff; --line:#c9d3dd; --line-soft:#e2e8ee;
+      --ink:#14212b; --ink-dim:#34495a; --ink-faint:#5d7180; --accent:#1d6fb8; --accent-ink:#ffffff; --tele:#0f6e53;
+      --good:#0f7a4f; --warn:#9a6700; --bad:#c62f2e;
+      --s-demand:#253746; --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s-base:#8a99a8;
+      color-scheme:light;
+    }
+    body{background:#ffffff; color:var(--ink);}
+    .topbar{background:#f4f7fa;}
+    .report{max-width:960px; margin:0 auto; padding:26px 24px 40px;}
+    .report h1{font-family:var(--head); font-size:34px; letter-spacing:.02em; margin:4px 0 2px;}
+    .report .eyebrow{font-family:var(--mono); font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent);}
+    .report .meta{font-family:var(--mono); font-size:11.5px; color:var(--ink-faint); margin:0 0 16px;}
+    .report h2{font-family:var(--head); font-size:16px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); margin:26px 0 8px; padding-bottom:4px; border-bottom:2px solid var(--line);}
+    .report p, .report li{line-height:1.6; color:var(--ink-dim); font-size:14px;}
+    .report .headline{font-size:16px; color:var(--ink-dim);}
+    .report .headline b{color:var(--ink);}
+    .report .dtable{min-width:0;}
+    .report .dtable td.better{color:var(--good); font-weight:600;} .report .dtable td.worse{color:var(--bad);}
+    .report .chart-title{margin-top:14px;}
+    .report .chart-table-btn{display:none;}
+    .report .small{font-size:12.5px; color:var(--ink-faint);}
+    .report .two{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+    @media (max-width:760px){ .report .two{grid-template-columns:1fr;} .report h1{font-size:28px;} }
+    @media print{
+      .topbar, .noprint{display:none !important;}
+      .report{padding:0; max-width:none;}
+      .report h2, .report .chart-title{break-after:avoid;} .chart, table{break-inside:avoid;}
+      @page{margin:16mm;}
+    }
+  </style>
+</head>
+<body>
+<header class="topbar noprint">
+  <div class="brand">
+    <a class="mark" href="index.html">PHARMA<span>SIM</span></a>
+    <div class="sub"><span class="rest" data-i18n="r.sub">DECISION REPORT</span></div>
+  </div>
+  <div class="header-actions">
+    <button class="back-link" type="button" id="langBtn" lang="es">Español</button>
+    <button class="back-link" type="button" id="r-print" data-i18n="r.print">Print or save as PDF</button>
+    <a class="back-link" href="index.html" id="r-back" data-i18n="nav.sim">← Simulator</a>
+  </div>
+</header>
+<main class="report" id="report">
+  <div class="eyebrow" data-i18n="r.eyebrow">PharmaSim decision report</div>
+  <h1 id="r-title"></h1>
+  <p class="meta" id="r-meta"></p>
+  <p class="headline" id="r-headline"></p>
+
+  <h2 data-i18n="r.h.results">Results</h2>
+  <div class="table-scroll"><table class="dtable" id="r-results"></table></div>
+
+  <h2 data-i18n="r.h.futures">Across 100 demand futures</h2>
+  <p id="r-futures"></p>
+  <div class="table-scroll"><table class="dtable" id="r-fut-table"></table></div>
+
+  <h2 data-i18n="r.h.charts">Week by week</h2>
+  <p class="chart-title" data-i18n="c.prod">Demand and production</p><div id="r-ch1"></div>
+  <div class="two">
+    <div><p class="chart-title" data-i18n="c.stock">Stock</p><div id="r-ch2"></div></div>
+    <div><p class="chart-title" data-i18n="c.service">Service</p><div id="r-ch3"></div></div>
+  </div>
+
+  <h2 data-i18n="r.h.sens">What moves profit most</h2>
+  <p class="small" data-i18n="r.sens.note">Each input moved 20% down and 20% up, one at a time, with everything else as in this scenario.</p>
+  <div class="table-scroll"><table class="dtable" id="r-sens"></table></div>
+
+  <h2 data-i18n="r.h.inputs">The scenario</h2>
+  <p id="r-inputs-note"></p>
+  <div class="table-scroll"><table class="dtable" id="r-inputs"></table></div>
+
+  <h2 data-i18n="lim.sum">What the model leaves out</h2>
+  <div data-i18n="lim.body">
+    <ul>
+      <li>One product family, one plant, at most one distributor and one API supplier. Several markets, other products competing for the same line, and allocation between markets are not modelled.</li>
+      <li>Campaigns are averaged: their lost capacity, delay and cycle stock are modelled, but not individual batches and when each is made.</li>
+      <li>The distributor's stock is not aged; shelf life is tracked at the plant only.</li>
+      <li>Nobody is laid off: the workforce shrinks only as people leave.</li>
+      <li>Costs and prices are illustrative, not a quotation.</li>
+    </ul>
+  </div>
+  <p class="small" id="r-foot"></p>
+</main>
+<script src="i18n-es.js"></script>
+<script src="i18n.js"></script>
+<script src="src/model.js"></script>
+<script src="src/specs.js"></script>
+<script src="src/charts.js"></script>
+<script src="src/analysis.js"></script>
+<script src="report.js"></script>
+</body>
+</html>

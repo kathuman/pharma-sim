@@ -2,7 +2,7 @@
 // the planning rule on the same demand. Best results are remembered in this browser for convenience only.
 (function () {
   "use strict";
-  var APP_VERSION = "3.2.0";
+  var APP_VERSION = "3.3.0";
   var M = window.PSModel, G = window.PSGame, CH = window.PSCharts, I18 = window.PSi18n, T = I18.T;
   var $ = function (id) { return document.getElementById(id); };
   var KEY = "ps-play-best-v1", game = null, chosen = null, surprise = false, seed = 1;
