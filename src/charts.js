@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var NS = "http://www.w3.org/2000/svg";
-  function T(t, v) { var I = window.PSi18n; return I ? I.T(t, v) : String(t).replace(/\{(\w+)\}/g, function (m, k) { return v && v[k] != null ? v[k] : m; }); }
+  function T(t, v) { var I = window.SPi18n; return I ? I.T(t, v) : String(t).replace(/\{(\w+)\}/g, function (m, k) { return v && v[k] != null ? v[k] : m; }); }
   function el(tag, attrs, parent) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
   function nice(lo, hi, n) {
     if (hi - lo < 1e-9) { hi = lo + 1; }

@@ -2,13 +2,13 @@
 // the planning rule on the same demand. Best results are remembered in this browser for convenience only.
 (function () {
   "use strict";
-  var APP_VERSION = "4.0.0";
-  var M = window.SPModel, G = window.SPGame, CH = window.SPCharts, I18 = window.PSi18n, T = I18.T;
+  var APP_VERSION = "4.1.0";
+  var M = window.SPModel, G = window.SPGame, CH = window.SPCharts, I18 = window.SPi18n, T = I18.T, fx = I18.fx;
   var $ = function (id) { return document.getElementById(id); };
   var KEY = "sp-play-best-v1", game = null, chosen = null, surprise = false, seed = 1;
-  var num = function (v, d) { return v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
-  var money = function (v, sign) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : ""; return s + (a >= 1e6 ? "$" + (a / 1e6).toFixed(2) + "M" : "$" + (a / 1e3).toFixed(0) + "k"); };
-  var pct = function (v) { return v == null ? "—" : (v * 100).toFixed(2) + "%"; };
+  var num = function (v, d) { return v == null || !isFinite(v) ? "—" : Number(v).toLocaleString(I18.locale, { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
+  var money = function (v, sign) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : ""; return s + (a >= 1e6 ? "$" + fx((a / 1e6), 2) + "M" : "$" + fx((a / 1e3), 0) + "k"); };
+  var pct = function (v) { return v == null ? "—" : fx((v * 100), 2) + "%"; };
   var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
   $("ver").textContent = "v" + APP_VERSION; $("ver-foot").textContent = "v" + APP_VERSION;
 
@@ -82,7 +82,7 @@
     CH.line($("g-ch2"), Object.assign({}, common, { rows: full, emptyMax: v0.stock * 1.5, yFmt: function (v) { return num(v); },
       series: [{ key: "stock", label: T("Your stock"), color: C.s1, area: true }] }));
     var lows = wk.filter(function (r) { return r.fill != null; }).map(function (r) { return r.fill; });
-    CH.line($("g-ch3"), Object.assign({}, common, { rows: wk, yMax: 100, yMin: lows.length ? Math.min(90, Math.floor(Math.min.apply(null, lows) / 5) * 5) : 90, yFmt: function (v) { return v.toFixed(0) + "%"; }, tipFmt: function (v) { return v.toFixed(1) + "%"; },
+    CH.line($("g-ch3"), Object.assign({}, common, { rows: wk, yMax: 100, yMin: lows.length ? Math.min(90, Math.floor(Math.min.apply(null, lows) / 5) * 5) : 90, yFmt: function (v) { return fx(v, 0) + "%"; }, tipFmt: function (v) { return fx(v, 1) + "%"; },
       series: [{ key: "fill", label: T("Demand served"), color: C.s1, width: 2 }] }));
   }
 
@@ -98,7 +98,7 @@
     $("game").hidden = true; $("end").hidden = false;
     $("g-verdict").innerHTML = "<b>" + VERDICT[v] + "</b> " + (surprise ? T("The scenario was: {s}.", { s: T(M.PRESETS[chosen].label) }) : "") + " " + T("Profit {d} against the rule.", { d: money(y.profit - r.profit, true) });
     var rows = [[T("Profit"), money(y.profit), money(r.profit), y.profit >= r.profit], [T("Fill rate"), pct(y.fillRate), pct(r.fillRate), y.fillRate >= r.fillRate],
-      [T("Weeks short"), num(y.shortWeeks), num(r.shortWeeks), y.shortWeeks <= r.shortWeeks], [T("Bullwhip"), y.bullwhip == null ? "—" : y.bullwhip.toFixed(2) + "×", r.bullwhip == null ? "—" : r.bullwhip.toFixed(2) + "×", (y.bullwhip || 0) <= (r.bullwhip || 0)],
+      [T("Weeks short"), num(y.shortWeeks), num(r.shortWeeks), y.shortWeeks <= r.shortWeeks], [T("Bullwhip"), y.bullwhip == null ? "—" : fx(y.bullwhip, 2) + "×", r.bullwhip == null ? "—" : fx(r.bullwhip, 2) + "×", (y.bullwhip || 0) <= (r.bullwhip || 0)],
       [T("Waste"), num(y.wasteUnits), num(r.wasteUnits), y.wasteUnits <= r.wasteUnits], [T("Peak workforce"), num(y.peakWorkforce, 1), num(r.peakWorkforce, 1), y.peakWorkforce <= r.peakWorkforce]];
     $("g-table").innerHTML = "<thead><tr><th></th><th>" + T("You") + "</th><th>" + T("The planning rule") + "</th></tr></thead><tbody>" + rows.map(function (x) { return "<tr><th>" + x[0] + "</th><td" + (x[3] ? " class='best'" : "") + ">" + x[1] + "</td><td" + (!x[3] ? " class='best'" : "") + ">" + x[2] + "</td></tr>"; }).join("") + "</tbody>";
     var p = game.params, per = Math.round(1 / p.dt), out = [];

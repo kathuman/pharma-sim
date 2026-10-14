@@ -1,8 +1,8 @@
 // Supply Pulse tutorial checks — run with: node tests/tutorial.test.js
 // Every question's claim holds in the model for the scenario its step sets up, every step points at something that
-// exists, quotes only known numbers and has a Spanish version with the same shape.
+// exists, quotes only known numbers and has a Spanish and a Danish version with the same shape.
 const fs = require("fs"), path = require("path");
-const M = require("../src/model.js"), A = require("../src/analysis.js"), S = require("../src/specs.js"), C = require("../tour-content.js"), ES = require("../tour-content-es.js");
+const M = require("../src/model.js"), A = require("../src/analysis.js"), S = require("../src/specs.js"), C = require("../tour-content.js"), ES = require("../tour-content-es.js"), DA = require("../tour-content-da.js");
 let pass = 0, fail = 0;
 function check(name, cond, detail) { if (cond) pass++; else fail++; if (!cond || process.env.VERBOSE) console.log((cond ? "ok   " : "FAIL ") + name + (detail !== undefined ? "  → " + detail : "")); }
 const run = (preset, v) => M.run(Object.assign({}, M.PRESETS[preset].values, v || {})).kpi;
@@ -73,20 +73,22 @@ C.LEVELS.forEach((l) => {
   });
 });
 
-// ---- Spanish
+// ---- the translations (Spanish and Danish)
 const tags = (x) => [...String(x).matchAll(/<\/?([a-z]+)/g)].map((m) => m[1]).sort().join(",");
 const toks = (x) => [...String(x).matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).sort().join(",");
-C.LEVELS.forEach((l) => {
-  const lt = ES.levels[l.id];
-  check(l.id + ": Spanish title and blurb", lt && lt.title && lt.blurb);
-  l.steps.forEach((s) => {
-    const e = ES.steps[s.id];
-    check(s.id + ": Spanish title and text with the same numbers and markup", e && e.title && e.body && toks(e.body) === toks(s.body) && tags(e.body) === tags(s.body), e ? toks(e.body) + " / " + tags(e.body) : "missing");
-    if (s.quiz) check(s.id + ": Spanish question with the same number of options", e && e.quiz && e.quiz.q && e.quiz.options.length === s.quiz.options.length && e.quiz.explain && toks(e.quiz.explain) === toks(s.quiz.explain));
-  });
-});
 const allIds = new Set(); C.LEVELS.forEach((l) => l.steps.forEach((s) => allIds.add(s.id)));
-check("no Spanish step for a step that does not exist", Object.keys(ES.steps).every((k) => allIds.has(k)), Object.keys(ES.steps).filter((k) => !allIds.has(k)).join(" "));
+for (const [name, TR] of [["Spanish", ES], ["Danish", DA]]) {
+  C.LEVELS.forEach((l) => {
+    const lt = TR.levels[l.id];
+    check(l.id + ": " + name + " title and blurb", lt && lt.title && lt.blurb);
+    l.steps.forEach((s) => {
+      const e = TR.steps[s.id];
+      check(s.id + ": " + name + " title and text with the same numbers and markup", e && e.title && e.body && toks(e.body) === toks(s.body) && tags(e.body) === tags(s.body), e ? toks(e.body) + " / " + tags(e.body) : "missing");
+      if (s.quiz) check(s.id + ": " + name + " question with the same number of options", e && e.quiz && e.quiz.q && e.quiz.options.length === s.quiz.options.length && e.quiz.explain && toks(e.quiz.explain) === toks(s.quiz.explain) && tags(e.quiz.explain) === tags(s.quiz.explain));
+    });
+  });
+  check("no " + name + " step for a step that does not exist", Object.keys(TR.steps).every((k) => allIds.has(k)), Object.keys(TR.steps).filter((k) => !allIds.has(k)).join(" "));
+}
 
 console.log(pass + "/" + (pass + fail) + " checks passed");
 process.exit(fail ? 1 : 0);

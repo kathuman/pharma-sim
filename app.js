@@ -3,20 +3,20 @@
 // demand. window.SPApp is the interface the tutorial uses.
 (function () {
   "use strict";
-  var APP_VERSION = "4.0.0";
-  var M = window.SPModel, S = window.SPSpecs, EQ = window.SPEquations, I18 = window.PSi18n, T = I18.T, tw = I18.tw;
+  var APP_VERSION = "4.1.0";
+  var M = window.SPModel, S = window.SPSpecs, EQ = window.SPEquations, I18 = window.SPi18n, T = I18.T, tw = I18.tw, fx = I18.fx;
   var $ = function (id) { return document.getElementById(id); }, listeners = [];
   var state = { p: M.merge(M.PRESETS.step.values), preset: "step", base: null, baseParams: null, res: null, hoverT: null, diagram: null, diagramMulti: null, charts: {} };
 
   // ---- formatting
-  var num = function (v, d) { return (v == null || !isFinite(v)) ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
+  var num = function (v, d) { return (v == null || !isFinite(v)) ? "—" : Number(v).toLocaleString(I18.locale, { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
   function money(v, sign) {
     if (v == null || !isFinite(v)) return "—";
     var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : "";
-    return s + (a >= 1e6 ? "$" + (a / 1e6).toFixed(2) + "M" : a >= 1e3 ? "$" + (a / 1e3).toFixed(0) + "k" : "$" + a.toFixed(0));
+    return s + (a >= 1e6 ? "$" + fx((a / 1e6), 2) + "M" : a >= 1e3 ? "$" + fx((a / 1e3), 0) + "k" : "$" + fx(a, 0));
   }
-  var pct = function (v, d) { return (v * 100).toFixed(d == null ? 1 : d) + "%"; };
-  function signed(v, d, suffix) { if (v == null || !isFinite(v)) return "—"; var r = v.toFixed(d); if (+r === 0) return "±0" + (suffix || ""); return (v > 0 ? "+" : "−") + Math.abs(v).toFixed(d) + (suffix || ""); }
+  var pct = function (v, d) { return fx((v * 100), d == null ? 1 : d) + "%"; };
+  function signed(v, d, suffix) { if (v == null || !isFinite(v)) return "—"; var r = v.toFixed(d); if (+r === 0) return "±0" + (suffix || ""); return (v > 0 ? "+" : "−") + fx(Math.abs(v), d) + (suffix || ""); }
   function unit(u) { return u ? T(u) : ""; }
   function showVal(c, v) {
     if (c.type === "toggle") return v ? T("on") : T("off");
@@ -87,10 +87,10 @@
     var k = state.res.kpi, p = state.res.params, b = state.base && state.base.kpi;
     var parts = T("Over {w} weeks the plant served <b>{fill}</b> of demand", { w: p.weeks, fill: pct(k.fillRate, 2) }) +
       (k.lost > 0.5 ? T(" ({lost} cases short, in {n} weeks)", { lost: num(k.lost), n: k.shortWeeks }) : "") + ". ";
-    parts += k.bullwhip == null ? T("Demand stayed level, so there was nothing to amplify") : T("Production swung <b>{bw}×</b> as much as demand", { bw: k.bullwhip.toFixed(2) }) + (state.res.multi && k.orderBullwhip != null ? T(", and the distributor's orders {obw}×", { obw: k.orderBullwhip.toFixed(2) }) : "");
+    parts += k.bullwhip == null ? T("Demand stayed level, so there was nothing to amplify") : T("Production swung <b>{bw}×</b> as much as demand", { bw: fx(k.bullwhip, 2) }) + (state.res.multi && k.orderBullwhip != null ? T(", and the distributor's orders {obw}×", { obw: fx(k.orderBullwhip, 2) }) : "");
     parts += T("; <b>{waste}</b> cases were wasted and profit was <b>{profit}</b>.", { waste: num(k.wasteUnits), profit: money(k.profit) });
     if (b) parts += "<span class='cmp'>" + T("Against the baseline: profit {dp}, fill rate {df} points, waste {dw} cases, bullwhip {db}.", {
-      dp: money(k.profit - b.profit, true), df: signed((k.fillRate - b.fillRate) * 100, 2), dw: signed(k.wasteUnits - b.wasteUnits, 0).replace(/(\d)(?=(\d{3})+$)/g, "$1,"),
+      dp: money(k.profit - b.profit, true), df: signed((k.fillRate - b.fillRate) * 100, 2), dw: signed(k.wasteUnits - b.wasteUnits, 0).replace(/(\d)(?=(\d{3})+$)/g, "$1" + (I18.locale === "da-DK" ? "." : ",")),
       db: k.bullwhip != null && b.bullwhip != null ? signed(k.bullwhip - b.bullwhip, 2) : "—" }) + "</span>";
     $("headline").innerHTML = parts;
   }
@@ -111,10 +111,10 @@
       tile(T("Profit"), money(k.profit), T("revenue minus every cost, {w} weeks", { w: p.weeks }), delta(k.profit, B(function (x) { return x.profit; }), 1, function (d) { return money(d, true); })),
       tile(T("Fill rate"), pct(k.fillRate, 2), T("{n} cases not supplied", { n: num(k.lost) }) + (k.criticalFill != null && p.criticalShare < 100 ? " · " + T("priority customers {c}", { c: pct(k.criticalFill, 2) }) : ""), delta(k.fillRate * 100, B(function (x) { return x.fillRate * 100; }), 1, function (d) { return signed(d, 2, " " + T("pts")); }), k.fillRate < 0.98 ? "critical" : k.fillRate < 0.995 ? "warning" : null),
       tile(T("Weeks short"), num(k.shortWeeks), T("weeks with under 99% of demand served"), delta(k.shortWeeks, B(function (x) { return x.shortWeeks; }), -1, function (d) { return signed(d, 0); }), k.shortWeeks > 8 ? "warning" : null),
-      tile(T("Bullwhip"), k.bullwhip == null ? "—" : k.bullwhip.toFixed(2) + "×", k.bullwhip == null ? T("demand did not vary") : T("production varies {x}× as much as demand", { x: k.bullwhip.toFixed(2) }), delta(k.bullwhip, B(function (x) { return x.bullwhip; }), -1, function (d) { return signed(d, 2); }), k.bullwhip > 1.5 ? "warning" : null),
-      r.multi ? tile(T("Distributor's orders"), k.orderBullwhip == null ? "—" : k.orderBullwhip.toFixed(2) + "×", T("its orders vary this much more than demand"), delta(k.orderBullwhip, B(function (x) { return x.orderBullwhip; }), -1, function (d) { return signed(d, 2); }), k.orderBullwhip > 1.5 ? "warning" : null)
+      tile(T("Bullwhip"), k.bullwhip == null ? "—" : fx(k.bullwhip, 2) + "×", k.bullwhip == null ? T("demand did not vary") : T("production varies {x}× as much as demand", { x: fx(k.bullwhip, 2) }), delta(k.bullwhip, B(function (x) { return x.bullwhip; }), -1, function (d) { return signed(d, 2); }), k.bullwhip > 1.5 ? "warning" : null),
+      r.multi ? tile(T("Distributor's orders"), k.orderBullwhip == null ? "—" : fx(k.orderBullwhip, 2) + "×", T("its orders vary this much more than demand"), delta(k.orderBullwhip, B(function (x) { return x.orderBullwhip; }), -1, function (d) { return signed(d, 2); }), k.orderBullwhip > 1.5 ? "warning" : null)
         : tile(T("Peak production"), num(k.peakProduction), T("cases/wk · {x} of the starting output", { x: pct(k.peakProduction / (p.demand / (1 - p.rejectRate / 100)), 0) }) + (k.labWeeks > 0 ? " · " + T("the QA lab at its limit for {w} weeks", { w: num(k.labWeeks, 0) }) : ""), delta(k.peakProduction, B(function (x) { return x.peakProduction; }), 0, function (d) { return signed(d, 0); }), k.labWeeks > 0 ? "warning" : null),
-      r.ing ? tile(T("Ingredient supplier orders"), k.ingBullwhip == null ? "—" : k.ingBullwhip.toFixed(2) + "×", T("vary this much more than demand") + (k.ingShortUnits > 0.5 ? " · " + T("{n} cases not made for lack of the ingredient", { n: num(k.ingShortUnits) }) : ""), delta(k.ingBullwhip, B(function (x) { return x.ingBullwhip; }), -1, function (d) { return signed(d, 2); }), k.ingShortUnits > 0.5 ? "critical" : k.ingBullwhip > 3 ? "warning" : null) : null,
+      r.ing ? tile(T("Ingredient supplier orders"), k.ingBullwhip == null ? "—" : fx(k.ingBullwhip, 2) + "×", T("vary this much more than demand") + (k.ingShortUnits > 0.5 ? " · " + T("{n} cases not made for lack of the ingredient", { n: num(k.ingShortUnits) }) : ""), delta(k.ingBullwhip, B(function (x) { return x.ingBullwhip; }), -1, function (d) { return signed(d, 2); }), k.ingShortUnits > 0.5 ? "critical" : k.ingBullwhip > 3 ? "warning" : null) : null,
       tile(T("Waste"), num(k.wasteUnits) + " " + T("cases"), T("{e} written off · {r} rejected · {v}", { e: num(k.expiredUnits), r: num(k.rejectedUnits), v: money(k.wasteCost) }), delta(k.wasteUnits, B(function (x) { return x.wasteUnits; }), -1, function (d) { return signed(d, 0); }), waste > 0.04 ? "warning" : null),
       tile(T("Average stock"), num(k.avgInventory / avgDemand, 1) + " " + T("wk"), T("{n} cases on hand on average", { n: num(k.avgInventory) }), delta(k.avgInventory, B(function (x) { return x.avgInventory; }), 0, function (d) { return signed(d, 0); })),
       tile(T("Workforce"), num(k.peakWorkforce, 0) + " " + T("people"), T("at the peak · {h} hired", { h: num(k.hires) }), delta(k.peakWorkforce, B(function (x) { return x.peakWorkforce; }), -1, function (d) { return signed(d, 1); }))
@@ -199,7 +199,7 @@
     var sopts = { rows: wrows, series: [{ key: "fill", label: T("Demand served"), color: C.s1, width: 2 }]
         .concat(crit ? [{ key: "crit", label: T("Priority customers"), color: C.s3, width: 1.5 }, { key: "other", label: T("Other customers"), color: C.s2, width: 1.5 }] : [])
         .concat(same && bwk ? [{ key: "bFill", label: T("Baseline"), color: C.b, dash: "5 4" }] : []), bands: bd,
-      yFmt: function (v) { return v.toFixed(0) + "%"; }, tipFmt: function (v) { return v.toFixed(1) + "%"; }, yMax: 100, yMin: Math.min(90, Math.floor(Math.min.apply(null, lows) / 5) * 5), height: 200, xLabel: wkLabel, tipTitle: tipT, onHover: hover, ariaLabel: T("Chart") };
+      yFmt: function (v) { return fx(v, 0) + "%"; }, tipFmt: function (v) { return fx(v, 1) + "%"; }, yMax: 100, yMin: Math.min(90, Math.floor(Math.min.apply(null, lows) / 5) * 5), height: 200, xLabel: wkLabel, tipTitle: tipT, onHover: hover, ariaLabel: T("Chart") };
     if (state.charts["ch-service"]) state.charts["ch-service"].update(sopts); else state.charts["ch-service"] = window.SPCharts.line($("ch-service"), sopts);
   }
 
@@ -229,7 +229,7 @@
       var ix = span.getAttribute("data-eq").split("."), it = EQ.SECTIONS[+ix[0]].items[+ix[1]];
       var v = it.v ? it.v(r, res.params) : null;
       if (it.name === "Fill rate") { span.textContent = pct(k.fillRate, 2); return; }
-      if (it.name === "Bullwhip (production)") { span.textContent = k.bullwhip == null ? "—" : k.bullwhip.toFixed(2) + "×"; return; }
+      if (it.name === "Bullwhip (production)") { span.textContent = k.bullwhip == null ? "—" : fx(k.bullwhip, 2) + "×"; return; }
       span.textContent = v == null ? "" : (it.u.charAt(0) === "$" ? money(v) : num(v, Math.abs(v) < 100 ? 1 : 0)) + (it.u && it.u.charAt(0) !== "$" ? " " + T(it.u) : it.u === "$/wk" ? " " + T("/wk") : "");
     });
   }
@@ -268,7 +268,7 @@
     if (!h.ok) { msg.innerHTML = "<span class='bad'>" + h.errors.map(tw).join(" ") + "</span>"; return; }
     window.SPApp.set(window.SPData.toParams(h));
     msg.innerHTML = T("Read {n} weeks: a starting level of {l} a week, a trend of {t} a year and week-to-week variation of {v}. The model now replays them.", {
-      n: h.weeks.length, l: num(h.level), t: (h.trend >= 0 ? "+" : "−") + Math.abs(h.trend * 100).toFixed(1) + "%", v: (h.variation * 100).toFixed(1) + "%" }) + (h.notes.length ? " " + h.notes.map(tw).join(" ") : "");
+      n: h.weeks.length, l: num(h.level), t: (h.trend >= 0 ? "+" : "−") + fx(Math.abs(h.trend * 100), 1) + "%", v: fx((h.variation * 100), 1) + "%" }) + (h.notes.length ? " " + h.notes.map(tw).join(" ") : "");
   }
   $("imp-file").addEventListener("change", function () {
     var f = this.files && this.files[0]; if (!f) return;

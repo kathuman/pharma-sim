@@ -47,5 +47,10 @@ check("CSV: semicolons, quotes, a byte-order mark, blank lines", D.rows('﻿a;b\
   const r = M.run(D.toParams(s));
   check("…and the model runs it without errors", r.ok && r.rows.length === 104 / 0.25);
 }
+{
+  const da = "Dato;Efterspørgsel\n" + Array.from({ length: 10 }, (_, i) => new Date(Date.UTC(2026, 0, 5 + 7 * i)).toISOString().slice(0, 10) + ";" + (i < 5 ? "1.000" : "1.200")).join("\n");
+  const h = D.read(da);
+  check("Danish headers (Dato, Efterspørgsel) with semicolons and thousands points", h.ok && h.weeks.length === 10 && h.weeks[0] === 1000 && h.weeks[9] === 1200 && h.notes.length === 0, JSON.stringify(h.notes));
+}
 console.log(pass + "/" + (pass + fail) + " checks passed");
 process.exit(fail ? 1 : 0);

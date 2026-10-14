@@ -1,5 +1,5 @@
 // Supply Pulse — reading a demand history (window.SPData / module.exports). A CSV of weekly (or daily) demand, with or
-// without dates, headers in English or Spanish, commas or semicolons, decimal points or commas. Daily rows are added
+// without dates, headers in English, Spanish or Danish, commas or semicolons, decimal points or commas. Daily rows are added
 // up into weeks. The result drives the model: demand = the level of the first weeks × the history as a multiple of
 // that level. Messages are English and translated by pattern in the app. Pure: no DOM.
 (function (root, factory) {
@@ -7,8 +7,8 @@
   else root.SPData = factory();
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
-  var DEMAND = ["demand", "demanda", "units", "unidades", "qty", "quantity", "cantidad", "cases", "envases", "sales", "ventas", "orders", "pedidos", "consumption", "consumo", "value", "valor"];
-  var DATE = ["date", "fecha", "week", "semana", "period", "periodo", "día", "dia", "day", "mes", "month"];
+  var DEMAND = ["demand", "demanda", "units", "unidades", "qty", "quantity", "cantidad", "cases", "envases", "sales", "ventas", "orders", "pedidos", "consumption", "consumo", "value", "valor", "efterspørgsel", "efterspoergsel", "antal", "mængde", "enheder", "kolli", "salg", "ordrer", "forbrug", "værdi"];
+  var DATE = ["date", "fecha", "week", "semana", "period", "periodo", "día", "dia", "day", "mes", "month", "dato", "uge", "dag", "måned", "maaned"];
   function norm(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase().replace(/^"|"$/g, ""); }
 
   // split a CSV into rows, guessing the delimiter (comma, semicolon or tab) from the first line
@@ -24,11 +24,12 @@
     if (cell !== "" || row.length) { row.push(cell); out.push(row); }
     return { rows: out.filter(function (r) { return r.some(function (x) { return String(x).trim() !== ""; }); }), delimiter: d };
   }
-  // a number written as 1,234.5 or 1.234,5 or 1234,5
-  function number(s) {
+  // a number written as 1,234.5 or 1.234,5 or 1234,5; in a semicolon file (the European convention) 1.000 is a thousand
+  function number(s, euro) {
     var x = String(s == null ? "" : s).trim().replace(/\s/g, "");
     if (!x) return null;
     if (/^-?[\d.]+,\d+$/.test(x)) x = x.replace(/\./g, "").replace(",", ".");
+    else if (euro && /^-?\d{1,3}(\.\d{3})+$/.test(x)) x = x.replace(/\./g, "");
     else x = x.replace(/,/g, "");
     var v = Number(x);
     return isFinite(v) ? v : null;
@@ -43,7 +44,7 @@
 
   // read a demand history: { ok, weeks: [...], level, notes: [...], errors: [...] }
   function read(text) {
-    var r = rows(text).rows, notes = [], errors = [];
+    var parsed = rows(text), r = parsed.rows, euro = parsed.delimiter === ";", notes = [], errors = [];
     if (r.length < 2) return { ok: false, errors: ["The file has no data rows."] };
     var head = r[0].map(norm), hasHead = head.some(function (h) { return h && number(h) == null; });
     var body = hasHead ? r.slice(1) : r;
@@ -51,13 +52,13 @@
     var dc = hasHead ? find(DEMAND) : -1, tc = hasHead ? find(DATE) : -1;
     if (dc < 0) {
       // the last column that is numeric in most rows
-      for (var c = (body[0] || []).length - 1; c >= 0; c--) { var nums = body.filter(function (x) { return number(x[c]) != null; }).length; if (nums >= body.length * 0.8 && c !== tc) { dc = c; break; } }
+      for (var c = (body[0] || []).length - 1; c >= 0; c--) { var nums = body.filter(function (x) { return number(x[c], euro) != null; }).length; if (nums >= body.length * 0.8 && c !== tc) { dc = c; break; } }
       if (dc >= 0 && hasHead) notes.push("No column called demand, units or quantity: used \"" + r[0][dc] + "\".");
     }
     if (dc < 0) return { ok: false, errors: ["No numeric demand column found."] };
     if (tc < 0 && hasHead) { for (var k = 0; k < head.length; k++) if (k !== dc && body.length && day(body[0][k]) != null) { tc = k; break; } }
     var pts = [], skipped = 0;
-    body.forEach(function (x) { var v = number(x[dc]); if (v == null || v < 0) { skipped++; return; } pts.push({ v: v, d: tc >= 0 ? day(x[tc]) : null }); });
+    body.forEach(function (x) { var v = number(x[dc], euro); if (v == null || v < 0) { skipped++; return; } pts.push({ v: v, d: tc >= 0 ? day(x[tc]) : null }); });
     if (skipped) notes.push(skipped + " row" + (skipped === 1 ? "" : "s") + " without a usable number skipped.");
     var weeks;
     var dated = pts.filter(function (p) { return p.d != null; });

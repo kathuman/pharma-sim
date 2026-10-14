@@ -2,12 +2,12 @@
 // demand futures, the charts, what moves profit most and every input changed. Light, to print or save as PDF.
 (function () {
   "use strict";
-  var APP_VERSION = "4.0.0";
-  var M = window.SPModel, S = window.SPSpecs, A = window.SPAnalysis, CH = window.SPCharts, I18 = window.PSi18n, T = I18.T;
+  var APP_VERSION = "4.1.0";
+  var M = window.SPModel, S = window.SPSpecs, A = window.SPAnalysis, CH = window.SPCharts, I18 = window.SPi18n, T = I18.T, fx = I18.fx;
   var $ = function (id) { return document.getElementById(id); };
-  var num = function (v, d) { return v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
-  var money = function (v, sign) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : ""; return s + (a >= 1e6 ? "$" + (a / 1e6).toFixed(2) + "M" : a >= 1e3 ? "$" + (a / 1e3).toFixed(0) + "k" : "$" + a.toFixed(0)); };
-  var pct = function (v, d) { return v == null ? "—" : (v * 100).toFixed(d == null ? 2 : d) + "%"; };
+  var num = function (v, d) { return v == null || !isFinite(v) ? "—" : Number(v).toLocaleString(I18.locale, { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
+  var money = function (v, sign) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : ""; return s + (a >= 1e6 ? "$" + fx((a / 1e6), 2) + "M" : a >= 1e3 ? "$" + fx((a / 1e3), 0) + "k" : "$" + fx(a, 0)); };
+  var pct = function (v, d) { return v == null ? "—" : fx((v * 100), d == null ? 2 : d) + "%"; };
   var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
   function decode(key) { var m = new RegExp("[#&]" + key + "=([^&]+)").exec(location.hash); if (!m) return null; try { return JSON.parse(decodeURIComponent(escape(atob(m[1])))); } catch (e) { return null; } }
   var cur = decode("s") || { pr: "step", v: {} }, base = decode("b");
@@ -22,19 +22,19 @@
 
   // ---- title and summary
   $("r-title").textContent = T(M.PRESETS[preset].label);
-  $("r-meta").textContent = T("Generated on {d} with Supply Pulse v{v}, over {w} weeks", { d: new Date().toLocaleDateString(I18.lang === "es" ? "es-419" : "en-GB", { year: "numeric", month: "long", day: "numeric" }), v: APP_VERSION, w: p.weeks }) +
+  $("r-meta").textContent = T("Generated on {d} with Supply Pulse v{v}, over {w} weeks", { d: new Date().toLocaleDateString(I18.lang === "es" ? "es-419" : I18.lang === "da" ? "da-DK" : "en-GB", { year: "numeric", month: "long", day: "numeric" }), v: APP_VERSION, w: p.weeks }) +
     (b ? " · " + T("compared with the baseline {name}", { name: T(M.PRESETS[base.pr] ? M.PRESETS[base.pr].label : "Your scenario") }) : "");
   var h = T("Over {w} weeks the plant served <b>{fill}</b> of demand", { w: p.weeks, fill: pct(k.fillRate) }) + (k.lost > 0.5 ? T(" ({lost} cases short, in {n} weeks)", { lost: num(k.lost), n: k.shortWeeks }) : "") + ". ";
-  h += k.bullwhip == null ? T("Demand stayed level, so there was nothing to amplify") : T("Production swung <b>{bw}×</b> as much as demand", { bw: k.bullwhip.toFixed(2) });
+  h += k.bullwhip == null ? T("Demand stayed level, so there was nothing to amplify") : T("Production swung <b>{bw}×</b> as much as demand", { bw: fx(k.bullwhip, 2) });
   h += T("; <b>{waste}</b> cases were wasted and profit was <b>{profit}</b>.", { waste: num(k.wasteUnits), profit: money(k.profit) });
   $("r-headline").innerHTML = h;
 
   // ---- results against the baseline
   var ROWS = [[T("Profit"), "profit", 1, function (v) { return money(v); }, function (d) { return money(d, true); }],
-    [T("Fill rate"), "fillRate", 1, function (v) { return pct(v); }, function (d) { return (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(2) + " " + T("pts"); }],
-    [T("Priority customers served"), "criticalFill", 1, function (v) { return pct(v); }, function (d) { return (d >= 0 ? "+" : "−") + Math.abs(d * 100).toFixed(2) + " " + T("pts"); }],
+    [T("Fill rate"), "fillRate", 1, function (v) { return pct(v); }, function (d) { return (d >= 0 ? "+" : "−") + fx(Math.abs(d * 100), 2) + " " + T("pts"); }],
+    [T("Priority customers served"), "criticalFill", 1, function (v) { return pct(v); }, function (d) { return (d >= 0 ? "+" : "−") + fx(Math.abs(d * 100), 2) + " " + T("pts"); }],
     [T("Weeks short"), "shortWeeks", -1, function (v) { return num(v); }, function (d) { return (d >= 0 ? "+" : "−") + num(Math.abs(d)); }],
-    [T("Bullwhip"), "bullwhip", -1, function (v) { return v == null ? "—" : v.toFixed(2) + "×"; }, function (d) { return (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(2); }],
+    [T("Bullwhip"), "bullwhip", -1, function (v) { return v == null ? "—" : fx(v, 2) + "×"; }, function (d) { return (d >= 0 ? "+" : "−") + fx(Math.abs(d), 2); }],
     [T("Waste"), "wasteUnits", -1, function (v) { return num(v); }, function (d) { return (d >= 0 ? "+" : "−") + num(Math.abs(d)); }],
     [T("Average stock"), "avgInventory", -1, function (v) { return num(v); }, function (d) { return (d >= 0 ? "+" : "−") + num(Math.abs(d)); }],
     [T("Peak workforce"), "peakWorkforce", -1, function (v) { return num(v, 1); }, function (d) { return (d >= 0 ? "+" : "−") + num(Math.abs(d), 1); }]];
@@ -68,7 +68,7 @@
   CH.line($("r-ch1"), Object.assign({}, common, { rows: rows, height: 230, yMin: null, yFmt: function (v) { return num(v); }, series: [{ key: "demand", label: T("Market demand"), color: C.d, width: 1.5 }, { key: "production", label: T("Production"), color: C.s1, width: 2.5 }].concat(same ? [{ key: "bProduction", label: T("Baseline production"), color: C.b, dash: "5 4" }] : []) }));
   CH.line($("r-ch2"), Object.assign({}, common, { rows: rows, height: 190, yMin: 0, yFmt: function (v) { return num(v); }, series: [{ key: "inventory", label: T("Plant stock"), color: C.s1, area: true }, { key: "target", label: T("Target stock"), color: C.d, width: 1.2, dash: "4 4" }].concat(same ? [{ key: "bInventory", label: T("Baseline plant stock"), color: C.b, dash: "5 4" }] : []) }));
   var lows = wk.map(function (x) { return Math.min(x.fill, x.bFill == null ? 100 : x.bFill); });
-  CH.line($("r-ch3"), Object.assign({}, common, { rows: wk, height: 190, yMax: 100, yMin: Math.min(90, Math.floor(Math.min.apply(null, lows) / 5) * 5), yFmt: function (v) { return v.toFixed(0) + "%"; }, tipFmt: function (v) { return v.toFixed(1) + "%"; }, series: [{ key: "fill", label: T("Demand served"), color: C.s1, width: 2 }].concat(same ? [{ key: "bFill", label: T("Baseline"), color: C.b, dash: "5 4" }] : []) }));
+  CH.line($("r-ch3"), Object.assign({}, common, { rows: wk, height: 190, yMax: 100, yMin: Math.min(90, Math.floor(Math.min.apply(null, lows) / 5) * 5), yFmt: function (v) { return fx(v, 0) + "%"; }, tipFmt: function (v) { return fx(v, 1) + "%"; }, series: [{ key: "fill", label: T("Demand served"), color: C.s1, width: 2 }].concat(same ? [{ key: "bFill", label: T("Baseline"), color: C.b, dash: "5 4" }] : []) }));
 
   // ---- what moves profit most
   var showInput = function (key, v) { var c = S.BY_KEY[key], d = c.step < 0.1 ? 2 : c.step < 1 ? 1 : 0; return num(v, d) + (c.unit === "%" ? "%" : c.unit ? " " + T(c.unit) : ""); };

@@ -21,7 +21,7 @@
   <div class="header-actions">
     <button class="back-link tour" type="button" id="tourBtn" data-i18n="nav.tour">Tutorial</button>
     <a class="back-link playlink" href="play.html" id="playLink" data-i18n="nav.play">Play</a>
-    <button class="back-link" type="button" id="langBtn" lang="es">Español</button>
+    <select class="back-link lang-sel" id="langSel" aria-label="Language"><option value="en">English</option></select>
     <a class="back-link" href="about.html" data-i18n="nav.about">About</a>
     <a class="back-link" href="https://kathuman.github.io/claude-projects/" data-i18n="nav.projects">← Projects</a>
   </div>
@@ -44,7 +44,7 @@
         <button class="btn small" id="imp-sample" type="button" data-i18n="imp.sample">Try the sample</button>
         <button class="btn small" id="imp-dl" type="button" data-i18n="imp.dl">Get the sample file</button>
       </div>
-      <div class="note" id="imp-msg" data-i18n="imp.note">Weekly or daily demand, with or without dates, headers in English or Spanish. The model replays it instead of a pattern. The file stays in your browser.</div>
+      <div class="note" id="imp-msg" data-i18n="imp.note">Weekly or daily demand, with or without dates, headers in English, Spanish or Danish. The model replays it instead of a pattern. The file stays in your browser.</div>
     </div>
     <p class="rail-note" data-i18n="rail.note">Every change reruns the model at once. A dot marks inputs you have changed from the starting scenario.</p>
     <div id="controls"></div>
@@ -176,6 +176,7 @@
 </div>
 
 <script src="i18n-es.js"></script>
+<script src="i18n-da.js"></script>
 <script src="i18n.js"></script>
 <script src="src/model.js"></script>
 <script src="src/specs.js"></script>
@@ -188,6 +189,7 @@
 <script src="lab.js"></script>
 <script src="tour-content.js"></script>
 <script src="tour-content-es.js"></script>
+<script src="tour-content-da.js"></script>
 <script src="tour.js"></script>
 </body>
 </html>

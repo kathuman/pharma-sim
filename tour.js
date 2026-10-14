@@ -5,9 +5,9 @@
   "use strict";
   var CONTENT = window.SPTourContent, APP = window.SPApp;
   if (!CONTENT || !APP) return;
-  var I18 = window.PSi18n, T = I18.T;
+  var I18 = window.SPi18n, T = I18.T, fx = I18.fx;
   // in Spanish, each level and step takes its text from tour-content-es.js (same ids; the setups stay as they are)
-  var ES = I18.lang === "es" ? window.SPTourContentES : null;
+  var ES = I18.lang === "es" ? window.SPTourContentES : I18.lang === "da" ? window.SPTourContentDA : null;
   if (ES) CONTENT = { TOKENS: CONTENT.TOKENS, LEVELS: CONTENT.LEVELS.map(function (l) {
     var lt = ES.levels[l.id] || {};
     return Object.assign({}, l, { title: lt.title || l.title, blurb: lt.blurb || l.blurb, steps: l.steps.map(function (st) {
@@ -56,16 +56,16 @@
   function fill(text) {
     var r = APP.result(), b = APP.baseline(); if (!r) return text;
     var k = r.kpi, bk = b ? b.kpi : null;
-    var num = function (v) { return Math.round(v).toLocaleString("en-US"); };
-    var money = function (v, sign) { var a = Math.abs(v); return (v < 0 ? "−" : sign && v > 0 ? "+" : "") + (a >= 1e6 ? "$" + (a / 1e6).toFixed(2) + "M" : "$" + (a / 1e3).toFixed(0) + "k"); };
-    var sg = function (v, d) { var s = Math.abs(v).toFixed(d); return (+s === 0 ? "±" : v > 0 ? "+" : "−") + s; };
+    var num = function (v) { return Math.round(v).toLocaleString(I18.locale); };
+    var money = function (v, sign) { var a = Math.abs(v); return (v < 0 ? "−" : sign && v > 0 ? "+" : "") + (a >= 1e6 ? "$" + fx((a / 1e6), 2) + "M" : "$" + fx((a / 1e3), 0) + "k"); };
+    var sg = function (v, d) { var zero = +Math.abs(v).toFixed(d) === 0; return (zero ? "±" : v > 0 ? "+" : "−") + fx(Math.abs(v), d); };
     var V = {
-      fill: (k.fillRate * 100).toFixed(2) + "%", bw: k.bullwhip == null ? "—" : k.bullwhip.toFixed(2) + "×", obw: k.orderBullwhip == null ? "—" : k.orderBullwhip.toFixed(2) + "×",
-      abw: k.ingBullwhip == null ? "—" : k.ingBullwhip.toFixed(2) + "×", crit: k.criticalFill == null ? "—" : (k.criticalFill * 100).toFixed(2) + "%", other: k.otherFill == null ? "—" : (k.otherFill * 100).toFixed(2) + "%",
+      fill: fx((k.fillRate * 100), 2) + "%", bw: k.bullwhip == null ? "—" : fx(k.bullwhip, 2) + "×", obw: k.orderBullwhip == null ? "—" : fx(k.orderBullwhip, 2) + "×",
+      abw: k.ingBullwhip == null ? "—" : fx(k.ingBullwhip, 2) + "×", crit: k.criticalFill == null ? "—" : fx((k.criticalFill * 100), 2) + "%", other: k.otherFill == null ? "—" : fx((k.otherFill * 100), 2) + "%",
       waste: num(k.wasteUnits), expired: num(k.expiredUnits), profit: money(k.profit), short: String(k.shortWeeks), lost: num(k.lost)
     };
     if (bk) {
-      V.dProfit = money(k.profit - bk.profit, true); V.dFill = sg((k.fillRate - bk.fillRate) * 100, 2); V.dWaste = sg(k.wasteUnits - bk.wasteUnits, 0).replace(/(\d)(?=(\d{3})+$)/g, "$1,");
+      V.dProfit = money(k.profit - bk.profit, true); V.dFill = sg((k.fillRate - bk.fillRate) * 100, 2); V.dWaste = sg(k.wasteUnits - bk.wasteUnits, 0).replace(/(\d)(?=(\d{3})+$)/g, "$1" + (I18.locale === "da-DK" ? "." : ","));
       V.dBw = k.bullwhip != null && bk.bullwhip != null ? sg(k.bullwhip - bk.bullwhip, 2) : "—"; V.dObw = k.orderBullwhip != null && bk.orderBullwhip != null ? sg(k.orderBullwhip - bk.orderBullwhip, 2) : "—"; V.dShort = sg(k.shortWeeks - bk.shortWeeks, 0);
       V.dAbw = k.ingBullwhip != null && bk.ingBullwhip != null ? sg(k.ingBullwhip - bk.ingBullwhip, 2) : "—"; V.dCrit = k.criticalFill != null && bk.criticalFill != null ? sg((k.criticalFill - bk.criticalFill) * 100, 2) : "—";
     }

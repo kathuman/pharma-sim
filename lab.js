@@ -2,13 +2,13 @@
 // on top of src/analysis.js. Works through window.SPApp; every option is run on the same random futures.
 (function () {
   "use strict";
-  var APP = window.SPApp, A = window.SPAnalysis, M = window.SPModel, S = window.SPSpecs, I18 = window.PSi18n, T = I18.T, CH = window.SPCharts;
+  var APP = window.SPApp, A = window.SPAnalysis, M = window.SPModel, S = window.SPSpecs, I18 = window.SPi18n, T = I18.T, fx = I18.fx, CH = window.SPCharts;
   if (!APP || !A) return;
   var $ = function (id) { return document.getElementById(id); };
   var KEY = "sp-scenarios-v1", tab = "scn", timer = null, optRun = null, optResult = null, optStamp = null;
-  var num = function (v, d) { return v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-US", { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
-  var money = function (v, sign) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : ""; return s + (a >= 1e6 ? "$" + (a / 1e6).toFixed(2) + "M" : a >= 1e3 ? "$" + (a / 1e3).toFixed(0) + "k" : "$" + a.toFixed(0)); };
-  var pct = function (v, d) { return v == null ? "—" : (v * 100).toFixed(d == null ? 2 : d) + "%"; };
+  var num = function (v, d) { return v == null || !isFinite(v) ? "—" : Number(v).toLocaleString(I18.locale, { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); };
+  var money = function (v, sign) { if (v == null || !isFinite(v)) return "—"; var a = Math.abs(v), s = v < 0 ? "−" : sign && v > 0 ? "+" : ""; return s + (a >= 1e6 ? "$" + fx((a / 1e6), 2) + "M" : a >= 1e3 ? "$" + fx((a / 1e3), 0) + "k" : "$" + fx(a, 0)); };
+  var pct = function (v, d) { return v == null ? "—" : fx((v * 100), d == null ? 2 : d) + "%"; };
   var css = function (n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); };
   var stamp = function (p) { return JSON.stringify(p); };
 
@@ -36,7 +36,7 @@
     [T("Fill rate"), "fillRate", 1, function (k) { return pct(k.fillRate); }],
     [T("Priority customers served"), "criticalFill", 1, function (k) { return pct(k.criticalFill); }],
     [T("Weeks short"), "shortWeeks", -1, function (k) { return num(k.shortWeeks); }],
-    [T("Bullwhip"), "bullwhip", -1, function (k) { return k.bullwhip == null ? "—" : k.bullwhip.toFixed(2) + "×"; }],
+    [T("Bullwhip"), "bullwhip", -1, function (k) { return k.bullwhip == null ? "—" : fx(k.bullwhip, 2) + "×"; }],
     [T("Waste"), "wasteUnits", -1, function (k) { return num(k.wasteUnits); }],
     [T("Average stock"), "avgInventory", -1, function (k) { return num(k.avgInventory); }],
     [T("Peak workforce"), "peakWorkforce", -1, function (k) { return num(k.peakWorkforce, 1); }]
@@ -89,11 +89,11 @@
     var rows = f.bands.map(function (x, i) { var o = { t: x.t, fillLo: x.fillLo, fillHi: x.fillHi, fill: x.fillMid, prodLo: x.productionLo, prodHi: x.productionHi, prod: x.productionMid }; if (b && b.ok) { o.bFill = b.bands[i].fillMid; o.bProd = b.bands[i].productionMid; } return o; });
     var common = { rows: rows, xLabel: T("week"), tipTitle: function (r) { return T("Week {w}", { w: r.t }); }, ariaLabel: T("Chart") };
     var lowFill = Math.min.apply(null, rows.map(function (r) { return Math.min(r.fillLo, r.bFill == null ? 100 : r.bFill); }));
-    CH.line($("fut-fill"), Object.assign({}, common, { height: 200, yMax: 100, yMin: Math.min(90, Math.floor(lowFill / 5) * 5), yFmt: function (v) { return v.toFixed(0) + "%"; }, tipFmt: function (v) { return v.toFixed(1) + "%"; },
+    CH.line($("fut-fill"), Object.assign({}, common, { height: 200, yMax: 100, yMin: Math.min(90, Math.floor(lowFill / 5) * 5), yFmt: function (v) { return fx(v, 0) + "%"; }, tipFmt: function (v) { return fx(v, 1) + "%"; },
       series: [{ band: ["fillLo", "fillHi"], label: T("Middle 80% of futures"), color: C.s1 }, { key: "fill", label: T("Median future"), color: C.s1, width: 2 }].concat(b && b.ok ? [{ key: "bFill", label: T("Baseline median"), color: C.b, dash: "5 4" }] : []) }));
     CH.line($("fut-prod"), Object.assign({}, common, { height: 200, yMin: null, yFmt: function (v) { return num(v); },
       series: [{ band: ["prodLo", "prodHi"], label: T("Middle 80% of futures"), color: C.s2 }, { key: "prod", label: T("Median future"), color: C.s2, width: 2 }].concat(b && b.ok ? [{ key: "bProd", label: T("Baseline median"), color: C.b, dash: "5 4" }] : []) }));
-    var F = { profit: function (v) { return money(v); }, fillRate: function (v) { return pct(v); }, criticalFill: function (v) { return pct(v); }, shortWeeks: function (v) { return num(v, 1); }, bullwhip: function (v) { return v == null ? "—" : v.toFixed(2) + "×"; }, wasteUnits: function (v) { return num(v); }, avgInventory: function (v) { return num(v); } };
+    var F = { profit: function (v) { return money(v); }, fillRate: function (v) { return pct(v); }, criticalFill: function (v) { return pct(v); }, shortWeeks: function (v) { return num(v, 1); }, bullwhip: function (v) { return v == null ? "—" : fx(v, 2) + "×"; }, wasteUnits: function (v) { return num(v); }, avgInventory: function (v) { return num(v); } };
     $("fut-table").innerHTML = "<thead><tr><th></th><th>" + T("10th percentile") + "</th><th>" + T("Median") + "</th><th>" + T("90th percentile") + "</th>" + (b && b.ok ? "<th>" + T("Baseline median") + "</th>" : "") + "</tr></thead><tbody>" +
       Object.keys(A.KPIS).filter(function (k) { return s[k]; }).map(function (k) {
         return "<tr><th>" + T(A.KPIS[k].label) + "</th><td>" + F[k](s[k].p10) + "</td><td>" + F[k](s[k].p50) + "</td><td>" + F[k](s[k].p90) + "</td>" + (b && b.ok ? "<td>" + (b.summary[k] ? F[k](b.summary[k].p50) : "—") + "</td>" : "") + "</tr>";
@@ -108,7 +108,7 @@
   $("sens-input").value = "coverage";
   $("sens-kpi").addEventListener("change", function () { refresh(true); });
   $("sens-input").addEventListener("change", function () { refresh(true); });
-  function fmtFor(k) { return k === "profit" ? function (v) { return money(v); } : k === "fillRate" ? function (v) { return pct(v); } : k === "bullwhip" ? function (v) { return v.toFixed(2) + "×"; } : function (v) { return num(v, k === "shortWeeks" ? 0 : 0); }; }
+  function fmtFor(k) { return k === "profit" ? function (v) { return money(v); } : k === "fillRate" ? function (v) { return pct(v); } : k === "bullwhip" ? function (v) { return fx(v, 2) + "×"; } : function (v) { return num(v, k === "shortWeeks" ? 0 : 0); }; }
   function showInput(k, v) { var c = S.BY_KEY[k], d = c.step < 0.1 ? 2 : c.step < 1 ? 1 : 0; return num(v, d) + (c.unit === "%" ? "%" : c.unit ? " " + T(c.unit) : ""); }
   function sensitivity() {
     var key = $("sens-kpi").value, p = M.merge(APP.params()), t = A.tornado(p, key, 0.2, S), fmt = fmtFor(key);
@@ -124,6 +124,8 @@
   }
 
   // ---- the optimiser
+  // the target menu reads in the language's number style (99.5% / 99,5%)
+  $("opt-target").querySelectorAll("option").forEach(function (o) { var v = +o.value * 100; o.textContent = fx(v, v % 1 ? 1 : 0) + "%"; });
   var GRIDN = A.candidates(M.merge({})).length;
   $("opt-count").textContent = GRIDN;
   function optimiserState() {
@@ -163,7 +165,7 @@
     var title = function (pol, mean) { return "<b>" + money(mean.profit) + " · " + pct(mean.fillRate) + "</b><span>" + T("Target stock cover") + "<em>" + num(pol.coverage, 0) + " " + T("wk") + "</em></span><span>" + T("Weight on the supply line") + "<em>" + num(pol.supplyLineWeight, 1) + "</em></span><span>" + T("Overtime") + "<em>" + (pol.overtime ? T("on") : T("off")) + "</em></span>"; };
     var pts = r.all.map(function (x) { return { x: x.mean.fillRate * 100, y: x.mean.profit, front: r.front.indexOf(x) >= 0, best: x === best, title: title(x.policy, x.mean), policy: x.policy }; });
     pts.push({ x: cur.fillRate * 100, y: cur.profit, current: true, title: "<b>" + T("Current policy") + "</b><span>" + money(cur.profit) + "<em>" + pct(cur.fillRate) + "</em></span>" });
-    CH.scatter($("opt-plot"), { points: pts, height: 300, xFmt: function (v) { return v.toFixed(1) + "%"; }, yFmt: function (v) { return money(v); }, xLabel: T("fill rate (average over the futures) →"), yLabel: T("↑ profit"), ariaLabel: T("Chart"),
+    CH.scatter($("opt-plot"), { points: pts, height: 300, xFmt: function (v) { return fx(v, 1) + "%"; }, yFmt: function (v) { return money(v); }, xLabel: T("fill rate (average over the futures) →"), yLabel: T("↑ profit"), ariaLabel: T("Chart"),
       onPick: function (pt) { if (pt.policy) APP.set(pt.policy); },
       legend: "<span class='legend-item'><i class='pt-key'></i>" + T("a policy") + "</span><span class='legend-item'><i class='pt-key front'></i>" + T("the trade-off frontier: nothing else has both more profit and a higher fill rate") + "</span><span class='legend-item'><i class='pt-key best'></i>" + T("best that meets the target") + "</span><span class='legend-item'><i class='pt-key current'></i>" + T("current policy") + "</span>" });
   }

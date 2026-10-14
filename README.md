@@ -2,7 +2,7 @@
 
 [![Supply Pulse tests](https://github.com/kathuman/supply-pulse/actions/workflows/ci.yml/badge.svg)](https://github.com/kathuman/supply-pulse/actions/workflows/ci.yml)
 
-**Live: [kathuman.github.io/supply-pulse](https://kathuman.github.io/supply-pulse/)** · [About](https://kathuman.github.io/supply-pulse/about.html) · English and Latin American Spanish
+**Live: [kathuman.github.io/supply-pulse](https://kathuman.github.io/supply-pulse/)** · [About](https://kathuman.github.io/supply-pulse/about.html) · English, Latin American Spanish and Danish
 
 A system-dynamics simulator of a packaged food and dairy supply chain. Shock the market or the plant, add a distributor,
 pull a lever or change the planning policy, and see the effect on profit, service, the bullwhip effect and waste
@@ -86,7 +86,7 @@ market demand revealed. Best results are remembered in the browser.
 - The model can be advanced in pieces, giving exactly the same run, and a fixed plan can replace the planning rule
   (for the coming play mode).
 
-`node tests/tutorial.test.js` (350 checks):
+`node tests/tutorial.test.js` (410 checks):
 - Every claim the tutorial's questions make holds in the model.
 - Every step points at a real element and quotes only known numbers.
 - Every step has a Spanish version with the same shape.
@@ -102,7 +102,7 @@ followed exactly, and that following the rule's suggestion tracks the rule more 
 data added up into weeks, missing values, refusals with reasons, the trend and variation, and the model replaying a
 history.
 
-`node tests/i18n.test.js` checks the Spanish translation for completeness, including the validation messages.
+`node tests/i18n.test.js` checks the Spanish and Danish translations for completeness, including the validation messages.
 
 CI runs all of them on every push.
 
@@ -113,6 +113,7 @@ Plain JavaScript with no build step: serve the folder with any static server (`p
 
 ## Version history
 
+- **4.1.0**: Danish. A language picker (English, Español, Dansk) replaces the two-way switch. Danish shows numbers with decimal commas and thousand points, and the data import reads Danish column names and a semicolon file's 1.000 as a thousand.
 - **4.0.0**: Supply Pulse. The simulator now models a packaged food and dairy supply chain (positive-release QA holds, retailers' shelf-life rules, a key ingredient such as milk powder, priority customers, summer and holiday peaks), with a new name and address.
 - **3.3.0**: your own demand data, the printable decision report, and a table view behind every chart.
 - **3.2.0**: play the planner (play.html).

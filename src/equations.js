@@ -27,9 +27,9 @@
     ] },
     { title: "Ingredient supplier (when the tier is on)", ing: true, items: [
       { name: "Ingredient stock", eq: "∫ (Ingredient arrivals − Production) dt", u: "cases", v: function (r) { return r.ingStock; }, note: "Measured in cases' worth of the ingredient." },
-      { name: "Ingredient orders", eq: "max(0, ingredient usage forecast + (Ingredient usage forecast × ingredient stock target − ingredient stock) ÷ Time to correct stock + Weight × (Desired ingredient on order − ingredient on order) ÷ Time to correct stock)", u: "cases/wk", v: function (r) { return r.ingOrders; },
-        note: "Ingredient usage forecast = SMOOTH(Production, Forecast smoothing). ingredient on order = waiting at the supplier + on its way. Desired ingredient on order = forecast × (1 week + ingredient lead time)." },
-      { name: "ingredient on its way", eq: "DELAY3(Supplier shipments, ingredient lead time); Supplier shipments = min(Ingredient backlog ÷ 1 week, Supplier capacity), 0 during an ingredient outage", u: "cases", v: function (r) { return r.ingTransit; } }
+      { name: "Ingredient orders", eq: "max(0, Ingredient usage forecast + (Ingredient usage forecast × Ingredient stock target − Ingredient stock) ÷ Time to correct stock + Weight × (Desired ingredient on order − Ingredient on order) ÷ Time to correct stock)", u: "cases/wk", v: function (r) { return r.ingOrders; },
+        note: "Ingredient usage forecast = SMOOTH(Production, Forecast smoothing). Ingredient on order = waiting at the supplier + on its way. Desired ingredient on order = forecast × (1 week + Ingredient lead time)." },
+      { name: "Ingredient on its way", eq: "DELAY3(Supplier shipments, Ingredient lead time); Supplier shipments = min(Ingredient backlog ÷ 1 week, Supplier capacity), 0 during an ingredient outage", u: "cases", v: function (r) { return r.ingTransit; } }
     ] },
     { title: "Plant: shipping and planning", items: [
       { name: "Plant shipments", eq: "Wanted × g(Plant stock ÷ (Wanted × Stock needed for full service)); Wanted = Demand, or Backlog ÷ 1 week with a distributor", u: "cases/wk", v: function (r) { return r.shipped; },

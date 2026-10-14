@@ -3,9 +3,11 @@
 (function () {
   "use strict";
   var NS = "http://www.w3.org/2000/svg";
-  function T(t, v) { var I = window.PSi18n; return I ? I.T(t, v) : String(t).replace(/\{(\w+)\}/g, function (m, k) { return v && v[k] != null ? v[k] : m; }); }
+  function T(t, v) { var I = window.SPi18n; return I ? I.T(t, v) : String(t).replace(/\{(\w+)\}/g, function (m, k) { return v && v[k] != null ? v[k] : m; }); }
   function el(tag, attrs, parent, text) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; }
-  var fmt = function (v) { return v == null ? "—" : Math.round(v).toLocaleString("en-US"); };
+  var I18 = function () { return window.SPi18n || { locale: "en-US", fx: function (v, d) { return Number(v).toFixed(d); } }; };
+  var fmt = function (v) { return v == null ? "—" : Math.round(v).toLocaleString(I18().locale); };
+  var fx = function (v, d) { return I18().fx(v, d); };
 
   function render(host, multi, ing) {
     host.innerHTML = "";
@@ -71,7 +73,7 @@
     // the ingredient supplier: what is on order and on its way, the plant's ingredient stock, and what production uses
     if (ing) {
       var ay = 352, amy = ay + 28;
-      cloud(20, amy); flow("ingOrdered", 29, amy, 120, amy, T("Ingredient ordered"), true); stock("ingOnOrder", 120, ay, 120, T("ingredient on order"));
+      cloud(20, amy); flow("ingOrdered", 29, amy, 120, amy, T("Ingredient ordered"), true); stock("ingOnOrder", 120, ay, 120, T("Ingredient on order"));
       flow("ingDeliver", 240, amy, 300, amy, "", true); stock("ingStock", 300, ay, 120, T("Ingredient stock"));
       flow("ingUsed", 420, amy, 550, amy, T("Used by production"), true); cloud(560, amy);
       link(330, ay, 98, my + 12, -60);
@@ -80,7 +82,7 @@
   }
   function update(d, r) {
     if (!d || !r) return;
-    var v = { workforce: r.workforce.toFixed(1), qa: fmt(r.qa), inventory: fmt(r.inventory), transit: fmt(r.transit), distInventory: fmt(r.distInventory),
+    var v = { workforce: fx(r.workforce, 1), qa: fmt(r.qa), inventory: fmt(r.inventory), transit: fmt(r.transit), distInventory: fmt(r.distInventory),
       production: fmt(r.production), approved: fmt(r.approved), rejected: fmt(r.rejected), expired: fmt(r.expired), shipped: fmt(r.shipped), served: fmt(r.served),
       forecast: fmt(r.forecast), target: fmt(r.target), desired: fmt(r.desired), orders: fmt(r.ordersToMfg), hire: "", leave: "", arrive: "",
       ingOrdered: fmt(r.ingOrders), ingOnOrder: fmt(r.ingBacklog + r.ingTransit), ingStock: fmt(r.ingStock), ingUsed: fmt(r.production), ingDeliver: "" };
